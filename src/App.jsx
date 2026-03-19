@@ -892,7 +892,21 @@ textarea.form-input { resize: none; line-height: 1.6; }
   .resp-grid-3 { grid-template-columns: 1fr 1fr; }
   .resp-grid-dashboard-hub { grid-template-columns: 1fr 1fr; }
   .resp-grid-split { grid-template-columns: 1fr; }
-  .dash-sidebar { width: 220px; padding: 24px 16px; }
+  /* Sidebar Hamburger (Tablet & Mobile) */
+  .dash-sidebar { 
+    position: fixed; top: 0; left: 0; height: 100vh; width: 280px; 
+    flex-direction: column !important; padding: 24px 20px; z-index: 1000; 
+    background: white; border-right: 1.5px solid ${T.line};
+    box-shadow: 4px 0 24px rgba(0,0,0,0.1); 
+    transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  body.mob-nav-open .dash-sidebar { transform: translateX(0); }
+  .dash-overlay { 
+    position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 999; 
+    opacity: 0; pointer-events: none; transition: opacity 0.3s ease; 
+  }
+  body.mob-nav-open .dash-overlay { opacity: 1; pointer-events: auto; }
+  .dash-wrap { display: block; }
   
   .agent-id-grid { grid-template-columns: 1fr; }
   .billing-grid { grid-template-columns: 1fr; }
@@ -933,10 +947,7 @@ textarea.form-input { resize: none; line-height: 1.6; }
   .form-row { grid-template-columns: 1fr; }
   
   .dash-wrap { flex-direction: column; }
-  .dash-sidebar { width: 100%; flex-direction: row; padding: 16px 20px; border-right: none; border-bottom: 1.5px solid ${T.line}; overflow-x: auto; white-space: nowrap; align-items: center; gap: 12px; z-index: 50; }
-  .dash-logo { margin-bottom: 0; margin-right: 16px; }
-  .dash-section-label { display: none; }
-  .dash-nav-item { padding: 8px 12px; margin-bottom: 0; }
+  .dash-logo { margin-bottom: 32px; }
   
   .resp-main-pad { padding: 24px 20px !important; }
   .dash-topbar { flex-direction: column; align-items: flex-start; gap: 16px; margin-bottom: 24px; border-bottom: none !important; }
@@ -1582,10 +1593,13 @@ function CallsScreen({ onBack, onNavigate }) {
       <main className="dash-main" style={{ padding: 0 }}>
         {/* TOP BAR */}
         <div className="dash-topbar" style={{ padding: "24px 32px", borderBottom: `1.5px solid ${T.line}` }}>
-          <div>
+          <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+            <button className="resp-show-mobile" onClick={() => document.body.classList.add('mob-nav-open')} style={{ background: "transparent", border: "none", fontSize: 26, cursor: "pointer", padding: 0, color: T.ink, marginTop: -2 }}>☰</button>
+            <div>
             <div className="dash-date">Wednesday · 18 March 2026</div>
             <div className="dash-greeting">Good afternoon, Tony 👋</div>
           </div>
+            </div>
           <div className="dash-topbar-right">
             <div className="dash-live-badge"><div style={{ width: 7, height: 7, borderRadius: "50%", background: T.green, animation: "pulse 2s infinite" }} />Agent live</div>
             <button onClick={onBack} style={{ background: T.white, border: `1.5px solid ${T.line}`, borderRadius: 9, padding: "7px 16px", fontSize: 12.5, fontWeight: 500, color: T.mid, cursor: "pointer", transition: "all .18s" }}>← Back to demo</button>
@@ -1795,10 +1809,13 @@ function Dashboard({ onBack, onNavigate }) {
       <main className="dash-main" style={{ padding: 0 }}>
         {/* TOP BAR */}
         <div className="dash-topbar" style={{ padding: "24px 32px", borderBottom: `1.5px solid ${T.line}` }}>
-          <div>
+          <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+            <button className="resp-show-mobile" onClick={() => document.body.classList.add('mob-nav-open')} style={{ background: "transparent", border: "none", fontSize: 26, cursor: "pointer", padding: 0, color: T.ink, marginTop: -2 }}>☰</button>
+            <div>
             <div className="dash-date">Wednesday · 18 March 2026</div>
             <div className="dash-greeting">Good afternoon, Tony 👋</div>
           </div>
+            </div>
           <div className="dash-topbar-right">
             <div className="dash-live-badge"><div style={{ width: 7, height: 7, borderRadius: "50%", background: T.green, animation: "pulse 2s infinite" }} />Agent live</div>
             <button onClick={onBack} style={{ background: T.white, border: `1.5px solid ${T.line}`, borderRadius: 9, padding: "7px 16px", fontSize: 12.5, fontWeight: 500, color: T.mid, cursor: "pointer", transition: "all .18s" }}>← Back to demo</button>
@@ -2031,10 +2048,13 @@ function OrdersScreen({ onBack, onNavigate }) {
       <main className="dash-main" style={{ padding: 0 }}>
         {/* TOP BAR */}
         <div className="dash-topbar" style={{ padding: "24px 32px", borderBottom: `1.5px solid ${T.line}` }}>
-          <div>
+          <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+            <button className="resp-show-mobile" onClick={() => document.body.classList.add('mob-nav-open')} style={{ background: "transparent", border: "none", fontSize: 26, cursor: "pointer", padding: 0, color: T.ink, marginTop: -2 }}>☰</button>
+            <div>
             <div className="dash-date">Wednesday · 18 March 2026</div>
             <div className="dash-greeting">Good afternoon, Tony 👋</div>
           </div>
+            </div>
           <div className="dash-topbar-right">
             <div className="dash-live-badge"><div style={{ width: 7, height: 7, borderRadius: "50%", background: T.green, animation: "pulse 2s infinite" }} />Agent live</div>
             <button onClick={onBack} style={{ background: T.white, border: `1.5px solid ${T.line}`, borderRadius: 9, padding: "7px 16px", fontSize: 12.5, fontWeight: 500, color: T.mid, cursor: "pointer", transition: "all .18s" }}>← Back to demo</button>
@@ -2226,10 +2246,13 @@ function ReservationsScreen({ onBack, onNavigate }) {
       <main className="dash-main" style={{ padding: 0 }}>
         {/* TOP BAR */}
         <div className="dash-topbar" style={{ padding: "24px 32px", borderBottom: `1.5px solid ${T.line}` }}>
-          <div>
+          <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+            <button className="resp-show-mobile" onClick={() => document.body.classList.add('mob-nav-open')} style={{ background: "transparent", border: "none", fontSize: 26, cursor: "pointer", padding: 0, color: T.ink, marginTop: -2 }}>☰</button>
+            <div>
             <div className="dash-date">Wednesday · 18 March 2026</div>
             <div className="dash-greeting">Good afternoon, Tony 👋</div>
           </div>
+            </div>
           <div className="dash-topbar-right">
             <div className="dash-live-badge"><div style={{ width: 7, height: 7, borderRadius: "50%", background: T.green, animation: "pulse 2s infinite" }} />Agent live</div>
             <button onClick={onBack} style={{ background: T.white, border: `1.5px solid ${T.line}`, borderRadius: 9, padding: "7px 16px", fontSize: 12.5, fontWeight: 500, color: T.mid, cursor: "pointer", transition: "all .18s" }}>← Back to demo</button>
@@ -2417,10 +2440,13 @@ function AgentScreen({ onBack, onNavigate }) {
       <main className="dash-main" style={{ padding: 0 }}>
         {/* TOP BAR */}
         <div className="dash-topbar" style={{ padding: "24px 32px", borderBottom: `1.5px solid ${T.line}` }}>
-          <div>
+          <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+            <button className="resp-show-mobile" onClick={() => document.body.classList.add('mob-nav-open')} style={{ background: "transparent", border: "none", fontSize: 26, cursor: "pointer", padding: 0, color: T.ink, marginTop: -2 }}>☰</button>
+            <div>
             <div className="dash-date">Wednesday · 18 March 2026</div>
             <div className="dash-greeting">Good afternoon, Tony 👋</div>
           </div>
+            </div>
           <div className="dash-topbar-right">
             <div className="dash-live-badge"><div style={{ width: 7, height: 7, borderRadius: "50%", background: T.green, animation: "pulse 2s infinite" }} />Agent live</div>
             <button onClick={onBack} style={{ background: T.white, border: `1.5px solid ${T.line}`, borderRadius: 9, padding: "7px 16px", fontSize: 12.5, fontWeight: 500, color: T.mid, cursor: "pointer", transition: "all .18s" }}>← Back to demo</button>
@@ -2630,9 +2656,12 @@ function KnowledgeBaseScreen({ onBack, onNavigate }) {
       <main className="dash-main" style={{ padding: 0 }}>
         {/* TOP BAR */}
         <div className="dash-topbar" style={{ padding: "24px 32px", borderBottom: `1.5px solid ${T.line}`, background: "white", position: "sticky", top: 0, zIndex: 10 }}>
-          <div>
+          <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+            <button className="resp-show-mobile" onClick={() => document.body.classList.add('mob-nav-open')} style={{ background: "transparent", border: "none", fontSize: 26, cursor: "pointer", padding: 0, color: T.ink, marginTop: -2 }}>☰</button>
+            <div>
             <div className="dash-greeting">Train your AI Agent</div>
           </div>
+            </div>
           <div className="dash-topbar-right">
             <button style={{ background: T.ink, border: "none", borderRadius: 9, padding: "9px 20px", fontSize: 13, fontWeight: 700, color: "white", cursor: "pointer", transition: "all .18s", boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}>Save Changes</button>
           </div>
@@ -2850,13 +2879,16 @@ function BillingScreen({ onBack, onNavigate }) {
       <main className="dash-main" style={{ padding: 0 }}>
         {/* TOP BAR */}
         <div className="dash-topbar" style={{ padding: "24px 32px", borderBottom: `1.5px solid ${T.line}`, background: "white", position: "sticky", top: 0, zIndex: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div>
+          <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+            <button className="resp-show-mobile" onClick={() => document.body.classList.add('mob-nav-open')} style={{ background: "transparent", border: "none", fontSize: 26, cursor: "pointer", padding: 0, color: T.ink, marginTop: -2 }}>☰</button>
+            <div>
             <div style={{ fontSize: 24, fontWeight: 800, color: T.ink, marginBottom: 4 }}>Billing & Plans</div>
             <div style={{ fontSize: 14, color: T.mid }}>Manage your subscription, monitor usage, and update your payment information with ease.</div>
           </div>
           <div>
             <button style={{ background: T.p100, border: "none", borderRadius: 20, padding: "10px 20px", fontSize: 13, fontWeight: 700, color: T.p700, cursor: "pointer", transition: "all .18s" }}>Download All Invoices</button>
           </div>
+            </div>
         </div>
 
         {/* CONTENT */}
@@ -3112,13 +3144,16 @@ function SettingsScreen({ onBack, onNavigate }) {
       <main className="dash-main" style={{ padding: 0 }}>
         {/* TOP BAR */}
         <div className="dash-topbar" style={{ padding: "24px 32px", borderBottom: `1.5px solid ${T.line}`, background: "white", position: "sticky", top: 0, zIndex: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div>
+          <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+            <button className="resp-show-mobile" onClick={() => document.body.classList.add('mob-nav-open')} style={{ background: "transparent", border: "none", fontSize: 26, cursor: "pointer", padding: 0, color: T.ink, marginTop: -2 }}>☰</button>
+            <div>
             <div style={{ fontSize: 24, fontWeight: 800, color: T.ink, marginBottom: 4 }}>Settings</div>
             <div style={{ fontSize: 14, color: T.mid }}>Manage your business profile, team members, and overall application preferences.</div>
           </div>
           <div>
             <button style={{ background: T.ink, border: "none", borderRadius: 20, padding: "10px 20px", fontSize: 13, fontWeight: 700, color: "white", cursor: "pointer", transition: "all .18s", boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}>Save Changes</button>
           </div>
+            </div>
         </div>
 
         {/* CONTENT */}
@@ -3199,24 +3234,33 @@ export default function App() {
   const [screen, setScreen] = useState("landing");
   const [step, setStep] = useState(0);
 
-  const go = s => { setScreen(s); window.scrollTo(0, 0); };
+  const go = s => { document.body.classList.remove('mob-nav-open'); setScreen(s); window.scrollTo(0, 0); };
 
   const nextOb = () => { if (step < 4) { setStep(step + 1); go(`ob${step + 1}`); } else go("success"); };
   const backOb = () => { if (step > 0) { setStep(step - 1); go(`ob${step - 1}`); } else go("landing"); };
 
-  if (screen === "landing")   return <Landing onCTA={() => { setStep(0); go("ob0"); }} />;
-  if (screen === "ob0")       return <Step0 onNext={nextOb} onBack={backOb} />;
-  if (screen === "ob1")       return <Step2 onNext={nextOb} onBack={backOb} />;
-  if (screen === "ob2")       return <Step4 onNext={nextOb} onBack={backOb} />;
-  if (screen === "ob3")       return <Step5 onNext={nextOb} onBack={backOb} />;
-  if (screen === "ob4")       return <Step6 onNext={() => go("success")} onBack={backOb} />;
-  if (screen === "success")         return <SuccessScreen onDashboard={() => go("dashboard")} />;
-  if (screen === "dashboard")       return <Dashboard onBack={() => go("landing")} onNavigate={go} />;
-  if (screen === "calls")           return <CallsScreen onBack={() => go("landing")} onNavigate={go} />;
-  if (screen === "orders")          return <OrdersScreen onBack={() => go("landing")} onNavigate={go} />;
-  if (screen === "reservations")    return <ReservationsScreen onBack={() => go("landing")} onNavigate={go} />;
-  if (screen === "agent")           return <AgentScreen onBack={() => go("landing")} onNavigate={go} />;
-  if (screen === "knowledge-base")  return <KnowledgeBaseScreen onBack={() => go("landing")} onNavigate={go} />;
-  if (screen === "billing")         return <BillingScreen onBack={() => go("landing")} onNavigate={go} />;
-  if (screen === "settings")        return <SettingsScreen onBack={() => go("landing")} onNavigate={go} />;
+    const renderScreen = () => {
+    if (screen === "landing")   return <Landing onCTA={() => { setStep(0); go("ob0"); }} />;
+      if (screen === "ob0")       return <Step0 onNext={nextOb} onBack={backOb} />;
+      if (screen === "ob1")       return <Step2 onNext={nextOb} onBack={backOb} />;
+      if (screen === "ob2")       return <Step4 onNext={nextOb} onBack={backOb} />;
+      if (screen === "ob3")       return <Step5 onNext={nextOb} onBack={backOb} />;
+      if (screen === "ob4")       return <Step6 onNext={() => go("success")} onBack={backOb} />;
+      if (screen === "success")         return <SuccessScreen onDashboard={() => go("dashboard")} />;
+      if (screen === "dashboard")       return <Dashboard onBack={() => go("landing")} onNavigate={go} />;
+      if (screen === "calls")           return <CallsScreen onBack={() => go("landing")} onNavigate={go} />;
+      if (screen === "orders")          return <OrdersScreen onBack={() => go("landing")} onNavigate={go} />;
+      if (screen === "reservations")    return <ReservationsScreen onBack={() => go("landing")} onNavigate={go} />;
+      if (screen === "agent")           return <AgentScreen onBack={() => go("landing")} onNavigate={go} />;
+      if (screen === "knowledge-base")  return <KnowledgeBaseScreen onBack={() => go("landing")} onNavigate={go} />;
+      if (screen === "billing")         return <BillingScreen onBack={() => go("landing")} onNavigate={go} />;
+      if (screen === "settings")        return <SettingsScreen onBack={() => go("landing")} onNavigate={go} />;
+  };
+
+  return (
+    <>
+      <div className="dash-overlay" onClick={() => document.body.classList.remove('mob-nav-open')} />
+      {renderScreen()}
+    </>
+  );
 }
