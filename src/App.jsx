@@ -870,6 +870,88 @@ textarea.form-input { resize: none; line-height: 1.6; }
 .qa-item:hover { border-color: ${T.p300}; background: ${T.p50}; transform: translateY(-2px); }
 .qa-icon { font-size: 18px; }
 .qa-label { font-size: 12.5px; font-weight: 500; color: ${T.mid}; }
+
+/* ── RESPONSIVE UTILITIES ── */
+.resp-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.resp-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; }
+.resp-grid-dashboard-hub { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 24px; }
+.resp-main-pad { padding: 32px 48px; max-width: 1200px; margin: 0 auto; }
+.resp-grid-split { display: grid; grid-template-columns: 1.2fr 1fr; gap: 32px; padding-bottom: 64px; transition: all 0.3s ease; align-items: start; }
+.resp-grid-single { display: grid; grid-template-columns: 1fr; gap: 32px; padding-bottom: 64px; transition: all 0.3s ease; align-items: start; }
+.resp-flex-row { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.resp-hidden-mobile { display: block; }
+.resp-show-mobile { display: none; }
+
+@media (max-width: 1024px) {
+  .hero-h1 { font-size: 52px; }
+  .features-bento { grid-template-columns: repeat(6, 1fr) !important; }
+  .feat-card { grid-column: span 3 !important; }
+  .testi-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  
+  .dash-grid { grid-template-columns: 1fr; }
+  .resp-grid-3 { grid-template-columns: 1fr 1fr; }
+  .resp-grid-dashboard-hub { grid-template-columns: 1fr 1fr; }
+  .resp-grid-split { grid-template-columns: 1fr; }
+  .dash-sidebar { width: 220px; padding: 24px 16px; }
+  
+  .agent-id-grid { grid-template-columns: 1fr; }
+  .billing-grid { grid-template-columns: 1fr; }
+  .dash-nav-item { padding: 10px 8px; font-size: 12.5px; }
+}
+
+@media (max-width: 768px) {
+  .nav { padding: 0 24px; height: 60px; }
+  .nav-center { display: none; }
+  .nav-right .btn-ghost { display: none; }
+  
+  .hero-wrap { grid-template-columns: 1fr; padding-top: 60px; }
+  .hero-left { padding: 40px 24px 20px; text-align: center; }
+  .hero-right { padding: 0 24px 60px; }
+  .hero-h1 { font-size: 42px; }
+  .hero-sub { margin-left: auto; margin-right: auto; font-size: 16px; }
+  .hero-cta { justify-content: center; }
+  .hero-eyebrow { margin-left: auto; margin-right: auto; display: flex; }
+  
+  .stat-grid { grid-template-columns: 1fr; }
+  .proof-bar { flex-direction: column; gap: 32px; padding: 40px 24px; }
+  .proof-div { width: 100%; height: 1px; }
+  
+  .features-section { padding: 60px 24px; }
+  .section-h2 { font-size: 34px; }
+  .features-bento { grid-template-columns: 1fr !important; }
+  .feat-card { grid-column: span 1 !important; padding: 24px; }
+  
+  .testi-section { padding: 60px 24px; }
+  .testi-grid { grid-template-columns: 1fr !important; }
+  
+  .footer-cta { padding: 60px 24px; }
+  
+  .ob-wrap { flex-direction: column; }
+  .ob-sidebar { width: 100%; flex-direction: row; align-items: center; border-right: none; border-bottom: 1.5px solid ${T.line}; padding: 16px 20px; overflow-x: auto; white-space: nowrap; gap: 20px; }
+  .ob-sidebar-logo, .ob-sidebar > div:last-child, .ob-step-line, .ob-step-info { display: none; }
+  .ob-main { padding: 32px 20px; max-width: 100%; }
+  .form-row { grid-template-columns: 1fr; }
+  
+  .dash-wrap { flex-direction: column; }
+  .dash-sidebar { width: 100%; flex-direction: row; padding: 16px 20px; border-right: none; border-bottom: 1.5px solid ${T.line}; overflow-x: auto; white-space: nowrap; align-items: center; gap: 12px; z-index: 50; }
+  .dash-logo { margin-bottom: 0; margin-right: 16px; }
+  .dash-section-label { display: none; }
+  .dash-nav-item { padding: 8px 12px; margin-bottom: 0; }
+  
+  .resp-main-pad { padding: 24px 20px !important; }
+  .dash-topbar { flex-direction: column; align-items: flex-start; gap: 16px; margin-bottom: 24px; border-bottom: none !important; }
+  .dash-topbar-right { width: 100%; justify-content: space-between; overflow-x: auto; padding-bottom: 4px; }
+  .dash-greeting { font-size: 24px; }
+  
+  .resp-grid-3, .resp-grid-dashboard-hub, .resp-grid-2 { grid-template-columns: 1fr; gap: 16px; }
+  .resp-flex-row { flex-direction: column; align-items: flex-start; gap: 16px; }
+  .resp-hidden-mobile { display: none !important; }
+  .resp-show-mobile { display: block !important; }
+  
+  .kpi-row { grid-template-columns: 1fr; gap: 12px; }
+  .plan-grid, .voice-grid { grid-template-columns: 1fr; }
+  .sso-row { flex-direction: column; }
+}
 `;
 
 /* ═══════════════════════════════════════════
@@ -1040,7 +1122,7 @@ function Landing({ onCTA }) {
           </div>
 
           {/* floating mini cards */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+          <div className="resp-grid-2" style={{ gap: 14 }}>
             {[
               { label: "Live in 20 min", sub: "Self-serve setup" },
               { label: "POS connected", sub: "Toast · Clover · Square" },
@@ -1077,7 +1159,7 @@ function Landing({ onCTA }) {
       {/* FEATURES */}
       <section style={{ background: T.ivory }}>
         <div className="features-section">
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 60, alignItems: "center", marginBottom: 60 }}>
+          <div className="resp-grid-2" style={{ alignItems: "center", marginBottom: 60 }}>
             <div>
               <span className="section-tag">Why talkativ</span>
               <h2 className="section-h2">Built for restaurants<br />that <em>never stop</em></h2>
@@ -1107,7 +1189,7 @@ function Landing({ onCTA }) {
       {/* TESTIMONIALS */}
       <section className="testi-section">
         <div style={{ maxWidth: 1100, margin: "0 auto", position: "relative", zIndex: 1 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 60, alignItems: "center", marginBottom: 52 }}>
+          <div className="resp-grid-2" style={{ alignItems: "center", marginBottom: 52 }}>
             <div>
               <span className="section-tag" style={{ color: T.p300 }}>What they say</span>
               <h2 className="section-h2" style={{ color: "white" }}>Restaurants that<br /><em>never miss a call</em></h2>
@@ -1512,8 +1594,8 @@ function CallsScreen({ onBack, onNavigate }) {
         </div>
 
         {/* CONTENT */}
-        <div style={{ padding: "32px 48px" }}>
-          <div style={{ display: "grid", gridTemplateColumns: activeCall ? "1.2fr 1fr" : "1fr", gap: 32, paddingBottom: 64, transition: "all 0.3s ease", alignItems: "start" }}>
+        <div className="resp-main-pad">
+          <div className={activeCall ? "resp-grid-split" : "resp-grid-single"}>
             {/* Call History */}
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
@@ -1725,14 +1807,14 @@ function Dashboard({ onBack, onNavigate }) {
         </div>
 
         {/* CONTENT */}
-        <div style={{ padding: "32px 48px", maxWidth: 1200, margin: "0 auto" }}>
+        <div className="resp-main-pad" style={{ maxWidth: 1200, margin: "0 auto" }}>
           
           <div style={{ marginBottom: 32, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
              {/* Heading removed per request */}
           </div>
 
           {/* KPI CARDS (Calls, Orders, Reservations) */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 24, marginBottom: 32 }}>
+          <div className="resp-grid-3" style={{ gap: 24, marginBottom: 32 }}>
             
             {/* Call History Widget */}
             <div style={{ background: T.white, border: `1.5px solid ${T.line}`, borderRadius: 20, padding: 28, display: "flex", flexDirection: "column", boxShadow: "0 4px 16px rgba(134,87,255,.04)", transition: "transform .2s", cursor: "pointer" }} onClick={() => onNavigate && onNavigate('calls')}>
@@ -1817,7 +1899,7 @@ function Dashboard({ onBack, onNavigate }) {
           </div>
 
           {/* SECONDARY HUB (Agent, Knowledge Base, Settings) */}
-          <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr 1fr", gap: 24 }}>
+          <div className="resp-grid-dashboard-hub" style={{ gap: 24 }}>
              
              {/* Agent Overview */}
              <div style={{ background: `linear-gradient(135deg, ${T.ink}, #2D3748)`, borderRadius: 20, padding: 28, display: "flex", flexDirection: "column", color: "white", boxShadow: "0 8px 24px rgba(0,0,0,0.12)", position: "relative", overflow: "hidden" }}>
@@ -1961,8 +2043,8 @@ function OrdersScreen({ onBack, onNavigate }) {
         </div>
 
         {/* CONTENT */}
-        <div style={{ padding: "32px 48px" }}>
-          <div style={{ display: "grid", gridTemplateColumns: activeCall ? "1.2fr 1fr" : "1fr", gap: 32, paddingBottom: 64, transition: "all 0.3s ease", alignItems: "start" }}>
+        <div className="resp-main-pad">
+          <div className={activeCall ? "resp-grid-split" : "resp-grid-single"}>
             {/* Orders History */}
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
@@ -2156,8 +2238,8 @@ function ReservationsScreen({ onBack, onNavigate }) {
         </div>
 
         {/* CONTENT */}
-        <div style={{ padding: "32px 48px" }}>
-          <div style={{ display: "grid", gridTemplateColumns: activeCall ? "1.2fr 1fr" : "1fr", gap: 32, paddingBottom: 64, transition: "all 0.3s ease", alignItems: "start" }}>
+        <div className="resp-main-pad">
+          <div className={activeCall ? "resp-grid-split" : "resp-grid-single"}>
             {/* Reservations History */}
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
@@ -2347,7 +2429,7 @@ function AgentScreen({ onBack, onNavigate }) {
         </div>
 
         {/* CONTENT */}
-        <div style={{ padding: "40px 48px", maxWidth: 1100, margin: "0 auto" }}>
+        <div className="resp-main-pad" style={{ maxWidth: 1100, margin: "0 auto" }}>
           
           <div style={{ marginBottom: 32, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
@@ -2382,13 +2464,13 @@ function AgentScreen({ onBack, onNavigate }) {
             </div>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32, alignItems: "start", marginBottom: 32 }}>
+          <div className="resp-grid-2" style={{ alignItems: "start", marginBottom: 32 }}>
             
             {/* Identity & Greeting (Left) */}
             <div style={{ background: "white", border: `1.5px solid ${T.line}`, borderRadius: 24, padding: "32px", boxShadow: "0 4px 24px rgba(0,0,0,0.02)", display: "flex", flexDirection: "column", gap: 24 }}>
               <div style={{ fontSize: 18, fontWeight: 800, color: T.ink }}>Agent Profile</div>
               
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+              <div className="resp-grid-2" style={{ gap: 20 }}>
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 700, color: T.ink, marginBottom: 8 }}>Agent Name</div>
                   <input type="text" defaultValue="Emily" style={{ width: "100%", padding: "14px 16px", borderRadius: 12, border: `1.5px solid ${T.line}`, fontSize: 14.5, fontWeight: 500, color: T.ink, background: T.paper }} />
@@ -2462,7 +2544,7 @@ function AgentScreen({ onBack, onNavigate }) {
                </div>
             </div>
              
-             <div style={{ borderTop: `1px solid ${T.line}`, paddingTop: 32, display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 16, opacity: is247 ? 0.3 : 1, pointerEvents: is247 ? "none" : "auto", transition: "opacity .3s" }}>
+             <div style={{ borderTop: `1px solid ${T.line}`, paddingTop: 32, display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 16, opacity: is247 ? 0.3 : 1, pointerEvents: is247 ? "none" : "auto", transition: "opacity .3s", overflowX: "auto", paddingBottom: 16 }}>
                 {scheduleDays.map(d => {
                   const isWeekend = d === "Sat" || d === "Sun";
                   return (
@@ -2557,14 +2639,14 @@ function KnowledgeBaseScreen({ onBack, onNavigate }) {
         </div>
 
         {/* CONTENT */}
-        <div style={{ padding: "32px 48px", maxWidth: 1000, margin: "0 auto" }}>
+        <div className="resp-main-pad" style={{ maxWidth: 1000, margin: "0 auto" }}>
           
           {/* FILE UPLOAD & SYNC URL */}
           <section style={{ background: "white", border: `1.5px solid ${T.line}`, borderRadius: 20, padding: 32, marginBottom: 32, boxShadow: "0 4px 16px rgba(134,87,255,.04)" }}>
             <div style={{ fontSize: 18, fontWeight: 800, color: T.ink, marginBottom: 8 }}>Documents & Sync URL</div>
             <div style={{ fontSize: 13.5, color: T.mid, marginBottom: 24, lineHeight: 1.5 }}>Upload PDF, PNG, or DOCX files of your menu or business guidelines, or provide a URL for our AI to automatically sync.</div>
             
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+            <div className="resp-grid-2">
               <div style={{ border: `2px dashed ${T.p200}`, background: T.p50, borderRadius: 16, padding: "32px 24px", textAlign: "center", cursor: "pointer", transition: "all .2s" }}>
                 <div style={{ width: 48, height: 48, borderRadius: "50%", background: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, margin: "0 auto 16px", color: T.p600, boxShadow: "0 2px 12px rgba(134,87,255,0.1)" }}>📄</div>
                 <div style={{ fontSize: 14, fontWeight: 700, color: T.p700, marginBottom: 4 }}>Click to upload files</div>
@@ -2778,9 +2860,9 @@ function BillingScreen({ onBack, onNavigate }) {
         </div>
 
         {/* CONTENT */}
-        <div style={{ padding: "32px 48px", maxWidth: 1050, margin: "0 auto", display: "flex", flexDirection: "column", gap: 24 }}>
+        <div className="resp-main-pad" style={{ maxWidth: 1050, margin: "0 auto", display: "flex", flexDirection: "column", gap: 24 }}>
           
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+          <div className="resp-grid-2">
             {/* CURRENT PLAN */}
             <div style={{ background: `linear-gradient(135deg, #6C3CE9, #5527D1)`, borderRadius: 24, padding: 32, display: "flex", flexDirection: "column", color: "white", position: "relative", overflow: "hidden", boxShadow: "0 12px 24px rgba(108,60,233,0.2)" }}>
               <div style={{ position: "absolute", top: 24, right: 24, fontSize: 24, opacity: 0.2 }}>✨</div>
@@ -2837,7 +2919,7 @@ function BillingScreen({ onBack, onNavigate }) {
             </div>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr", gap: 24 }}>
+          <div className="resp-grid-split">
             {/* PAYMENT METHOD */}
             <div style={{ background: "white", borderRadius: 24, padding: 32, border: `1px solid ${T.line}`, boxShadow: "0 4px 16px rgba(134,87,255,.04)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
@@ -2863,7 +2945,7 @@ function BillingScreen({ onBack, onNavigate }) {
               <div style={{ fontSize: 17, fontWeight: 800, color: T.ink, marginBottom: 24 }}>Tax Information</div>
               
               <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+                <div className="resp-grid-2">
                   <div>
                     <div style={{ fontSize: 10, fontWeight: 800, color: T.soft, letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>Business Name</div>
                     <div style={{ fontSize: 15, fontWeight: 700, color: T.ink }}>Tony's Pizzeria</div>
@@ -2884,7 +2966,7 @@ function BillingScreen({ onBack, onNavigate }) {
           {/* DEPOSIT SETTINGS */}
           <div style={{ background: "white", borderRadius: 24, padding: 32, border: `1px solid ${T.line}`, boxShadow: "0 4px 16px rgba(134,87,255,.04)" }}>
             <div style={{ fontSize: 17, fontWeight: 800, color: T.ink, marginBottom: 24 }}>Deposit Settings</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32 }}>
+            <div className="resp-grid-2" style={{ gap: 32 }}>
               
               <div style={{ padding: "24px", border: `1.5px solid ${T.line}`, borderRadius: 16, background: "#F8F7FA" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
@@ -2920,7 +3002,7 @@ function BillingScreen({ onBack, onNavigate }) {
           </div>
 
           {/* BILLING HISTORY */}
-          <div style={{ background: "white", borderRadius: 24, padding: "32px 32px 24px", border: `1px solid ${T.line}`, boxShadow: "0 4px 16px rgba(134,87,255,.04)" }}>
+          <div style={{ overflowX: "auto", background: "white", borderRadius: 24, padding: "32px 32px 24px", border: `1px solid ${T.line}`, boxShadow: "0 4px 16px rgba(134,87,255,.04)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
               <div style={{ fontSize: 17, fontWeight: 800, color: T.ink }}>Billing History</div>
               <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: T.mid, cursor: "pointer" }}>
@@ -2928,7 +3010,7 @@ function BillingScreen({ onBack, onNavigate }) {
               </div>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1.5fr 2fr 1fr 1fr 40px", gap: 16, padding: "12px 0", borderBottom: `2px solid ${T.paper}`, fontSize: 11, fontWeight: 800, color: T.soft, letterSpacing: 1, textTransform: "uppercase" }}>
+            <div style={{ minWidth: 600, display: "grid", gridTemplateColumns: "1.5fr 2fr 1fr 1fr 40px", gap: 16, padding: "12px 0", borderBottom: `2px solid ${T.paper}`, fontSize: 11, fontWeight: 800, color: T.soft, letterSpacing: 1, textTransform: "uppercase" }}>
               <div>Invoice Date</div>
               <div>Invoice ID</div>
               <div>Amount</div>
@@ -2943,7 +3025,7 @@ function BillingScreen({ onBack, onNavigate }) {
                 { d: "Jul 12, 2026", id: "#INV-2026-007", a: "$99.00", s: "Paid" },
                 { d: "Jun 12, 2026", id: "#INV-2026-006", a: "$142.50", s: "Paid", meta: "Included overages" },
               ].map((inv, i) => (
-                <div key={i} style={{ display: "grid", gridTemplateColumns: "1.5fr 2fr 1fr 1fr 40px", gap: 16, padding: "20px 0", borderBottom: i === 3 ? "none" : `1px solid ${T.paper}`, alignItems: "center", fontSize: 14 }}>
+                <div key={i} style={{ minWidth: 600, display: "grid", gridTemplateColumns: "1.5fr 2fr 1fr 1fr 40px", gap: 16, padding: "20px 0", borderBottom: i === 3 ? "none" : `1px solid ${T.paper}`, alignItems: "center", fontSize: 14 }}>
                   <div style={{ fontWeight: 600, color: T.ink }}>{inv.d}</div>
                   <div style={{ color: T.mid }}>{inv.id}</div>
                   <div style={{ fontWeight: 800, color: T.ink }}>{inv.a}</div>
@@ -3040,7 +3122,7 @@ function SettingsScreen({ onBack, onNavigate }) {
         </div>
 
         {/* CONTENT */}
-        <div style={{ padding: "32px 48px", maxWidth: 900, margin: "0 auto", display: "flex", flexDirection: "column", gap: 32 }}>
+        <div className="resp-main-pad" style={{ maxWidth: 900, margin: "0 auto", display: "flex", flexDirection: "column", gap: 32 }}>
           
           {/* PROFILE CARD */}
           <section style={{ background: "white", borderRadius: 24, padding: 32, border: `1px solid ${T.line}`, boxShadow: "0 4px 16px rgba(134,87,255,.04)" }}>
@@ -3054,7 +3136,7 @@ function SettingsScreen({ onBack, onNavigate }) {
               </div>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+            <div className="resp-grid-2">
               <div>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: T.soft, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 8 }}>Business Name</label>
                 <input value={profileName} onChange={e => setProfileName(e.target.value)} style={{ width: "100%", padding: "12px 16px", borderRadius: 10, border: `1.5px solid ${T.line}`, fontSize: 14, outline: "none", color: T.ink, background: "#F8F7FA" }} />
