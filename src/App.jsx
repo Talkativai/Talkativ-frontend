@@ -37,7 +37,7 @@ const T = {
    GLOBAL STYLES
 ═══════════════════════════════════════════ */
 const G = `
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Outfit:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Outfit:wght@300;400;500;600&display=swap');
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -209,20 +209,16 @@ html, body, #root {
 }
 .hero-dot { width: 7px; height: 7px; border-radius: 50%; background: ${T.green}; animation: pulse 2s infinite; }
 .hero-h1 {
-  font-family: 'Inter', sans-serif;
-  font-size: 64px;
-  font-weight: 700; line-height: 1.1;
-  letter-spacing: -2px; color: oklch(0.21 0.034 264.665);
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(48px, 5.5vw, 76px);
+  font-weight: 900; line-height: 1.05;
+  letter-spacing: -2px; color: ${T.ink};
   margin-bottom: 22px;
 }
-.hero-h1 em { 
-  font-style: italic; 
-  color: ${T.p600}; 
-}
+.hero-h1 em { font-style: italic; color: ${T.p600}; }
 .hero-sub {
-  font-family: 'Inter', sans-serif;
-  font-size: 20px; color: oklch(0.446 0.03 256.802); line-height: 1.6;
-  max-width: 480px; margin-bottom: 40px; font-weight: 600;
+  font-size: 17px; color: ${T.mid}; line-height: 1.75;
+  max-width: 460px; margin-bottom: 40px; font-weight: 300;
 }
 .hero-cta { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 52px; }
 .hero-trust {
@@ -319,13 +315,13 @@ html, body, #root {
   margin-bottom: 16px;
 }
 .section-h2 {
-  font-family: 'Inter', sans-serif;
-  font-size: 48px; font-weight: 700; line-height: 1.2;
-  letter-spacing: -1.5px; color: oklch(0.21 0.034 264.665);
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(36px, 4vw, 56px); font-weight: 900;
+  letter-spacing: -1.5px; color: ${T.ink}; line-height: 1.12;
   margin-bottom: 12px;
 }
-.section-h2 em { font-style: italic; color: ${T.p600}; }
-.section-sub { font-family: 'Inter', sans-serif; font-size: 16px; color: oklch(0.446 0.03 256.802); max-width: 480px; line-height: 1.6; font-weight: 400; }
+.section-h2 em { font-style: italic; color: ${T.p500}; }
+.section-sub { font-size: 16px; color: ${T.mid}; max-width: 480px; line-height: 1.7; font-weight: 300; }
 .features-bento {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
@@ -354,11 +350,11 @@ html, body, #root {
 }
 .feat-card:hover .feat-icon { transform: scale(1.08); }
 .feat-card h3 {
-  font-family: 'Inter', sans-serif;
-  font-size: 20px; font-weight: 600; color: oklch(0.21 0.034 264.665);
+  font-family: 'Playfair Display', serif;
+  font-size: 18px; font-weight: 700; color: ${T.ink};
   margin-bottom: 10px; letter-spacing: -.3px;
 }
-.feat-card p { font-family: 'Inter', sans-serif; font-size: 16px; color: oklch(0.446 0.03 256.802); line-height: 1.6; font-weight: 400; }
+.feat-card p { font-size: 14px; color: ${T.mid}; line-height: 1.7; font-weight: 300; }
 
 /* ── TESTIMONIALS ── */
 .testi-section {
@@ -459,7 +455,7 @@ html, body, #root {
   font-size: 34px; font-weight: 900; letter-spacing: -1px;
   color: ${T.ink}; line-height: 1.2; margin-bottom: 10px;
 }
-.ob-heading em { font-style: italic; color: ${T.p600}; }
+.ob-heading em { font-style: normal; color: ${T.p600}; }
 .ob-subheading { font-size: 14.5px; color: ${T.mid}; line-height: 1.65; margin-bottom: 36px; font-weight: 300; }
 
 /* form */
@@ -520,6 +516,16 @@ textarea.form-input { resize: none; line-height: 1.6; }
   cursor: pointer; transition: all .2s;
 }
 .voice-card.selected .voice-play-btn { background: ${T.p600}; border-color: ${T.p600}; color: white; }
+@keyframes miniWave { 0%, 100% { height: 4px; } 50% { height: 16px; } }
+.voice-wave {
+  display: flex; align-items: center; justify-content: center; gap: 2.5px;
+  width: 30px; height: 30px; border-radius: 50%;
+  background: ${T.p600}; border: 1.5px solid ${T.p600}; margin-top: 12px;
+}
+.voice-wave-bar {
+  width: 2.5px; border-radius: 3px; background: white;
+  animation: miniWave .75s ease-in-out infinite;
+}
 
 /* import options */
 .import-list { display: flex; flex-direction: column; gap: 11px; }
@@ -703,6 +709,7 @@ textarea.form-input { resize: none; line-height: 1.6; }
   width: 256px; flex-shrink: 0;
   background: ${T.white}; border-right: 1.5px solid ${T.line};
   padding: 28px 20px; display: flex; flex-direction: column;
+  overflow-y: auto;
 }
 .dash-logo {
   display: flex; align-items: center; gap: 10px;
@@ -870,109 +877,160 @@ textarea.form-input { resize: none; line-height: 1.6; }
 .qa-item:hover { border-color: ${T.p300}; background: ${T.p50}; transform: translateY(-2px); }
 .qa-icon { font-size: 18px; }
 .qa-label { font-size: 12.5px; font-weight: 500; color: ${T.mid}; }
+\n
+/* ── RESPONSIVE CLASSES ── */
+.resp-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.resp-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.resp-grid-dashboard-hub { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; }
+.resp-grid-sidebar-left { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 18px; }
 
-/* ── RESPONSIVE UTILITIES ── */
-.resp-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-.resp-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; }
-.resp-grid-dashboard-hub { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 24px; }
-.resp-main-pad { padding: 32px 48px; max-width: 1200px; margin: 0 auto; }
-.resp-grid-split { display: grid; grid-template-columns: 1.2fr 1fr; gap: 32px; padding-bottom: 64px; transition: all 0.3s ease; align-items: start; }
-.resp-grid-single { display: grid; grid-template-columns: 1fr; gap: 32px; padding-bottom: 64px; transition: all 0.3s ease; align-items: start; }
-.resp-flex-row { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
-.resp-hidden-mobile { display: block; }
-.resp-show-mobile { display: none; }
+.resp-show-mobile { display: none !important; }
+.mob-close-btn { display: none; }
 
+/* ── MEDIA QUERIES ── */
+
+/* TABLET (max 1024px) */
 @media (max-width: 1024px) {
-  .hero-h1 { font-size: 52px; }
+  .bento-stack { margin-top: 32px; }
+  .bento-main { position: relative; }
+  .hero-wrap { grid-template-columns: 1fr !important; }
+  .hero-left { padding: 110px 48px 40px !important; }
+  .hero-right { padding: 0 48px 60px !important; }
+  .features-section { padding: 80px 40px; }
+  .testi-section { padding: 80px 40px; }
+  .footer-cta { padding: 80px 40px; }
+  .proof-bar { padding: 18px 40px; }
+  .testi-grid { grid-template-columns: 1fr 1fr !important; }
   .features-bento { grid-template-columns: repeat(6, 1fr) !important; }
   .feat-card { grid-column: span 3 !important; }
-  .testi-grid { grid-template-columns: repeat(2, 1fr) !important; }
-  
-  .dash-grid { grid-template-columns: 1fr; }
-  .resp-grid-3 { grid-template-columns: 1fr 1fr; }
-  .resp-grid-dashboard-hub { grid-template-columns: 1fr 1fr; }
-  .resp-grid-split { grid-template-columns: 1fr; }
-  /* Sidebar Hamburger (Tablet & Mobile) */
-  .dash-sidebar { 
-    position: fixed; top: 0; left: 0; height: 100vh; width: 280px; 
-    flex-direction: column !important; padding: 24px 20px; z-index: 1000; 
-    background: white; border-right: 1.5px solid ${T.line};
-    box-shadow: 4px 0 24px rgba(0,0,0,0.1); 
+
+  /* Off-canvas Navigation Overlay */
+  .dash-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 900;
+    opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+  }
+  body.mob-nav-open .dash-overlay { opacity: 1; pointer-events: auto; }
+  body.mob-nav-open { overflow: hidden; }
+
+  /* Hamburger Toggle */
+  .resp-show-mobile { display: block !important; }
+  .mob-close-btn { display: flex !important; }
+
+  /* Off-canvas Sidebar */
+  .dash-sidebar {
+    position: fixed; top: 0; left: 0; bottom: 0; width: 280px; height: 100vh;
+    z-index: 1000; box-shadow: 4px 0 24px rgba(0,0,0,0.1);
     transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
   body.mob-nav-open .dash-sidebar { transform: translateX(0); }
-  .dash-overlay { 
-    position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 999; 
-    opacity: 0; pointer-events: none; transition: opacity 0.3s ease; 
+  .dash-main { padding: 36px 32px; }
+
+  .resp-grid-dashboard-hub { grid-template-columns: 1fr !important; }
+  .resp-grid-sidebar-left { grid-template-columns: 1fr !important; }
+
+  /* Off-canvas Onboarding Sidebar */
+  .ob-sidebar {
+    position: fixed; top: 0; left: 0; bottom: 0; width: 280px; height: 100vh;
+    z-index: 1000; box-shadow: 4px 0 24px rgba(0,0,0,0.1);
+    transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    border-right: none !important;
   }
-  body.mob-nav-open .dash-overlay { opacity: 1; pointer-events: auto; }
-  .dash-wrap { display: block; }
-  
-  .agent-id-grid { grid-template-columns: 1fr; }
-  .billing-grid { grid-template-columns: 1fr; }
-  .dash-nav-item { padding: 10px 8px; font-size: 12.5px; }
+  .ob-sidebar.ob-open { transform: translateX(0); }
+  .ob-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 900;
+    opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+  }
+  .ob-overlay.ob-open { opacity: 1; pointer-events: auto; }
+  .ob-hamburger { display: flex !important; }
 }
 
+/* MOBILE (max 768px) */
 @media (max-width: 768px) {
-  .nav { padding: 0 24px; height: 60px; }
+  .hero-wrap, .ob-wrap, .testi-grid, .footer-cta { display: flex; flex-direction: column; }
+  .hero-left, .hero-right { padding: 32px 20px !important; }
+  .hero-left { padding-top: 90px !important; }
+  .hero-h1 { font-size: 36px !important; letter-spacing: -1px; }
+  .hero-sub { font-size: 15px; }
+  .features-section, .testi-section { padding: 60px 20px; }
+  .footer-cta { padding: 60px 20px; }
+  .ob-sidebar { width: 100%; border-right: none; border-bottom: 1.5px solid #EBE6F5; padding: 24px; }
+  .ob-main { padding: 24px; }
   .nav-center { display: none; }
-  .nav-right .btn-ghost { display: none; }
-  
-  .hero-wrap { grid-template-columns: 1fr; padding-top: 60px; }
-  .hero-left { padding: 40px 24px 20px; text-align: center; }
-  .hero-right { padding: 0 24px 60px; }
-  .hero-h1 { font-size: 42px; }
-  .hero-sub { margin-left: auto; margin-right: auto; font-size: 16px; }
-  .hero-cta { justify-content: center; }
-  .hero-eyebrow { margin-left: auto; margin-right: auto; display: flex; }
-  
-  .stat-grid { grid-template-columns: 1fr; }
-  .proof-bar { flex-direction: column; gap: 32px; padding: 40px 24px; }
-  .proof-div { width: 100%; height: 1px; }
-  
-  .features-section { padding: 60px 24px; }
-  .section-h2 { font-size: 34px; }
+  .nav { padding: 0 20px; height: 60px; }
+  .nav-logo { font-size: 19px; }
+  .section-h2 { font-size: 28px !important; }
+  .ob-wrap { display: flex; flex-direction: column; }
+  .ob-sidebar { width: 280px; }
+  .ob-main { padding: 24px 20px; }
+
+  /* Grid Fallbacks */
+  .resp-grid-2, .resp-grid-3, .resp-grid-dashboard-hub, .resp-grid-sidebar-left, .kpi-row, .dash-grid {
+    grid-template-columns: 1fr !important;
+  }
   .features-bento { grid-template-columns: 1fr !important; }
-  .feat-card { grid-column: span 1 !important; padding: 24px; }
-  
-  .testi-section { padding: 60px 24px; }
+  .feat-card { grid-column: span 1 !important; }
   .testi-grid { grid-template-columns: 1fr !important; }
-  
-  .footer-cta { padding: 60px 24px; }
-  
-  .ob-wrap { flex-direction: column; }
-  .ob-sidebar { width: 100%; flex-direction: row; align-items: center; border-right: none; border-bottom: 1.5px solid ${T.line}; padding: 16px 20px; overflow-x: auto; white-space: nowrap; gap: 20px; }
-  .ob-sidebar-logo, .ob-sidebar > div:last-child, .ob-step-line, .ob-step-info { display: none; }
-  .ob-main { padding: 32px 20px; max-width: 100%; }
-  .form-row { grid-template-columns: 1fr; }
-  
-  .dash-wrap { flex-direction: column; }
-  .dash-logo { margin-bottom: 32px; }
-  
-  .resp-main-pad { padding: 24px 20px !important; }
-  .dash-topbar { flex-direction: column; align-items: flex-start; gap: 16px; margin-bottom: 24px; border-bottom: none !important; }
-  .dash-topbar-right { width: 100%; justify-content: space-between; overflow-x: auto; padding-bottom: 4px; }
-  .dash-greeting { font-size: 24px; }
-  
-  .resp-grid-3, .resp-grid-dashboard-hub, .resp-grid-2 { grid-template-columns: 1fr; gap: 16px; }
-  .resp-flex-row { flex-direction: column; align-items: flex-start; gap: 16px; }
-  .resp-hidden-mobile { display: none !important; }
-  .resp-show-mobile { display: block !important; }
-  
-  .kpi-row { grid-template-columns: 1fr; gap: 12px; }
-  .plan-grid, .voice-grid { grid-template-columns: 1fr; }
-  .sso-row { flex-direction: column; }
+  .stat-grid { grid-template-columns: 1fr 1fr; }
+  .dash-main { padding: 24px 16px; }
+  .card { overflow-x: auto; scrollbar-width: none; }
+  .live-banner { flex-direction: column; text-align: center; gap: 12px; }
+  .lb-wave { margin: 10px auto; }
+  .lb-btn { margin-left: 0; }
+  .proof-bar { padding: 20px; flex-direction: column; gap: 16px; }
+  .proof-div { display: none; }
+
+  /* Success screen */
+  .success-screen { padding: 40px 24px; }
+  .success-h1 { font-size: 38px !important; letter-spacing: -1px; }
+  .success-sub { font-size: 15px; max-width: 340px; margin: 10px 0 32px; }
+  .success-stats { flex-direction: column; gap: 12px; width: 100%; }
+  .ss-card { padding: 16px 20px; }
+  .success-icon { width: 80px; height: 80px; font-size: 36px; margin-bottom: 24px; }
+
+  /* Calls card list on mobile */
+  .calls-table-header { display: none !important; }
+  .calls-table-row { display: none !important; }
+
+  /* Landing grids */
+  .features-section > div:first-child { grid-template-columns: 1fr !important; gap: 20px !important; }
+  .testi-section > div > div:first-child { grid-template-columns: 1fr !important; gap: 20px !important; }
 }
-`;
+
+/* SMALL PHONE (max 480px) */
+@media (max-width: 480px) {
+  .hero-h1 { font-size: 30px !important; }
+  .hero-sub { font-size: 14px; }
+  .hero-cta { flex-direction: column; gap: 10px; }
+  .btn-hero, .btn-hero-outline { width: 100%; justify-content: center; text-align: center; }
+  .kpi-row { gap: 10px !important; }
+  .kpi-card { padding: 16px !important; }
+  .kpi-value { font-size: 22px !important; }
+  .nav { padding: 0 16px; }
+  .dash-main { padding: 16px 12px; }
+  .card { padding: 16px !important; border-radius: 14px !important; }
+  .card-head { font-size: 15px !important; }
+  .section-h2 { font-size: 24px !important; }
+  .feat-card { padding: 24px 20px; }
+  .proof-bar { padding: 16px; }
+  .success-screen { padding: 32px 16px; }
+  .success-h1 { font-size: 30px !important; }
+  .success-sub { font-size: 14px; max-width: 300px; }
+  .ss-val { font-size: 24px; }
+}
+
+\n`;
 
 /* ═══════════════════════════════════════════
    STEP DEFINITIONS
 ═══════════════════════════════════════════ */
 const STEPS = [
+  { name: "Hear it live",     time: "~2 min" },
   { name: "Create account",   time: "~1 min" },
-  { name: "Business & Menu",  time: "~4 min" },
+  { name: "Business info",    time: "~1 min" },
+  { name: "Import menu",      time: "~3 min" },
   { name: "AI voice & script",time: "~4 min" },
-  { name: "Go live",          time: "~2 min" },
+  { name: "Phone number",     time: "~3 min" },
+  { name: "Test call",        time: "~2 min" },
   { name: "Choose plan",      time: "~2 min" },
 ];
 
@@ -981,13 +1039,21 @@ const STEPS = [
 ═══════════════════════════════════════════ */
 function ObShell({ step, children, onNext, onBack, nextLabel = "Continue →" }) {
   const pct = ((step + 1) / STEPS.length) * 100;
+  const [obOpen, setObOpen] = useState(false);
   return (
     <div className="ob-wrap">
       <style>{G}</style>
-      <aside className="ob-sidebar">
-        <div className="ob-sidebar-logo">
-          <div className="ob-sidebar-logo-mark">t</div>
-          talkativ
+      {/* Overlay for mobile sidebar */}
+      <div className={`ob-overlay ${obOpen?"ob-open":""}`} onClick={()=>setObOpen(false)}/>
+      <aside className={`ob-sidebar ${obOpen?"ob-open":""}`}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
+          <div className="ob-sidebar-logo">
+            <div className="ob-sidebar-logo-mark">t</div>
+            talkativ
+          </div>
+          <button className="ob-hamburger" onClick={()=>setObOpen(false)} style={{display:"none",background:"none",border:"none",cursor:"pointer",fontSize:22,color:T.mid,padding:4,borderRadius:8,alignItems:"center",justifyContent:"center"}}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
         </div>
         {STEPS.map((s, i) => {
           const state = i < step ? "done" : i === step ? "active" : "upcoming";
@@ -1013,11 +1079,14 @@ function ObShell({ step, children, onNext, onBack, nextLabel = "Continue →" })
       </aside>
 
       <div className="ob-main">
-        <div>
-          <div className="ob-progress-bar">
-            <div className="ob-progress-fill" style={{ width: `${pct}%` }} />
+        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:8}}>
+          <button className="ob-hamburger" onClick={()=>setObOpen(true)} style={{display:"none",background:"none",border:"none",cursor:"pointer",fontSize:24,color:T.ink,padding:0,alignItems:"center",justifyContent:"center"}}>☰</button>
+          <div style={{flex:1}}>
+            <div className="ob-progress-bar">
+              <div className="ob-progress-fill" style={{ width: `${pct}%` }} />
+            </div>
+            <div className="ob-progress-label">Step {step + 1} of {STEPS.length} · {STEPS[step].time} remaining</div>
           </div>
-          <div className="ob-progress-label">Step {step + 1} of {STEPS.length} · {STEPS[step].time} remaining</div>
         </div>
         <div style={{ flex: 1, marginTop: 8 }}>{children}</div>
         <div className="ob-footer">
@@ -1049,7 +1118,6 @@ function Landing({ onCTA }) {
           ))}
         </div>
         <div className="nav-right">
-          <button className="btn-ghost" onClick={onCTA}>Log in</button>
           <button className="btn-primary" onClick={onCTA}>Start free →</button>
         </div>
       </nav>
@@ -1081,7 +1149,7 @@ function Landing({ onCTA }) {
           </p>
           <div className="hero-cta">
             <button className="btn-hero" onClick={onCTA}>
-              Start free
+              Get started free
               <span style={{ fontSize: 18, lineHeight: 1 }}>→</span>
             </button>
             <button className="btn-hero-outline" onClick={onCTA}>
@@ -1089,8 +1157,6 @@ function Landing({ onCTA }) {
             </button>
           </div>
           <div className="hero-trust">
-            {/* Avatars removed as requested */}
-            <div style={{ height: 30 }} />
             <span>Loved by 2,400+ restaurant owners</span>
           </div>
         </div>
@@ -1099,7 +1165,6 @@ function Landing({ onCTA }) {
         <div className="hero-right">
           <div className="bento-main">
             <div className="call-header">
-              <div className="call-avatar">T</div>
               <div>
                 <div className="call-name">Tony's Pizzeria</div>
                 <div className="call-sub">Talkativ AI · Active call</div>
@@ -1133,17 +1198,16 @@ function Landing({ onCTA }) {
           </div>
 
           {/* floating mini cards */}
-          <div className="resp-grid-2" style={{ gap: 14 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
             {[
-              { label: "Live in 20 min", sub: "Self-serve setup" },
-              { label: "POS connected", sub: "Toast · Clover · Square" },
-              { label: "24/7 coverage", sub: "Zero missed calls" },
-              { label: "Live dashboard", sub: "Every call tracked" },
-            ].map(({ label, sub }) => (
+              { icon: "⚡", label: "Live in 20 min", sub: "Self-serve setup" },
+              { icon: "🔌", label: "POS connected", sub: "Toast · Clover · Square" },
+              { icon: "🌙", label: "24/7 coverage", sub: "Zero missed calls" },
+              { icon: "📊", label: "Live dashboard", sub: "Every call tracked" },
+            ].map(({ icon, label, sub }) => (
               <div key={label} style={{ background: T.white, border: `1.5px solid ${T.line}`, borderRadius: 16, padding: "16px 18px", display: "flex", alignItems: "center", gap: 12, boxShadow: `0 4px 16px rgba(134,87,255,.06)`, transition: "all .22s", cursor: "default" }}
                 onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.borderColor = T.p300; }}
                 onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.borderColor = T.line; }}>
-                {/* Icon removed */}
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 600, color: T.ink }}>{label}</div>
                   <div style={{ fontSize: 11, color: T.soft, marginTop: 2 }}>{sub}</div>
@@ -1170,7 +1234,7 @@ function Landing({ onCTA }) {
       {/* FEATURES */}
       <section style={{ background: T.ivory }}>
         <div className="features-section">
-          <div className="resp-grid-2" style={{ alignItems: "center", marginBottom: 60 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 60, alignItems: "center", marginBottom: 60 }}>
             <div>
               <span className="section-tag">Why talkativ</span>
               <h2 className="section-h2">Built for restaurants<br />that <em>never stop</em></h2>
@@ -1181,14 +1245,15 @@ function Landing({ onCTA }) {
           </div>
           <div className="features-bento">
             {[
-              { span: 4, title: "Sounds like you", body: "Custom voice, agent name, and brand tone. Your customers won't know it's AI." },
-              { span: 4, title: "Knows your menu", body: "Import via URL, PDF, or POS. Orders go directly to your kitchen system." },
-              { span: 4, title: "Always on", body: "Every call answered — even at 2am, during peak rush, on bank holidays." },
-              { span: 6, title: "Deep POS integrations", body: "Toast, Clover, Square, OpenTable, Aloha and 8 more. One-click setup, real-time sync." },
-              { span: 3, title: "Live in 20 min", body: "No sales calls. No IT team. Self-serve and ready in under 20 minutes." },
-              { span: 3, title: "Live analytics", body: "Every call, order and transcript in one beautiful dashboard." },
-            ].map(({ span, title, body }) => (
+              { span: 4, icon: "🎙️", title: "Sounds like you", body: "Custom voice, agent name, and brand tone. Your customers won't know it's AI." },
+              { span: 4, icon: "📋", title: "Knows your menu", body: "Import via URL, PDF, or POS. Orders go directly to your kitchen system." },
+              { span: 4, icon: "🌙", title: "Always on", body: "Every call answered — even at 2am, during peak rush, on bank holidays." },
+              { span: 6, icon: "🔌", title: "Deep POS integrations", body: "Toast, Clover, Square, OpenTable, Aloha and 8 more. One-click setup, real-time sync." },
+              { span: 3, icon: "⚡", title: "Live in 20 min", body: "No sales calls. No IT team. Self-serve and ready in under 20 minutes." },
+              { span: 3, icon: "📊", title: "Live analytics", body: "Every call, order and transcript in one beautiful dashboard." },
+            ].map(({ span, icon, title, body }) => (
               <div key={title} className="feat-card" style={{ gridColumn: `span ${span}` }}>
+                <div className="feat-icon">{icon}</div>
                 <h3>{title}</h3>
                 <p>{body}</p>
               </div>
@@ -1200,7 +1265,7 @@ function Landing({ onCTA }) {
       {/* TESTIMONIALS */}
       <section className="testi-section">
         <div style={{ maxWidth: 1100, margin: "0 auto", position: "relative", zIndex: 1 }}>
-          <div className="resp-grid-2" style={{ alignItems: "center", marginBottom: 52 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 60, alignItems: "center", marginBottom: 52 }}>
             <div>
               <span className="section-tag" style={{ color: T.p300 }}>What they say</span>
               <h2 className="section-h2" style={{ color: "white" }}>Restaurants that<br /><em>never miss a call</em></h2>
@@ -1252,13 +1317,45 @@ function Landing({ onCTA }) {
 ═══════════════════════════════════════════ */
 function Step0({ onNext, onBack }) {
   const [ph, setPh] = useState("");
+  const [calling, setCalling] = useState(false);
   return (
-    <ObShell step={0} onNext={onNext} onBack={onBack} nextLabel="Create account →">
-      <div className="ob-step-label">Step 1 · Account</div>
-      <h1 className="ob-heading">Create your<br />account</h1>
+    <ObShell step={0} onNext={onNext} onBack={onBack} nextLabel="Create my account →">
+      <div className="ob-step-label">Step 1 · Experience first</div>
+      <h1 className="ob-heading">Hear <em>Talkativ</em><br />before signing up</h1>
+      <p className="ob-subheading">Enter your number and we'll call you right now. Place a test order — no commitment needed.</p>
+      <div className="form-group">
+        <label className="form-label">Your mobile number</label>
+        <input className="form-input" placeholder="+44 7700 000 000" value={ph} onChange={e => setPh(e.target.value)} style={{ fontSize: 18, padding: "16px 20px" }} />
+      </div>
+      <button
+        onClick={() => setCalling(true)}
+        style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 28, background: calling ? T.greenBg : T.ink, border: calling ? `1.5px solid ${T.greenBd}` : "none", color: calling ? T.green : "white", borderRadius: 50, padding: "14px 28px", fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "'Outfit', sans-serif", boxShadow: calling ? "none" : "0 4px 20px rgba(19,13,46,.18)", transition: "all .3s" }}>
+        {calling ? "📞 Calling you now…" : "📞 Call me now"}
+      </button>
+      {calling && (
+        <div className="bento-main" style={{ maxWidth: 400, margin: 0 }}>
+          <div className="call-header">
+            <div className="call-avatar">🤖</div>
+            <div><div className="call-name">Talkativ Demo</div><div className="call-sub">Calling {ph || "+44 7700 000 000"}</div></div>
+            <div className="live-badge"><div style={{ width: 6, height: 6, borderRadius: "50%", background: T.green, animation: "pulse 1.5s infinite" }} />LIVE</div>
+          </div>
+          <div className="waveform">{Array.from({ length: 14 }, (_, i) => <div key={i} className="wave-bar" style={{ animationDelay: `${i * .08}s` }} />)}</div>
+          <div className="chat-bubble chat-ai"><span className="chat-tag">ARIA · TALKATIV</span>Hi! You're through to Talkativ's demo. Go ahead and place a test order — I'll handle everything!</div>
+        </div>
+      )}
+      {!calling && <p style={{ fontSize: 13, color: T.soft, fontStyle: "italic" }}>Prefer to skip? Hit Continue → below.</p>}
+    </ObShell>
+  );
+}
+
+function Step1({ onNext, onBack }) {
+  return (
+    <ObShell step={1} onNext={onNext} onBack={onBack} nextLabel="Create account →">
+      <div className="ob-step-label">Step 2 · Account</div>
+      <h1 className="ob-heading">Create your<br /><em>account</em></h1>
       <p className="ob-subheading">No credit card required. 14-day free trial on all plans — cancel any time.</p>
       <div className="sso-row">
-        <button className="sso-btn">Continue with Google</button>
+        <button className="sso-btn">🔵 Continue with Google</button>
       </div>
       <div className="divider-row"><div className="divider-line" /><span className="divider-text">or continue with email</span><div className="divider-line" /></div>
       <div className="form-row">
@@ -1266,10 +1363,6 @@ function Step0({ onNext, onBack }) {
         <div className="form-group"><label className="form-label">Last name</label><input className="form-input" placeholder="Chen" /></div>
       </div>
       <div className="form-group"><label className="form-label">Email address</label><input className="form-input" placeholder="maria@restaurant.com" type="email" /></div>
-      <div className="form-group">
-        <label className="form-label">Mobile number</label>
-        <input className="form-input" placeholder="+44 7700 000 000" value={ph} onChange={e => setPh(e.target.value)} />
-      </div>
       <div className="form-group"><label className="form-label">Password</label><input className="form-input" placeholder="At least 8 characters" type="password" /></div>
       <p style={{ fontSize: 12.5, color: T.soft, marginTop: 6 }}>By continuing you agree to our <span style={{ color: T.p600, cursor: "pointer" }}>Terms of Service</span> and <span style={{ color: T.p600, cursor: "pointer" }}>Privacy Policy</span>.</p>
     </ObShell>
@@ -1277,32 +1370,53 @@ function Step0({ onNext, onBack }) {
 }
 
 function Step2({ onNext, onBack }) {
-  const [sel, setSel] = useState(0);
-  const [imported, setImported] = useState(false);
-  const opts = [
-    { title: "Import from URL", desc: "Paste your website or online menu link", badge: "Fastest" },
-    { title: "Upload a PDF", desc: "Drag and drop your printed menu" },
-    { title: "Connect your POS", desc: "Toast, Clover, Square and 8 more", badge: "Recommended" },
-  ];
-
   return (
-    <ObShell step={1} onNext={onNext} onBack={onBack} nextLabel="Looks good →">
-      <div className="ob-step-label">Step 2 · Business & Menu</div>
-      <h1 className="ob-heading">Set up your business<br />and menu</h1>
-      <p className="ob-subheading">We'll pull your address from Google, and automatically parse your menu to train your AI agent.</p>
-      
-      <div className="form-group" style={{ marginTop: 24 }}>
+    <ObShell step={2} onNext={onNext} onBack={onBack} nextLabel="Looks good →">
+      <div className="ob-step-label">Step 3 · Business profile</div>
+      <h1 className="ob-heading">Tell us about<br /><em>your business</em></h1>
+      <p className="ob-subheading">Search your business name and we'll pull your address, hours, and category from Google automatically.</p>
+      <div className="form-group">
         <label className="form-label">Business name</label>
         <div style={{ position: "relative" }}>
-          <input className="form-input" defaultValue="Tony's Pizzeria" style={{ paddingRight: 80 }} />
-          <div style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: T.p600, color: "white", borderRadius: 8, padding: "6px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Save</div>
+          <input className="form-input" defaultValue="Tony's Pizzeria" style={{ paddingRight: 120 }} />
+          <div style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: T.p600, color: "white", borderRadius: 8, padding: "5px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>🔍 Search</div>
         </div>
       </div>
+      <div className="info-block">
+        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
+          <div style={{ width: 46, height: 46, background: `linear-gradient(135deg,${T.p400},${T.p700})`, borderRadius: 13, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>🍕</div>
+          <div><div style={{ fontWeight: 600, fontSize: 14.5, color: T.ink }}>Tony's Pizzeria</div><div style={{ fontSize: 12, color: T.soft }}>Restaurant · Manchester, UK</div></div>
+          <div style={{ marginLeft: "auto", background: T.greenBg, border: `1px solid ${T.greenBd}`, borderRadius: 8, padding: "4px 11px", fontSize: 11, fontWeight: 700, color: T.green }}>✓ Found</div>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 11 }}>
+          {[["📍", "Address", "14 High Street, Manchester M1 1AE"], ["🕐", "Hours", "Mon–Sun · 11am – 11pm"], ["📞", "Phone", "0161 234 5678"], ["🌐", "Category", "Pizza Restaurant"]].map(([ic, l, v]) => (
+            <div key={l} style={{ background: T.white, border: `1.5px solid ${T.line}`, borderRadius: 11, padding: "10px 14px" }}>
+              <div style={{ fontSize: 11, color: T.soft, marginBottom: 3 }}>{ic} {l}</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: T.ink }}>{v}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </ObShell>
+  );
+}
 
-      <div style={{ marginTop: 40, marginBottom: 16, fontSize: 14, fontWeight: 700, color: T.ink }}>How should we import your Menu?</div>
+function Step3({ onNext, onBack }) {
+  const [sel, setSel] = useState(0);
+  const opts = [
+    { icon: "🌐", title: "Import from URL", desc: "Paste your website or online menu link", badge: "Fastest" },
+    { icon: "📄", title: "Upload a PDF", desc: "Drag and drop your printed menu" },
+    { icon: "🔌", title: "Connect your POS", desc: "Toast, Clover, Square and 8 more", badge: "Recommended" },
+  ];
+  return (
+    <ObShell step={3} onNext={onNext} onBack={onBack} nextLabel="Import menu →">
+      <div className="ob-step-label">Step 4 · Menu</div>
+      <h1 className="ob-heading">Import your<br /><em>menu</em></h1>
+      <p className="ob-subheading">We parse it automatically — no manual entry. Your AI uses this to answer customer questions and take orders.</p>
       <div className="import-list">
         {opts.map((o, i) => (
-          <div key={o.title} className={`import-item ${sel === i ? "selected" : ""}`} onClick={() => { setSel(i); setImported(false); }}>
+          <div key={o.title} className={`import-item ${sel === i ? "selected" : ""}`} onClick={() => setSel(i)}>
+            <div className="import-item-icon">{o.icon}</div>
             <div className="import-item-info"><h4>{o.title}</h4><p>{o.desc}</p></div>
             {o.badge && <div className="import-badge">{o.badge}</div>}
             <div className="radio-dot" style={{ borderColor: sel === i ? T.p500 : T.faint, background: sel === i ? T.p500 : "transparent" }}>
@@ -1311,33 +1425,14 @@ function Step2({ onNext, onBack }) {
           </div>
         ))}
       </div>
-
-      {sel === 0 && (
-        <div style={{ marginTop: 18 }}>
-          <label className="form-label">Menu URL</label>
-          <div style={{ display: 'flex', gap: 10, marginTop: 6 }}>
-            <input className="form-input" placeholder="https://tonys-pizzeria.com/menu" style={{ flex: 1 }} />
-            <button onClick={() => setImported(true)} style={{ background: T.ink, color: 'white', border: 'none', borderRadius: 8, padding: '0 24px', fontWeight: 600, cursor: 'pointer', fontFamily: "'Outfit', sans-serif" }}>Import</button>
-          </div>
-        </div>
-      )}
-
-      {sel === 1 && !imported && (
-        <div style={{ marginTop: 18, border: `2px dashed ${T.borderM || T.faint}`, borderRadius: 16, padding: 36, textAlign: "center", cursor: "pointer", background: T.paper }} onClick={() => setImported(true)}>
+      {sel === 0 && <div style={{ marginTop: 18 }}><label className="form-label">Menu URL</label><input className="form-input" placeholder="https://tonys-pizzeria.com/menu" style={{ marginTop: 6 }} /></div>}
+      {sel === 1 && (
+        <div style={{ marginTop: 18, border: `2px dashed ${T.borderM || T.faint}`, borderRadius: 16, padding: 36, textAlign: "center", cursor: "pointer", background: T.paper }}>
+          <div style={{ fontSize: 32, marginBottom: 10 }}>📄</div>
           <div style={{ fontWeight: 600, color: T.ink, fontSize: 14 }}>Drop your PDF here</div>
           <div style={{ fontSize: 13, color: T.soft, marginTop: 5 }}>or click to browse files</div>
         </div>
       )}
-
-      {sel === 1 && imported && (
-        <div style={{ marginTop: 18, border: `1.5px solid ${T.greenBd}`, background: T.greenBg, borderRadius: 16, padding: 18, display: "flex", alignItems: "center", gap: 16, cursor: "pointer" }} onClick={() => setImported(false)}>
-          <div>
-            <div style={{ fontWeight: 600, color: T.green, fontSize: 13.5 }}>menu_final_2026.pdf</div>
-            <div style={{ fontSize: 11.5, color: T.green, opacity: 0.8, marginTop: 2 }}>2.4 MB · Uploaded successfully</div>
-          </div>
-        </div>
-      )}
-
       {sel === 2 && (
         <div style={{ marginTop: 18, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
           {["Toast", "Clover", "Square", "OpenTable", "Aloha", "Olo"].map(p => (
@@ -1349,68 +1444,33 @@ function Step2({ onNext, onBack }) {
           ))}
         </div>
       )}
-
-      {(sel === 0 || sel === 1) && imported && (
-        <div style={{ marginTop: 24, padding: 22, background: T.white, border: `1.5px solid ${T.line}`, borderRadius: 16, animation: 'fadeUp .4s ease' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: T.green }} />
-            <div style={{ fontSize: 13.5, fontWeight: 700, color: T.ink }}>Information successfully extracted</div>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
-            {[["Menu", "142 items found"], ["Opening hours", "Mon-Sun schedule"], ["FAQ", "12 common questions"]].map(([title, desc]) => (
-              <div key={title} style={{ background: T.ivory, border: `1.5px solid ${T.line}`, borderRadius: 12, padding: '14px 16px' }}>
-                <div style={{ fontSize: 13.5, fontWeight: 700, color: T.ink }}>{title}</div>
-                <div style={{ fontSize: 11.5, color: T.soft, marginTop: 4 }}>{desc}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </ObShell>
   );
 }
 
 function Step4({ onNext, onBack }) {
   const [vc, setVc] = useState(0);
-  const [gender, setGender] = useState(0);
-  const [playingVoice, setPlayingVoice] = useState(null);
   const [greeting, setGreeting] = useState("Thanks for calling Tony's Pizzeria! I'm Aria, your AI assistant. Would you like to place an order, check our hours, or something else?");
   return (
-    <ObShell step={2} onNext={onNext} onBack={onBack} nextLabel="Save & continue →">
-      <div className="ob-step-label">Step 3 · Voice & script</div>
-      <h1 className="ob-heading">Customise your<br />AI agent</h1>
+    <ObShell step={4} onNext={onNext} onBack={onBack} nextLabel="Save & continue →">
+      <div className="ob-step-label">Step 5 · Voice & script</div>
+      <h1 className="ob-heading">Customise your<br /><em>AI agent</em></h1>
       <p className="ob-subheading">Pick a voice and personalise your greeting. All fields are pre-filled — just change what you want.</p>
-
-      <div className="form-group" style={{ marginBottom: 24 }}>
-        <label className="form-label" style={{ display: 'block', marginBottom: 10 }}>Agent gender</label>
-        <div style={{ display: 'flex', gap: 10 }}>
-          {["Female", "Male"].map((g, i) => (
-            <div key={g} onClick={() => setGender(i)} style={{ flex: 1, textAlign: 'center', padding: '14px 0', border: `1.5px solid ${gender === i ? T.p500 : T.line}`, background: gender === i ? T.p50 : T.white, color: gender === i ? T.p700 : T.mid, fontSize: 13.5, fontWeight: 700, borderRadius: 12, cursor: 'pointer', transition: 'all .2s', boxShadow: gender === i ? `0 2px 12px rgba(112,53,245,.15)` : 'none' }}>
-              {g}
-            </div>
-          ))}
-        </div>
-      </div>
-
       <label className="form-label" style={{ marginBottom: 12 }}>Choose a voice</label>
-      <style>{`@keyframes miniWave { 0%, 100% { height: 25%; } 50% { height: 100%; } }`}</style>
       <div className="voice-grid">
         {[{ n: "Aria", d: "Warm & professional" }, { n: "Leo", d: "Friendly & upbeat" }, { n: "Nova", d: "Calm & precise" }, { n: "Finn", d: "Casual & relaxed" }].map((v, i) => (
           <div key={v.n} className={`voice-card ${vc === i ? "selected" : ""}`} onClick={() => setVc(i)}>
-            <div>
-              <div className="voice-name">{v.n}</div>
-              <div className="voice-desc">{v.d}</div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{ display: 'flex', gap: 2.5, alignItems: 'center', height: 18, width: playingVoice === i ? 24 : 0, opacity: playingVoice === i ? 1 : 0, transition: 'all .25s ease-out' }}>
-                {[...Array(5)].map((_, w) => (
-                  <div key={w} style={{ width: 3, borderRadius: 2, background: vc === i ? T.p600 : T.mid, animation: playingVoice === i ? `miniWave .8s infinite ease-in-out ${w * 0.15}s` : 'none', height: playingVoice === i ? '100%' : '3px' }} />
-                ))}
+            <div className="voice-name">{v.n}</div>
+            <div className="voice-desc">{v.d}</div>
+            {vc === i ? (
+              <div className="voice-wave">
+                <div className="voice-wave-bar" style={{ animationDelay: '0s' }} />
+                <div className="voice-wave-bar" style={{ animationDelay: '0.15s' }} />
+                <div className="voice-wave-bar" style={{ animationDelay: '0.3s' }} />
               </div>
-              <div className="voice-play-btn" style={{ position: 'relative', right: 'auto', top: 'auto', margin: 0 }} onClick={(e) => { e.stopPropagation(); setPlayingVoice(playingVoice === i ? null : i); }}>
-                {playingVoice === i ? "■" : "▶"}
-              </div>
-            </div>
+            ) : (
+              <div className="voice-play-btn">▶</div>
+            )}
           </div>
         ))}
       </div>
@@ -1418,7 +1478,7 @@ function Step4({ onNext, onBack }) {
       <div className="form-group">
         <label className="form-label">Greeting message</label>
         <textarea className="form-input" rows={3} value={greeting} onChange={e => setGreeting(e.target.value)} />
-        <div style={{ fontSize: 11.5, color: T.soft, marginTop: 6 }}>💡 Keep under 20 seconds of speech for the best experience</div>
+        <div style={{ fontSize: 11.5, color: T.soft, marginTop: 6 }}>Keep under 20 seconds of speech for the best experience</div>
       </div>
       <div className="form-group">
         <label className="form-label">When agent can't help, it should…</label>
@@ -1429,30 +1489,71 @@ function Step4({ onNext, onBack }) {
 }
 
 function Step5({ onNext, onBack }) {
-  const [called, setCalled] = useState(false);
+  const [opt, setOpt] = useState(0);
   return (
-    <ObShell step={3} onNext={onNext} onBack={onBack} nextLabel={called ? "Choose a plan →" : "Skip for now →"}>
-      <div className="ob-step-label">Step 4 · Go live</div>
-      <h1 className="ob-heading">Your agent is<br />live</h1>
-      <p className="ob-subheading">We've automatically assigned you a Talkativ number. Your agent is active and ready to take calls.</p>
-      
-      <div style={{ marginTop: 24, background: T.greenBg, border: `1.5px solid ${T.greenBd}`, borderRadius: 16, padding: 20, display: "flex", gap: 16, alignItems: "center" }}>
-        <div style={{ width: 44, height: 44, borderRadius: "50%", background: T.green, color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>✓</div>
-        <div>
-          <div style={{ fontSize: 13, color: T.green, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".5px", marginBottom: 3 }}>System Active</div>
-          <div style={{ fontSize: 18, color: T.green, fontWeight: 800 }}>+44 161 792 4831</div>
+    <ObShell step={5} onNext={onNext} onBack={onBack} nextLabel="Connect number →">
+      <div className="ob-step-label">Step 6 · Phone number</div>
+      <h1 className="ob-heading">Connect your<br /><em>phone number</em></h1>
+      <p className="ob-subheading">Choose how calls are routed to Talkativ. This takes about 3 minutes.</p>
+      <div className="phone-opts">
+        <div className={`phone-opt ${opt === 0 ? "selected" : ""}`} onClick={() => setOpt(0)}>
+          <div className="phone-opt-icon">🔀</div>
+          <h4>Forward existing number</h4>
+          <p>Keep your current number. We'll walk you through your carrier's call forwarding settings step by step.</p>
+        </div>
+        <div className={`phone-opt ${opt === 1 ? "selected" : ""}`} onClick={() => setOpt(1)}>
+          <div className="phone-opt-icon">✨</div>
+          <h4>Get a new number</h4>
+          <p>We'll instantly assign you a local number — perfect if you're starting fresh or running a new line.</p>
         </div>
       </div>
+      {opt === 0 && (
+        <div className="info-block">
+          <div style={{ fontWeight: 600, color: T.ink, marginBottom: 14, fontSize: 14 }}>📱 Forwarding instructions</div>
+          {["Dial *21*[your Talkativ number]# on your phone", "Press Call — you'll hear a short confirmation tone", "Return here and click Verify below"].map((s, i) => (
+            <div key={i} style={{ display: "flex", gap: 14, alignItems: "flex-start", marginBottom: 12 }}>
+              <div style={{ width: 24, height: 24, borderRadius: "50%", background: T.p600, color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, flexShrink: 0, boxShadow: `0 2px 8px rgba(112,53,245,.3)` }}>{i + 1}</div>
+              <div style={{ fontSize: 13.5, color: T.mid, paddingTop: 2 }}>{s}</div>
+            </div>
+          ))}
+        </div>
+      )}
+      {opt === 1 && (
+        <div style={{ marginTop: 18 }}>
+          <label className="form-label">Choose your area code</label>
+          <div style={{ display: "flex", gap: 10, marginTop: 10, flexWrap: "wrap" }}>
+            {["Manchester +44 161", "London +44 20", "Birmingham +44 121", "Leeds +44 113"].map(a => (
+              <div key={a} style={{ border: `1.5px solid ${T.faint}`, borderRadius: 50, padding: "8px 18px", fontSize: 13, fontWeight: 600, color: T.p700, cursor: "pointer", background: T.white, transition: "all .18s" }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = T.p400; e.currentTarget.style.background = T.p50; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = T.faint; e.currentTarget.style.background = T.white; }}>
+                {a}
+              </div>
+            ))}
+          </div>
+          <div style={{ marginTop: 18, background: T.greenBg, border: `1.5px solid ${T.greenBd}`, borderRadius: 13, padding: "14px 16px", display: "flex", gap: 10, alignItems: "center" }}>
+            <span style={{ fontSize: 18 }}>✅</span>
+            <span style={{ fontSize: 13.5, color: T.green, fontWeight: 600 }}>+44 161 792 4831 is available and ready to assign</span>
+          </div>
+        </div>
+      )}
+    </ObShell>
+  );
+}
 
-      <div style={{ marginTop: 40, marginBottom: 16, fontSize: 14, fontWeight: 700, color: T.ink }}>Test call</div>
-      <p style={{ fontSize: 13.5, color: T.mid, marginBottom: 16 }}>Call your Talkativ number and hear your fully configured AI agent answering as your business.</p>
-
+function Step6({ onNext, onBack }) {
+  const [called, setCalled] = useState(false);
+  return (
+    <ObShell step={6} onNext={onNext} onBack={onBack} nextLabel={called ? "Choose a plan →" : "Skip for now →"}>
+      <div className="ob-step-label">Step 7 · Test call</div>
+      <h1 className="ob-heading">Test your agent<br />before <em>going live</em></h1>
+      <p className="ob-subheading">One click to hear exactly what your customers will experience when they call.</p>
       <div className="test-call-card">
-        <div className="test-call-icon">{called ? "T" : "T"}</div>
-        <h3>{called ? "Your agent sounds perfect!" : "Ready for a test run?"}</h3>
+        <div className="test-call-icon">{called ? "✅" : "📞"}</div>
+        <h3>{called ? "Your agent sounds perfect!" : "Ready to make a test call?"}</h3>
+        <p>{called ? "Everything is working beautifully. Aria is ready to go live to your customers." : "Call your Talkativ number and hear your fully configured AI agent answering as your business."}</p>
         {!called && (
           <button onClick={() => setCalled(true)} style={{ background: T.ink, color: "white", border: "none", borderRadius: 50, padding: "14px 32px", fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "'Outfit', sans-serif", boxShadow: "0 4px 20px rgba(19,13,46,.2)", transition: "all .22s", position: "relative", zIndex: 1 }}>
-            Call my number now
+            📞 Call my number now
           </button>
         )}
         {called && (
@@ -1464,8 +1565,9 @@ function Step5({ onNext, onBack }) {
       </div>
       {called && (
         <div style={{ display: "flex", gap: 14, marginTop: 18 }}>
-          {[["1 call", "Completed"], ["0:42", "Duration"], ["Order taken", "Outcome"]].map(([v, l]) => (
+          {[["📞", "1 call", "Completed"], ["⏱️", "0:42", "Duration"], ["✅", "Order taken", "Outcome"]].map(([ic, v, l]) => (
             <div key={l} style={{ flex: 1, background: T.white, border: `1.5px solid ${T.line}`, borderRadius: 16, padding: 18, textAlign: "center", boxShadow: `0 4px 16px rgba(134,87,255,.06)` }}>
+              <div style={{ fontSize: 20, marginBottom: 6 }}>{ic}</div>
               <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: T.p600 }}>{v}</div>
               <div style={{ fontSize: 11, color: T.soft, marginTop: 3, textTransform: "uppercase", letterSpacing: ".8px", fontWeight: 600 }}>{l}</div>
             </div>
@@ -1476,12 +1578,12 @@ function Step5({ onNext, onBack }) {
   );
 }
 
-function Step6({ onNext, onBack }) {
+function Step7({ onNext, onBack }) {
   const [plan, setPlan] = useState(1);
   return (
-    <ObShell step={4} onNext={onNext} onBack={onBack} nextLabel="Start free trial →">
-      <div className="ob-step-label">Step 5 · Plan</div>
-      <h1 className="ob-heading">Choose your<br />plan</h1>
+    <ObShell step={7} onNext={onNext} onBack={onBack} nextLabel="Start free trial →">
+      <div className="ob-step-label">Step 8 · Plan</div>
+      <h1 className="ob-heading">Choose your<br /><em>plan</em></h1>
       <p className="ob-subheading">14-day free trial on all plans. No charge until your trial ends — cancel any time.</p>
       <div className="plan-grid">
         {[
@@ -1510,7 +1612,7 @@ function Step6({ onNext, onBack }) {
           <div className="form-group"><label className="form-label">Expiry date</label><input className="form-input" placeholder="MM / YY" /></div>
           <div className="form-group"><label className="form-label">CVC</label><input className="form-input" placeholder="123" /></div>
         </div>
-        <div style={{ fontSize: 12, color: T.soft, display: "flex", alignItems: "center", gap: 6 }}>🔒 Secured by Stripe · You won't be charged until your 14-day trial ends</div>
+        <div style={{ fontSize: 12, color: T.soft, display: "flex", alignItems: "center", gap: 6 }}>Secured by Stripe · You won't be charged until your 14-day trial ends</div>
       </div>
     </ObShell>
   );
@@ -1524,11 +1626,13 @@ function SuccessScreen({ onDashboard }) {
     <div className="success-screen">
       <style>{G}</style>
       <div className="success-bg" />
+      <div className="success-icon">🎉</div>
       <h1 className="success-h1">You're live!</h1>
       <p className="success-sub">Aria is now answering calls for Tony's Pizzeria. Your first real customer call could come in any moment.</p>
       <div className="success-stats">
-        {[["Live", "Agent status"], ["24/7", "Coverage"], ["Ready", "For orders"]].map(([v, l]) => (
+        {[["📞", "Live", "Agent status"], ["⏱️", "24/7", "Coverage"], ["🛒", "Ready", "For orders"]].map(([ic, v, l]) => (
           <div className="ss-card" key={l}>
+            <div style={{ fontSize: 24, marginBottom: 10 }}>{ic}</div>
             <div className="ss-val">{v}</div>
             <div className="ss-label">{l}</div>
           </div>
@@ -1543,1723 +1647,1193 @@ function SuccessScreen({ onDashboard }) {
 }
 
 /* ═══════════════════════════════════════════
-   CALLS SCREEN
+   DASHBOARD
 ═══════════════════════════════════════════ */
-function CallsScreen({ onBack, onNavigate }) {
-  const [activeCall, setActiveCall] = useState(null);
-  
-  const callLogs = [
-    { id: "1", n: "+1 (415) 555-0921", t: "14:20 · Today", txt: `"I'd like to change my reservation to tomorrow evening..."`, s: "Completed", sb: "#D1FAE5", sc: "#065F46", dur: "2m 45s", ic: "✓" },
-    { id: "2", n: "Private Number", t: "13:05 · Today", txt: `"Customer disconnected during agent transfer."`, s: "Escalated", sb: "#FECACA", sc: "#B91C1C", dur: "0m 12s", ic: "↷" },
-    { id: "3", n: "+1 (212) 555-8844", t: "Yesterday 18:30", txt: `"How much is the special tonight?"`, s: "Enquiry", sb: "#D1FAE5", sc: "#065F46", dur: "1m 02s", ic: "✓" },
-    { id: "4", n: "+1 (650) 555-1234", t: "Yesterday 12:15", txt: `"Order #122 contains a gluten-free pizza, right?"`, s: "Order Mod", sb: T.p100, sc: T.p700, dur: "4m 20s", ic: "✓" },
-    { id: "5", n: "+44 7911 123456", t: "16 Mar 2026", txt: `"Can I book a table for 6 on Friday?"`, s: "Completed", sb: "#D1FAE5", sc: "#065F46", dur: "3m 15s", ic: "✓" },
-    { id: "6", n: "+1 (310) 555-9876", t: "16 Mar 2026", txt: `"Do you have any vegan options on the menu?"`, s: "Enquiry", sb: "#D1FAE5", sc: "#065F46", dur: "1m 45s", ic: "✓" },
-    { id: "7", n: "Unknown Caller", t: "15 Mar 2026", txt: `"Are you open on Easter Sunday?"`, s: "Completed", sb: "#D1FAE5", sc: "#065F46", dur: "0m 50s", ic: "✓" }
-  ];
 
+
+const NAV = [
+  { section:"Main", items:[["📊","Dashboard"],["📞","Calls"],["📋","Orders"],["📅","Reservations"]] },
+  { section:"Agent", items:[["🤖","My Agent"],["🎙️","Voice & Script"],["📋","Menu"]] },
+  { section:"Account", items:[["🔌","Integrations"],["💳","Billing"],["⚙️","Settings"]] },
+];
+
+function Sidebar({ active, onNav }) {
   return (
-    <div className="dash-wrap" style={{ background: "#F8F7FA" }}>
-      <style>{G}</style>
-      <aside className="dash-sidebar" style={{ display: "flex", flexDirection: "column" }}>
-        <div className="dash-logo"><div className="dash-logo-mark">t</div>talkativ</div>
-        <div className="dash-section-label">Main</div>
-        {[["Dashboard", "dashboard"], ["Calls", "calls"], ["Orders", "orders"], ["Reservations", "reservations"]].map(([l, route]) => (
-          <div key={l} className={`dash-nav-item ${route === "calls" ? "active" : ""}`} onClick={() => route && onNavigate ? onNavigate(route) : null}>{l}</div>
-        ))}
-        <div className="dash-section-label">Agent</div>
-        {[["My Agent", "agent"], ["Knowledge base", "knowledge-base"]].map(([l, route]) => (
-          <div key={l} className="dash-nav-item" onClick={() => route && onNavigate && onNavigate(route)}>{l}</div>
-        ))}
-        <div className="dash-section-label">Account</div>
-        {[["Billing", "billing"], ["Settings", "settings"]].map(([l, route]) => (
-          <div key={l} className="dash-nav-item" onClick={() => route && onNavigate ? onNavigate(route) : null}>{l}</div>
-        ))}
-        
-        <div style={{ marginTop: "auto", borderTop: `1.5px solid ${T.line}`, paddingTop: 20 }}>
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 24, padding: "0 8px" }}>
-            <div style={{ width: 36, height: 36, borderRadius: "50%", background: `linear-gradient(135deg,${T.p400},${T.p700})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "white" }}>TC</div>
-            <div>
-               <div style={{ fontSize: 14.5, fontWeight: 800, color: T.ink, marginBottom: 2 }}>Tony's Pizzeria</div>
-               <div style={{ fontSize: 12.5, color: T.soft, fontWeight: 600, cursor: "pointer", textDecoration: "underline", textDecorationThickness: "1px", textUnderlineOffset: 3 }} onClick={() => onNavigate && onNavigate('landing')}>Logout</div>
-            </div>
-          </div>
-          <button style={{ width: "100%", padding: "12px", background: "white", border: `1.5px solid ${T.line}`, borderRadius: 10, fontSize: 13, fontWeight: 700, color: T.ink, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "all .2s" }}>
-             Customer support ↗
-          </button>
+    <aside className="dash-sidebar">
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <div className="dash-logo">
+          <div className="dash-logo-mark">t</div>talkativ
         </div>
-      </aside>
-
-      <main className="dash-main" style={{ padding: 0 }}>
-        {/* TOP BAR */}
-        <div className="dash-topbar" style={{ padding: "24px 32px", borderBottom: `1.5px solid ${T.line}` }}>
-          <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
-            <button className="resp-show-mobile" onClick={() => document.body.classList.add('mob-nav-open')} style={{ background: "transparent", border: "none", fontSize: 26, cursor: "pointer", padding: 0, color: T.ink, marginTop: -2 }}>☰</button>
-            <div>
-            <div className="dash-date">Wednesday · 18 March 2026</div>
-            <div className="dash-greeting">Good afternoon, Tony 👋</div>
-          </div>
+        <button className="mob-close-btn" onClick={()=>document.body.classList.remove('mob-nav-open')} style={{background:"none",border:"none",cursor:"pointer",fontSize:22,color:T.mid,padding:4,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",transition:"all .15s"}}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      {NAV.map(({ section, items }) => (
+        <div key={section}>
+          <div className="dash-section-label">{section}</div>
+          {items.map(([ic, label]) => (
+            <div
+              key={label}
+              className={`dash-nav-item ${active === label ? "active" : ""}`}
+              onClick={() => onNav(label)}
+            >
+              <span className="dash-nav-icon">{ic}</span>{label}
             </div>
-          <div className="dash-topbar-right">
-            <div className="dash-live-badge"><div style={{ width: 7, height: 7, borderRadius: "50%", background: T.green, animation: "pulse 2s infinite" }} />Agent live</div>
-            <button onClick={onBack} style={{ background: T.white, border: `1.5px solid ${T.line}`, borderRadius: 9, padding: "7px 16px", fontSize: 12.5, fontWeight: 500, color: T.mid, cursor: "pointer", transition: "all .18s" }}>← Back to demo</button>
-            <div className="dash-avatar" style={{ cursor: "pointer" }}>TC</div>
-          </div>
+          ))}
         </div>
-
-        {/* CONTENT */}
-        <div className="resp-main-pad">
-          <div className={activeCall ? "resp-grid-split" : "resp-grid-single"}>
-            {/* Call History */}
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-                <div style={{ fontSize: 17, fontWeight: 700, color: T.ink }}>Call history</div>
-                <div style={{ display: "flex", gap: 16, fontSize: 12.5, fontWeight: 600 }}>
-                  <div style={{ color: T.p600, cursor: "pointer" }}>All</div>
-                  <div style={{ color: T.mid, cursor: "pointer" }}>Failed</div>
-                  <div style={{ color: T.mid, cursor: "pointer" }}>Escalated</div>
-                </div>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                {callLogs.map((r) => {
-                  const isActive = activeCall && activeCall.id === r.id;
-                  return (
-                    <div key={r.id} onClick={() => setActiveCall(isActive ? null : r)} style={{ background: isActive ? "white" : T.paper, border: `1.5px solid ${isActive ? T.p400 : "transparent"}`, borderRadius: 16, padding: "20px", display: "flex", alignItems: "flex-start", gap: 16, boxShadow: isActive ? "0 4px 16px rgba(134,87,255,0.12)" : "none", cursor: "pointer", transition: "all .2s" }}>
-                      <div style={{ width: 44, height: 44, borderRadius: "50%", background: isActive ? T.p50 : "white", border: `1.5px solid ${isActive ? T.p200 : T.line}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight:"bold", color: r.s==="Escalated"? "#B91C1C" : (isActive ? T.p600 : T.ink) }}>{r.ic}</div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                          <div style={{ fontSize: 14.5, fontWeight: 700, color: T.ink }}>{r.n}</div>
-                          <div style={{ fontSize: 12, color: T.soft, fontWeight: 600 }}>{r.t}</div>
-                        </div>
-                        <div style={{ fontSize: 13.5, color: T.mid, marginBottom: 12 }}>{r.txt}</div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                          <span style={{ fontSize: 10.5, fontWeight: 700, background: r.sb, color: r.sc, padding: "4px 8px", borderRadius: 4 }}>{r.s}</span>
-                          <span style={{ fontSize: 11.5, color: T.soft, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
-                            <span style={{ fontSize: 12 }}>🕒</span> {r.dur}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              
-              {/* Pagination */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 24, padding: "0 8px" }}>
-                <div style={{ fontSize: 13, color: T.soft, fontWeight: 500 }}>Showing 1-7 of 142 calls</div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button style={{ background: "white", border: `1px solid ${T.line}`, borderRadius: 8, padding: "6px 14px", fontSize: 13, fontWeight: 600, color: T.soft, cursor: "not-allowed" }}>Previous</button>
-                  <button style={{ background: "white", border: `1px solid ${T.line}`, borderRadius: 8, padding: "6px 14px", fontSize: 13, fontWeight: 600, color: T.ink, cursor: "pointer" }}>Next</button>
-                </div>
-              </div>
-            </div>
-
-            {/* Call Details */}
-            {activeCall && (
-              <div style={{ background: "white", border: `1.5px solid ${T.line}`, borderRadius: 20, padding: 32, boxShadow: "0 4px 24px rgba(0,0,0,0.04)", position: "sticky", top: 32 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 20, fontWeight: 800, color: T.ink, marginBottom: 4 }}>Call Details</div>
-                    <div style={{ fontSize: 12.5, color: T.soft, fontWeight: 600 }}>ID: #TALK-9921-{activeCall.id}</div>
-                  </div>
-                  <div style={{ textAlign: "right", display: "flex", gap: 16, alignItems: "flex-start" }}>
-                    <div>
-                      <div style={{ fontSize: 11.5, color: T.soft, marginTop: 4 }}>Processed via VoiceCore™</div>
-                    </div>
-                    <button onClick={() => setActiveCall(null)} style={{ background: T.paper, border: `1px solid ${T.line}`, width: 28, height: 28, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 16, color: T.mid, fontWeight: "bold", padding: 0, marginTop: -4 }}>×</button>
-                  </div>
-                </div>
-
-                {/* Transcript */}
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-                  <div style={{ fontSize: 11.5, fontWeight: 800, color: T.soft, letterSpacing: 1.5, textTransform: "uppercase" }}>Transcript</div>
-                  <div style={{ fontSize: 14, color: T.mid, fontWeight: "bold", cursor: "pointer", transform:"rotate(-45deg)" }}>⚲</div>
-                </div>
-
-                <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 40, maxHeight: 380, overflowY: "auto", paddingRight: 8 }}>
-                  {/* AI */}
-                  <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: T.p600, display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: 12, flexShrink: 0 }}>🤖</div>
-                    <div style={{ background: T.p50, padding: "14px 18px", borderRadius: "0 18px 18px 18px", fontSize: 13.5, color: T.ink, lineHeight: 1.6 }}>
-                      Hello! Welcome to Talkativ. How can I help you today?
-                    </div>
-                  </div>
-                  {/* User */}
-                  <div style={{ display: "flex", gap: 12, alignItems: "flex-start", justifyContent: "flex-end" }}>
-                    <div style={{ background: T.paper, padding: "14px 18px", borderRadius: "18px 0 18px 18px", fontSize: 13.5, color: T.ink, lineHeight: 1.6 }}>
-                      {activeCall.txt.replace(/"/g, '')}
-                    </div>
-                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: T.line, display: "flex", alignItems: "center", justifyContent: "center", color: T.mid, fontSize: 12, flexShrink: 0, fontWeight: "bold" }}>👤</div>
-                  </div>
-                  {/* AI */}
-                  <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: T.p600, display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: 12, flexShrink: 0 }}>🤖</div>
-                    <div style={{ background: T.p50, padding: "14px 18px", borderRadius: "0 18px 18px 18px", fontSize: 13.5, color: T.ink, lineHeight: 1.6 }}>
-                      Of course. I see you've called from {activeCall.n}. Shall I pull up those details to confirm?
-                    </div>
-                  </div>
-                  {/* User */}
-                  <div style={{ display: "flex", gap: 12, alignItems: "flex-start", justifyContent: "flex-end" }}>
-                    <div style={{ background: T.paper, padding: "14px 18px", borderRadius: "18px 0 18px 18px", fontSize: 13.5, color: T.ink, lineHeight: 1.6 }}>
-                      Yes, please. That would be great.
-                    </div>
-                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: T.line, display: "flex", alignItems: "center", justifyContent: "center", color: T.mid, fontSize: 12, flexShrink: 0, fontWeight: "bold" }}>👤</div>
-                  </div>
-                </div>
-
-                {/* Special Requests */}
-                <div style={{ marginBottom: 24 }}>
-                  <div style={{ fontSize: 11.5, fontWeight: 800, color: T.soft, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 12 }}>Special Requests & Allergies</div>
-                  <div style={{ background: "#FEF2F2", border: "1px solid #FCA5A5", padding: "12px 16px", borderRadius: "12px", fontSize: 13.5, color: "#991B1B", lineHeight: 1.6, fontWeight: 600 }}>
-                     "Severe nut allergy. Celebrating 10th anniversary. Preferred seating near window if possible."
-                  </div>
-                </div>
-                
-                {/* AI Context */}
-                <div style={{ marginBottom: 32 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                    <div style={{ fontSize: 11.5, fontWeight: 800, color: T.soft, letterSpacing: 1.5, textTransform: "uppercase", display:"flex", alignItems:"center", gap: 6 }}>
-                      <div style={{ width: 14, height: 14, borderRadius: "50%", background: T.p600, display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: 8 }}>✦</div>
-                      Talkativ AI Context
-                    </div>
-                    <div style={{ fontSize: 12, color: T.p600, fontWeight: 700, cursor: "pointer", display:"flex", alignItems:"center", gap:4 }}>View Full Call Log <span style={{fontSize: 14}}>↗</span></div>
-                  </div>
-                  <div style={{ background: T.p50, border: `1px solid ${T.p100}`, padding: "16px", borderRadius: "16px", display: "flex", alignItems: "flex-start", gap: 14 }}>
-                    <div style={{ width: 32, height: 32, borderRadius: "50%", background: T.white, display: "flex", alignItems: "center", justifyContent: "center", color: T.p600, fontSize: 14, cursor:"pointer", border:`1px solid ${T.line}`, flexShrink: 0, boxShadow: "0 2px 8px rgba(134,87,255,0.15)", transform:"scaleX(1.1)" }}>▶</div>
-                    <div style={{ fontSize: 13.5, color: T.ink, lineHeight: 1.6, flex: 1, fontStyle: "italic", fontWeight: 500 }}>
-                      "The caller mentioned they want a specific vintage wine if available. I confirmed our sommelier would be notified."
-                    </div>
-                  </div>
-                </div>
-
-                {/* Bottom intent panel */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
-                  <div style={{ background: T.paper, borderRadius: 20, padding: "14px 20px" }}>
-                    <div style={{ fontSize: 10, color: T.soft, fontWeight: 700, letterSpacing: .5, textTransform: "uppercase", marginBottom: 4 }}>Intent</div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: T.ink }}>{activeCall.s}</div>
-                  </div>
-                  <div style={{ background: "#F6FBF9", borderRadius: 20, padding: "14px 20px" }}>
-                    <div style={{ fontSize: 10, color: T.soft, fontWeight: 700, letterSpacing: .5, textTransform: "uppercase", marginBottom: 4 }}>Payment</div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: "#059669" }}>Pre-auth Success</div>
-                  </div>
-                </div>
-
-                <button style={{ width: "100%", background: T.p100, color: T.p700, border: "none", borderRadius: 30, padding: "16px", fontSize: 14.5, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 24, transition: "background .2s" }}>
-                  📅 View Booking #RSV-{activeCall.id}20
-                </button>
-
-                <div style={{ textAlign: "center", fontSize: 12.5, color: T.soft, fontWeight: 600, cursor: "pointer", textDecoration: "underline", textDecorationColor: T.line }}>
-                  Flag as Incorrect Intent
-                </div>
-              </div>
-            )}
-          </div>
+      ))}
+      <div style={{ marginTop:"auto", paddingTop:18, borderTop:`1.5px solid ${T.line}` }}>
+        <div className="dash-nav-item">
+          <div style={{ width:28,height:28,borderRadius:"50%",background:`linear-gradient(135deg,${T.p400},${T.p700})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"white" }}>TC</div>
+          Tony's Pizzeria
         </div>
-      </main>
+      </div>
+    </aside>
+  );
+}
+
+function TopBar({ title, subtitle, children }) {
+  return (
+    <div className="dash-topbar">
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
+        <button className="resp-show-mobile" onClick={() => document.body.classList.add('mob-nav-open')} style={{ background: "transparent", border: "none", fontSize: 26, cursor: "pointer", padding: 0, color: T.ink, marginTop: -2 }}>☰</button>
+        <div>
+        <div className="dash-date">Wednesday · 18 March 2026</div>
+        <div className="page-title">{title}</div>
+        {subtitle && <div className="page-sub">{subtitle}</div>}
+      </div>
+
+      </div>
+      <div className="dash-topbar-right">
+        <div className="dash-live-badge">
+          <div style={{ width:7,height:7,borderRadius:"50%",background:T.green,animation:"pulse 2s infinite" }} />
+          Agent live
+        </div>
+        {children}
+        <div className="dash-avatar">TC</div>
+      </div>
     </div>
   );
 }
 
 /* ═══════════════════════════════════════════
-   DASHBOARD
+   PAGE 1 — DASHBOARD (HOME)
 ═══════════════════════════════════════════ */
-function Dashboard({ onBack, onNavigate }) {
+function PageDashboard() {
   const calls = [
-    { s: "live", n: "Incoming call",   d: "Live now · +44 7811 234 567", o: "Taking order",    b: "order" },
-    { s: "done", n: "Sarah Williams",  d: "Today 2:14pm · 1:42",          o: "Order — £34.50", b: "order" },
-    { s: "done", n: "James Patel",     d: "Today 1:58pm · 0:38",          o: "Menu enquiry",   b: "info" },
-    { s: "done", n: "Unknown caller",  d: "Today 1:22pm · 0:12",          o: "Hours check",    b: "info" },
-    { s: "miss", n: "Missed call",     d: "Today 12:45pm",                 o: "Missed",         b: "missed" },
-    { s: "done", n: "Lucy Chen",       d: "Today 11:30am · 2:05",          o: "Order — £52.00", b: "order" },
+    { s:"live", n:"Incoming call",  d:"Live now · +44 7811 234 567", o:"Taking order",    b:"order" },
+    { s:"done", n:"Sarah Williams", d:"Today 2:14pm · 1:42",          o:"Order — £34.50", b:"order" },
+    { s:"done", n:"James Patel",    d:"Today 1:58pm · 0:38",          o:"Menu enquiry",   b:"info"  },
+    { s:"done", n:"Unknown caller", d:"Today 1:22pm · 0:12",          o:"Hours check",    b:"info"  },
+    { s:"miss", n:"Missed call",    d:"Today 12:45pm",                 o:"Missed",         b:"missed"},
+    { s:"done", n:"Lucy Chen",      d:"Today 11:30am · 2:05",          o:"Order — £52.00", b:"order" },
   ];
-  const bars = [42, 67, 58, 82, 74, 91, 100, 79, 88, 96, 62, 50];
-  const days = ["M", "T", "W", "T", "F", "S", "S", "M", "T", "W", "T", "F"];
-
+  const bars = [42,67,58,82,74,91,100,79,88,96,62,50];
+  const days = ["M","T","W","T","F","S","S","M","T","W","T","F"];
   return (
-    <div className="dash-wrap">
-      <style>{G}</style>
-      <aside className="dash-sidebar">
-        <div className="dash-logo"><div className="dash-logo-mark">t</div>talkativ</div>
-        <div className="dash-section-label">Main</div>
-        {[["Dashboard", "dashboard"], ["Calls", "calls"], ["Orders", "orders"], ["Reservations", "reservations"]].map(([l, route]) => (
-          <div key={l} className={`dash-nav-item ${route === "dashboard" ? "active" : ""}`} onClick={() => route && onNavigate ? onNavigate(route) : null}>{l}</div>
-        ))}
-        <div className="dash-section-label">Agent</div>
-        {[["My Agent", "agent"], ["Knowledge base", "knowledge-base"]].map(([l, route]) => (
-          <div key={l} className="dash-nav-item" onClick={() => route && onNavigate && onNavigate(route)}>{l}</div>
-        ))}
-        <div className="dash-section-label">Account</div>
-        {[["Billing", "billing"], ["Settings", "settings"]].map(([l, route]) => (
-          <div key={l} className="dash-nav-item" onClick={() => route && onNavigate ? onNavigate(route) : null}>{l}</div>
-        ))}
-        <div style={{ marginTop: "auto", borderTop: `1.5px solid ${T.line}`, paddingTop: 20 }}>
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 24, padding: "0 8px" }}>
-            <div style={{ width: 36, height: 36, borderRadius: "50%", background: `linear-gradient(135deg,${T.p400},${T.p700})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "white" }}>TC</div>
-            <div>
-               <div style={{ fontSize: 14.5, fontWeight: 800, color: T.ink, marginBottom: 2 }}>Tony's Pizzeria</div>
-               <div style={{ fontSize: 12.5, color: T.soft, fontWeight: 600, cursor: "pointer", textDecoration: "underline", textDecorationThickness: "1px", textUnderlineOffset: 3 }} onClick={() => onNavigate && onNavigate('landing')}>Logout</div>
-            </div>
-          </div>
-          <button style={{ width: "100%", padding: "12px", background: "white", border: `1.5px solid ${T.line}`, borderRadius: 10, fontSize: 13, fontWeight: 700, color: T.ink, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "all .2s" }}>
-             Customer support ↗
-          </button>
-        </div>
-      </aside>
-
-      <main className="dash-main" style={{ padding: 0 }}>
-        {/* TOP BAR */}
-        <div className="dash-topbar" style={{ padding: "24px 32px", borderBottom: `1.5px solid ${T.line}` }}>
-          <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
-            <button className="resp-show-mobile" onClick={() => document.body.classList.add('mob-nav-open')} style={{ background: "transparent", border: "none", fontSize: 26, cursor: "pointer", padding: 0, color: T.ink, marginTop: -2 }}>☰</button>
-            <div>
-            <div className="dash-date">Wednesday · 18 March 2026</div>
-            <div className="dash-greeting">Good afternoon, Tony 👋</div>
-          </div>
-            </div>
-          <div className="dash-topbar-right">
-            <div className="dash-live-badge"><div style={{ width: 7, height: 7, borderRadius: "50%", background: T.green, animation: "pulse 2s infinite" }} />Agent live</div>
-            <button onClick={onBack} style={{ background: T.white, border: `1.5px solid ${T.line}`, borderRadius: 9, padding: "7px 16px", fontSize: 12.5, fontWeight: 500, color: T.mid, cursor: "pointer", transition: "all .18s" }}>← Back to demo</button>
-            <div className="dash-avatar" style={{ cursor: "pointer" }} onClick={() => onNavigate && onNavigate('settings')}>TC</div>
-          </div>
+    <>
+      <div className="dash-topbar">
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
+        <button className="resp-show-mobile" onClick={() => document.body.classList.add('mob-nav-open')} style={{ background: "transparent", border: "none", fontSize: 26, cursor: "pointer", padding: 0, color: T.ink, marginTop: -2 }}>☰</button>
+        <div>
+          <div className="dash-date">Wednesday · 18 March 2026</div>
+          <div className="dash-greeting">Good afternoon, <strong>Tony</strong> 👋</div>
         </div>
 
-        {/* CONTENT */}
-        <div className="resp-main-pad" style={{ maxWidth: 1200, margin: "0 auto" }}>
-          
-          <div style={{ marginBottom: 32, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-             {/* Heading removed per request */}
+        </div>
+        <div className="dash-topbar-right">
+          <div className="dash-live-badge"><div style={{ width:7,height:7,borderRadius:"50%",background:T.green,animation:"pulse 2s infinite" }} />Agent live</div>
+          <div className="dash-avatar">TC</div>
+        </div>
+      </div>
+
+      <div className="live-banner">
+        <div className="lb-icon">📞</div>
+        <div className="lb-content"><h4>Live call in progress</h4><p>Aria is taking an order · +44 7811 234 567 · 0:34</p></div>
+        <div className="lb-wave">{Array.from({length:9},(_,i)=><div key={i} className="lb-wave-bar" style={{height:6+Math.random()*16,animationDelay:`${i*.09}s`}}/>)}</div>
+        <button className="lb-btn">Listen in →</button>
+      </div>
+
+      <div className="kpi-row">
+        {[{l:"Calls today",v:"14",d:"↑ 3 vs yesterday"},{l:"Revenue today",v:"£486",d:"↑ 12% vs last Wed"},{l:"Avg. call time",v:"1:18",d:"↓ 8s this week"},{l:"Answer rate",v:"100%",d:"0 missed today"}].map(k=>(
+          <div className="kpi-card" key={k.l}><div className="kpi-label">{k.l}</div><div className="kpi-value">{k.v}</div><div className="kpi-delta">{k.d}</div></div>
+        ))}
+      </div>
+
+      <div className="resp-grid-dashboard-hub">
+        <div>
+          <div className="card" style={{marginBottom:16}}>
+            <div className="card-head">Recent calls <span className="card-link">View all →</span></div>
+            {calls.map((c,i)=>(
+              <div className="call-log-item" key={i}>
+                <div className={`call-dot ${c.s==="live"?"live":c.s==="done"?"done":"miss"}`}/>
+                <div style={{flex:1}}><div className="call-name">{c.n}</div><div className="call-detail">{c.d}</div></div>
+                <span className={`call-badge ${c.b==="order"?"order":c.b==="info"?"info":"missed"}`}>{c.o}</span>
+              </div>
+            ))}
           </div>
 
-          {/* KPI CARDS (Calls, Orders, Reservations) */}
-          <div className="resp-grid-3" style={{ gap: 24, marginBottom: 32 }}>
-            
-            {/* Call History Widget */}
-            <div style={{ background: T.white, border: `1.5px solid ${T.line}`, borderRadius: 20, padding: 28, display: "flex", flexDirection: "column", boxShadow: "0 4px 16px rgba(134,87,255,.04)", transition: "transform .2s", cursor: "pointer" }} onClick={() => onNavigate && onNavigate('calls')}>
-              <div style={{ width: 44, height: 44, borderRadius: 12, background: T.p50, marginBottom: 20, display: "flex", alignItems:"center", justifyContent:"center", color:T.p600, fontSize:18 }}>📞</div>
-              <div style={{ fontSize: 17, fontWeight: 700, color: T.ink, marginBottom: 24 }}>Call History</div>
-              <div style={{ display: "flex", gap: 32, marginBottom: 28 }}>
-                <div>
-                  <div style={{ fontSize: 10, color: T.soft, fontWeight: 700, letterSpacing: .8, textTransform: "uppercase", marginBottom: 6 }}>Total Calls</div>
-                  <div style={{ fontSize: 32, fontWeight: 800, color: T.ink, lineHeight: 1, marginBottom: 8 }}>1,284</div>
-                  <div style={{ fontSize: 12.5, color: T.green, fontWeight: 600 }}>↗ +12%</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: 10, color: T.soft, fontWeight: 700, letterSpacing: .8, textTransform: "uppercase", marginBottom: 6 }}>Missed</div>
-                  <div style={{ fontSize: 32, fontWeight: 800, color: T.ink, lineHeight: 1, marginBottom: 8 }}>42</div>
-                  <div style={{ fontSize: 12.5, color: T.red, fontWeight: 600 }}>↘ -5%</div>
-                </div>
-              </div>
-              <div style={{ marginTop: "auto", fontSize: 13, color: T.p600, fontWeight: 700, display:"flex", alignItems:"center", gap:4 }}>View full call logs <span style={{fontSize:14}}>→</span></div>
+        </div>
+        <div>
+          <div className="card" style={{marginBottom:16}}>
+            <div className="card-head">Your agent</div>
+            <div className="agent-card">
+              <div className="agent-avatar">🤖</div>
+              <div><div className="agent-name">Aria</div><div className="agent-status"><div className="agent-status-dot"/>Active · Tony's Pizzeria</div></div>
+              <button className="agent-edit-btn">Edit</button>
             </div>
+            <div className="agent-meta">
+              {[["Voice","Aria · Warm"],["Language","English"],["Call rules","Transfer"],["POS","Toast ✓"]].map(([l,v])=>(
+                <div key={l} className="agent-meta-item"><div className="agent-meta-label">{l}</div><div className="agent-meta-value">{v}</div></div>
+              ))}
+            </div>
+          </div>
+          <div className="card">
+            <div className="card-head">Quick actions</div>
+            <div className="quick-actions-grid">
+              {[["📞","Test call"],["📋","Update menu"],["⏰","Edit hours"]].map(([ic,l])=>(
+                <div key={l} className="qa-item"><div className="qa-icon">{ic}</div><div className="qa-label">{l}</div></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
 
-            {/* Orders Status Widget */}
-            <div style={{ background: T.white, border: `1.5px solid ${T.line}`, borderRadius: 20, padding: 28, display: "flex", flexDirection: "column", boxShadow: "0 4px 16px rgba(134,87,255,.04)", transition: "transform .2s", cursor: "pointer" }} onClick={() => onNavigate && onNavigate('orders')}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
-                <div style={{ width: 44, height: 44, borderRadius: 12, background: "#FEF3C7", display:"flex", alignItems:"center", justifyContent:"center", fontSize:18 }}>🍔</div>
-                <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: 11, color: T.soft, fontWeight: 600 }}>Total Today</div>
-                  <div style={{ fontSize: 22, fontWeight: 800, color: T.ink }}>156</div>
-                </div>
-              </div>
-              <div style={{ fontSize: 17, fontWeight: 700, color: T.ink, marginBottom: 20 }}>Orders Status</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 28 }}>
-                {[
-                  { label: "Accepted", val: "84", pct: "60%", color: T.p500 },
-                  { label: "Confirmed", val: "62", pct: "40%", color: T.green },
-                  { label: "Cancelled", val: "10", pct: "10%", color: T.red },
-                ].map(b => (
-                  <div key={b.label}>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, fontWeight: 600, color: T.ink, marginBottom: 6 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 6, height: 6, borderRadius: "50%", background: b.color }} />{b.label}</div>
-                      <div>{b.val}</div>
+/* ═══════════════════════════════════════════
+   PAGE 2 — CALLS
+═══════════════════════════════════════════ */
+function PageCalls() {
+  const [filter, setFilter] = useState("All");
+  const [page, setPage] = useState(1);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  useEffect(()=>{ const h=()=>setIsMobile(window.innerWidth<=768); window.addEventListener('resize',h); return ()=>window.removeEventListener('resize',h); },[]);
+  const calls = [
+    { s:"live", n:"Incoming call",  phone:"+44 7811 234 567", time:"Live now",    dur:"0:34",  outcome:"Taking order",    amount:"",      b:"order" },
+    { s:"done", n:"Sarah Williams", phone:"+44 7922 111 222", time:"Today 2:14pm",dur:"1:42",  outcome:"Order placed",    amount:"£34.50",b:"order" },
+    { s:"done", n:"James Patel",    phone:"+44 7933 444 555", time:"Today 1:58pm",dur:"0:38",  outcome:"Menu enquiry",    amount:"",      b:"info"  },
+    { s:"done", n:"Unknown caller", phone:"+44 7944 666 777", time:"Today 1:22pm",dur:"0:12",  outcome:"Hours check",     amount:"",      b:"info"  },
+    { s:"miss", n:"Missed call",    phone:"+44 7800 123 456", time:"Today 12:45pm",dur:"\u2014",    outcome:"Missed",          amount:"",      b:"missed"},
+    { s:"done", n:"Lucy Chen",      phone:"+44 7711 999 888", time:"Today 11:30am",dur:"2:05", outcome:"Order placed",    amount:"\u00a352.00",b:"order" },
+    { s:"done", n:"David Park",     phone:"+44 7622 777 333", time:"Yesterday 7pm",dur:"1:18", outcome:"Reservation",     amount:"",      b:"info"  },
+    { s:"done", n:"Emma Thompson",  phone:"+44 7533 222 111", time:"Yesterday 6pm",dur:"0:55", outcome:"Order placed",    amount:"\u00a328.75",b:"order" },
+    { s:"miss", n:"Unknown",        phone:"+44 7444 555 666", time:"Yesterday 5pm",dur:"\u2014",    outcome:"Missed",          amount:"",      b:"missed"},
+    { s:"done", n:"Ravi Sharma",    phone:"+44 7355 888 444", time:"Yesterday 3pm",dur:"2:22", outcome:"Order placed",    amount:"\u00a367.00",b:"order" },
+  ];
+  const tabs = ["All","Orders","Enquiries","Missed"];
+  const filtered = filter==="All"?calls:filter==="Orders"?calls.filter(c=>c.b==="order"):filter==="Missed"?calls.filter(c=>c.b==="missed"):calls.filter(c=>c.b==="info");
+  const perPage = 5;
+  const totalPages = Math.ceil(filtered.length / perPage);
+  const paginated = filtered.slice((page-1)*perPage, page*perPage);
+  return (
+    <>
+      <TopBar title={<>All <strong>Calls</strong></>} subtitle="Every call routed through Talkativ with full transcripts">
+        <button className="btn-secondary" style={{fontSize:13,padding:"8px 18px"}}>Export CSV</button>
+      </TopBar>
+
+      <div className="kpi-row">
+        {[{l:"Total today",v:"14",d:"\u2191 3 vs yesterday"},{l:"Answered",v:"13",d:"92.8% answer rate"},{l:"Avg. duration",v:"1:18",d:"\u2193 8s vs last week"},{l:"Orders taken",v:"8",d:"\u2191 \u00a3486 revenue"}].map(k=>(
+          <div className="kpi-card" key={k.l}><div className="kpi-label">{k.l}</div><div className="kpi-value">{k.v}</div><div className="kpi-delta">{k.d}</div></div>
+        ))}
+      </div>
+
+      <div className="card">
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20,flexWrap:"wrap",gap:10}}>
+          <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+            {tabs.map(t=>(
+              <button key={t} onClick={()=>{setFilter(t);setPage(1)}} style={{padding:"7px 16px",borderRadius:50,border:`1.5px solid ${filter===t?T.p500:T.line}`,background:filter===t?T.p50:"transparent",color:filter===t?T.p700:T.mid,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif",transition:"all .18s"}}>
+                {t}
+              </button>
+            ))}
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <select style={{padding:"8px 16px",fontSize:13,border:`1.5px solid ${T.line}`,borderRadius:50,background:T.white,color:T.ink,fontFamily:"'Outfit',sans-serif",fontWeight:600,cursor:"pointer",outline:"none",transition:"border-color .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)"}}>
+              <option>Today</option><option>Yesterday</option><option>This week</option><option>This month</option>
+            </select>
+          </div>
+        </div>
+
+        {isMobile ? (
+          /* Mobile card layout */
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            {paginated.map((c,i)=>(
+              <div key={i} style={{background:T.paper,border:`1.5px solid ${T.line}`,borderRadius:14,padding:"14px 16px",transition:"all .15s"}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+                  <div style={{display:"flex",alignItems:"center",gap:10}}>
+                    <div className={`call-dot ${c.s==="live"?"live":c.s==="done"?"done":"miss"}`}/>
+                    <div>
+                      <div style={{fontSize:14,fontWeight:600,color:T.ink}}>{c.n}</div>
+                      <div style={{fontSize:12,color:T.soft,marginTop:2}}>{c.phone}</div>
                     </div>
-                    <div style={{ height: 6, background: T.paper, borderRadius: 4, overflow: "hidden" }}>
-                      <div style={{ width: b.pct, height: "100%", background: b.color, borderRadius: 4 }} />
+                  </div>
+                  <span className={`call-badge ${c.b==="order"?"order":c.b==="info"?"info":"missed"}`}>{c.outcome}</span>
+                </div>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:8,borderTop:`1px solid ${T.line}`}}>
+                  <div style={{display:"flex",gap:14}}>
+                    <span style={{fontSize:12,color:T.soft}}>{c.time}</span>
+                    <span style={{fontSize:12,color:T.soft}}>{c.dur}</span>
+                  </div>
+                  <div style={{fontSize:13,fontWeight:700,color:c.amount?T.ink:T.faint}}>{c.amount||"\u2014"}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          /* Desktop table layout */
+          <>
+            <div className="calls-table-header" style={{display:"grid",gridTemplateColumns:"8px 1fr 160px 120px 80px 130px 120px",gap:14,padding:"8px 0 12px",borderBottom:`1.5px solid ${T.line}`,marginBottom:4}}>
+              {["","Caller","Phone","Time","Duration","Outcome","Amount"].map(h=>(
+                <div key={h} style={{fontSize:10.5,fontWeight:700,color:T.soft,textTransform:"uppercase",letterSpacing:".8px"}}>{h}</div>
+              ))}
+            </div>
+            {paginated.map((c,i)=>(
+              <div key={i} className="calls-table-row" style={{display:"grid",gridTemplateColumns:"8px 1fr 160px 120px 80px 130px 120px",gap:14,padding:"11px 0",borderBottom:`1px solid ${T.paper}`,alignItems:"center",cursor:"pointer",transition:"background .15s",borderRadius:8}} onMouseEnter={e=>e.currentTarget.style.background=T.paper} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                <div className={`call-dot ${c.s==="live"?"live":c.s==="done"?"done":"miss"}`}/>
+                <div><div className="call-name">{c.n}</div></div>
+                <div style={{fontSize:13,color:T.soft}}>{c.phone}</div>
+                <div style={{fontSize:13,color:T.soft}}>{c.time}</div>
+                <div style={{fontSize:13,color:T.soft}}>{c.dur}</div>
+                <span className={`call-badge ${c.b==="order"?"order":c.b==="info"?"info":"missed"}`}>{c.outcome}</span>
+                <div style={{fontSize:13,fontWeight:600,color:c.amount?T.ink:T.faint}}>{c.amount||"\u2014"}</div>
+              </div>
+            ))}
+          </>
+        )}
+        {totalPages > 1 && (
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:16,marginTop:10,borderTop:`1px solid ${T.paper}`}}>
+            <div style={{fontSize:13,color:T.soft}}>Showing {(page-1)*perPage + 1} to {Math.min(page*perPage, filtered.length)} of {filtered.length} calls</div>
+            <div style={{display:"flex",gap:8}}>
+              <button disabled={page === 1} onClick={() => setPage(p => Math.max(1, p-1))} style={{padding:"6px 14px",borderRadius:50,border:`1.5px solid ${T.line}`,background:page===1?"transparent":T.white,color:page===1?T.faint:T.mid,fontSize:13,fontWeight:600,cursor:page===1?"default":"pointer",transition:"all .18s"}}>Previous</button>
+              <button disabled={page === totalPages} onClick={() => setPage(p => Math.min(totalPages, p+1))} style={{padding:"6px 14px",borderRadius:50,border:`1.5px solid ${T.line}`,background:page===totalPages?"transparent":T.white,color:page===totalPages?T.faint:T.mid,fontSize:13,fontWeight:600,cursor:page===totalPages?"default":"pointer",transition:"all .18s"}}>Next</button>
+            </div>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   PAGE 3 — ORDERS
+═══════════════════════════════════════════ */
+function PageOrders() {
+  const [tab, setTab] = useState("Today");
+  const [page, setPage] = useState(1);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  useEffect(()=>{ const h=()=>setIsMobile(window.innerWidth<=768); window.addEventListener('resize',h); return ()=>window.removeEventListener('resize',h); },[]);
+  const orders = [
+    { id:"ORD-0091", name:"Sarah Williams", items:"Large pepperoni, garlic bread", type:"Delivery", status:"completed", amount:"£34.50", time:"2:14pm" },
+    { id:"ORD-0090", name:"Lucy Chen",       items:"2x Margherita, tiramisu \u00d72",  type:"Collection",status:"completed", amount:"£52.00", time:"11:30am" },
+    { id:"ORD-0089", name:"Incoming call",   items:"Ordering in progress\u2026",       type:"Delivery",  status:"live",      amount:"\u2014",      time:"Now" },
+    { id:"ORD-0088", name:"Emma Thompson",  items:"Calzone, 2x Coke, dessert",    type:"Delivery",  status:"completed", amount:"£28.75", time:"Yesterday" },
+    { id:"ORD-0087", name:"Ravi Sharma",    items:"Family feast + 4 garlic breads",type:"Collection",status:"completed",amount:"£67.00", time:"Yesterday" },
+    { id:"ORD-0086", name:"David Park",     items:"3x Quattro formaggi",          type:"Delivery",  status:"completed", amount:"£41.50", time:"Yesterday" },
+  ];
+  const perPage = 5;
+  const totalPages = Math.ceil(orders.length / perPage);
+  const paginated = orders.slice((page-1)*perPage, page*perPage);
+  const statusColor = { completed:"order", live:"purple" };
+  return (
+    <>
+      <TopBar title={<>All <strong>Orders</strong></>} subtitle="Orders taken by Aria across all calls">
+        <button className="btn-secondary" style={{fontSize:13,padding:"8px 18px"}}>Export</button>
+      </TopBar>
+
+      <div className="kpi-row">
+        {[{l:"Orders today",v:"9",d:"\u2191 2 vs yesterday"},{l:"Revenue today",v:"£486",d:"\u2191 12% vs last Wed"},{l:"Avg. order value",v:"£54",d:"\u2191 £6 this week"},{l:"Delivery rate",v:"62%",d:"vs 38% collection"}].map(k=>(
+          <div className="kpi-card" key={k.l}><div className="kpi-label">{k.l}</div><div className="kpi-value">{k.v}</div><div className="kpi-delta">{k.d}</div></div>
+        ))}
+      </div>
+
+      <div className="card">
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20,flexWrap:"wrap",gap:10}}>
+          <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+            {["Today","Yesterday","This week","This month"].map(t=>(
+              <button key={t} onClick={()=>{setTab(t);setPage(1)}} style={{padding:"7px 16px",borderRadius:50,border:`1.5px solid ${tab===t?T.p500:T.line}`,background:tab===t?T.p50:"transparent",color:tab===t?T.p700:T.mid,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif",transition:"all .18s"}}>{t}</button>
+            ))}
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+            <select style={{padding:"8px 16px",fontSize:13,border:`1.5px solid ${T.line}`,borderRadius:50,background:T.white,color:T.ink,fontFamily:"'Outfit',sans-serif",fontWeight:600,cursor:"pointer",outline:"none",transition:"border-color .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)"}}>
+              <option>All types</option><option>Delivery</option><option>Collection</option>
+            </select>
+            <select style={{padding:"8px 16px",fontSize:13,border:`1.5px solid ${T.line}`,borderRadius:50,background:T.white,color:T.ink,fontFamily:"'Outfit',sans-serif",fontWeight:600,cursor:"pointer",outline:"none",transition:"border-color .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)"}}>
+              <option>All statuses</option><option>Completed</option><option>Live</option>
+            </select>
+          </div>
+        </div>
+
+        {isMobile ? (
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            {paginated.map((o,i)=>(
+              <div key={i} style={{background:T.paper,border:`1.5px solid ${T.line}`,borderRadius:14,padding:"14px 16px"}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                  <div style={{display:"flex",alignItems:"center",gap:10}}>
+                    <div style={{fontSize:11,fontWeight:700,color:T.p600,fontFamily:"monospace"}}>{o.id}</div>
+                    <div style={{fontSize:14,fontWeight:600,color:T.ink}}>{o.name}</div>
+                  </div>
+                  <div style={{fontSize:14,fontWeight:700,color:o.amount==="\u2014"?T.faint:T.ink}}>{o.amount}</div>
+                </div>
+                <div style={{fontSize:12,color:T.soft,marginBottom:10}}>{o.items}</div>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:8,borderTop:`1px solid ${T.line}`}}>
+                  <div style={{display:"flex",gap:8}}>
+                    <span className="badge badge-purple">{o.type}</span>
+                    <span className={`badge ${o.status==="live"?"badge-green":"badge-green"}`}>{o.status==="live"?"\u25cf Live":"\u2713 Done"}</span>
+                  </div>
+                  <span style={{fontSize:12,color:T.soft}}>{o.time}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <>
+            <div style={{display:"grid",gridTemplateColumns:"100px 1fr 200px 110px 100px 110px",gap:14,padding:"8px 0 12px",borderBottom:`1.5px solid ${T.line}`}}>
+              {["Order ID","Customer","Items","Type","Status","Total"].map(h=>(
+                <div key={h} style={{fontSize:10.5,fontWeight:700,color:T.soft,textTransform:"uppercase",letterSpacing:".8px"}}>{h}</div>
+              ))}
+            </div>
+            {paginated.map((o,i)=>(
+              <div key={i} style={{display:"grid",gridTemplateColumns:"100px 1fr 200px 110px 100px 110px",gap:14,padding:"12px 0",borderBottom:`1px solid ${T.paper}`,alignItems:"center",cursor:"pointer",transition:"background .15s",borderRadius:8}} onMouseEnter={e=>e.currentTarget.style.background=T.paper} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                <div style={{fontSize:12,fontWeight:700,color:T.p600,fontFamily:"monospace"}}>{o.id}</div>
+                <div><div className="call-name">{o.name}</div><div className="call-detail">{o.time}</div></div>
+                <div style={{fontSize:12.5,color:T.soft}}>{o.items}</div>
+                <div><span className="badge badge-purple">{o.type}</span></div>
+                <div><span className={`badge ${o.status==="live"?"badge-green":"badge-green"}`}>{o.status==="live"?"\u25cf Live":"\u2713 Done"}</span></div>
+                <div style={{fontSize:14,fontWeight:700,color:o.amount==="\u2014"?T.faint:T.ink}}>{o.amount}</div>
+              </div>
+            ))}
+          </>
+        )}
+        {totalPages > 1 && (
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:16,marginTop:10,borderTop:`1px solid ${T.paper}`}}>
+            <div style={{fontSize:13,color:T.soft}}>Showing {(page-1)*perPage + 1} to {Math.min(page*perPage, orders.length)} of {orders.length} orders</div>
+            <div style={{display:"flex",gap:8}}>
+              <button disabled={page === 1} onClick={() => setPage(p => Math.max(1, p-1))} style={{padding:"6px 14px",borderRadius:50,border:`1.5px solid ${T.line}`,background:page===1?"transparent":T.white,color:page===1?T.faint:T.mid,fontSize:13,fontWeight:600,cursor:page===1?"default":"pointer",transition:"all .18s"}}>Previous</button>
+              <button disabled={page === totalPages} onClick={() => setPage(p => Math.min(totalPages, p+1))} style={{padding:"6px 14px",borderRadius:50,border:`1.5px solid ${T.line}`,background:page===totalPages?"transparent":T.white,color:page===totalPages?T.faint:T.mid,fontSize:13,fontWeight:600,cursor:page===totalPages?"default":"pointer",transition:"all .18s"}}>Next</button>
+            </div>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   PAGE 4 — RESERVATIONS
+═══════════════════════════════════════════ */
+function PageReservations() {
+  const [view, setView] = useState("List");
+  const [page, setPage] = useState(1);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  useEffect(()=>{ const h=()=>setIsMobile(window.innerWidth<=768); window.addEventListener('resize',h); return ()=>window.removeEventListener('resize',h); },[]);
+  const reservations = [
+    { name:"Emily Watson",     guests:4, date:"Today 7:30pm",   status:"confirmed", note:"Window table requested", phone:"+44 7811 234 567" },
+    { name:"The Johnson Group",guests:8, date:"Today 8:00pm",   status:"confirmed", note:"Birthday dinner",         phone:"+44 7922 111 222" },
+    { name:"Amir Hassan",      guests:2, date:"Today 9:00pm",   status:"pending",   note:"",                        phone:"+44 7933 444 555" },
+    { name:"Sophie Clarke",    guests:6, date:"Tomorrow 1:00pm",status:"confirmed", note:"Vegetarian menu",        phone:"+44 7944 666 777" },
+    { name:"Mark & Laura",     guests:2, date:"Tomorrow 7:30pm",status:"confirmed", note:"Anniversary",            phone:"+44 7800 123 456" },
+    { name:"Office Lunch",     guests:12,date:"Fri 12:30pm",    status:"pending",   note:"Needs large table",      phone:"+44 7711 999 888" },
+  ];
+  const perPage = 5;
+  const totalPages = Math.ceil(reservations.length / perPage);
+  const paginated = reservations.slice((page-1)*perPage, page*perPage);
+  return (
+    <>
+      <TopBar title={<>Reservations</>} subtitle="Bookings taken by Aria via phone">
+        <button className="btn-primary" style={{fontSize:13,padding:"9px 20px"}}>+ Add booking</button>
+      </TopBar>
+
+      <div className="kpi-row">
+        {[{l:"Today's covers",v:"22",d:"2 tables remaining"},{l:"This week",v:"87",d:"\u2191 14 vs last week"},{l:"Avg. party size",v:"4.2",d:"Stable"},{l:"No-show rate",v:"4%",d:"\u2193 2% this month"}].map(k=>(
+          <div className="kpi-card" key={k.l}><div className="kpi-label">{k.l}</div><div className="kpi-value">{k.v}</div><div className="kpi-delta">{k.d}</div></div>
+        ))}
+      </div>
+
+      <div className="card">
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20,flexWrap:"wrap",gap:10}}>
+          <div className="card-head" style={{marginBottom:0}}>Upcoming bookings</div>
+          <div style={{display:"flex",gap:6}}>
+            {["List","Calendar"].map(v=>(
+              <button key={v} onClick={()=>{setView(v);setPage(1)}} style={{padding:"7px 16px",borderRadius:50,border:`1.5px solid ${view===v?T.p500:T.line}`,background:view===v?T.p50:"transparent",color:view===v?T.p700:T.mid,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>{v}</button>
+            ))}
+          </div>
+        </div>
+
+        {isMobile ? (
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            {paginated.map((r,i)=>(
+              <div key={i} style={{background:T.paper,border:`1.5px solid ${T.line}`,borderRadius:14,padding:"14px 16px"}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                  <div style={{display:"flex",alignItems:"center",gap:10}}>
+                    <div style={{width:40,height:40,borderRadius:12,background:r.status==="confirmed"?T.p50:T.amberBg,border:`1.5px solid ${r.status==="confirmed"?T.p100:T.amberBd}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>👥</div>
+                    <div>
+                      <div style={{fontSize:14,fontWeight:600,color:T.ink}}>{r.name}</div>
+                      <div style={{fontSize:12,color:T.soft,marginTop:2}}>{r.guests} guests</div>
+                    </div>
+                  </div>
+                  <span className={`badge ${r.status==="confirmed"?"badge-green":"badge-amber"}`}>{r.status==="confirmed"?"\u2713 Confirmed":"\u25cf Pending"}</span>
+                </div>
+                <div style={{fontSize:12,color:T.soft,marginBottom:8}}>{r.phone} \u00b7 {r.note||"No special requests"}</div>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:8,borderTop:`1px solid ${T.line}`}}>
+                  <div style={{fontSize:13,fontWeight:600,color:T.ink}}>{r.date}</div>
+                  <div style={{display:"flex",gap:6}}>
+                    <button className="btn-secondary" style={{fontSize:12,padding:"6px 12px"}}>Edit</button>
+                    <button className="btn-danger" style={{fontSize:12,padding:"6px 12px"}}>Cancel</button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <>
+            {paginated.map((r,i)=>(
+              <div key={i} style={{display:"flex",alignItems:"center",gap:16,padding:"14px 0",borderBottom:`1px solid ${T.paper}`,cursor:"pointer"}} onMouseEnter={e=>e.currentTarget.style.background=T.paper} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                <div style={{width:48,height:48,borderRadius:14,background:r.status==="confirmed"?T.p50:T.amberBg,border:`1.5px solid ${r.status==="confirmed"?T.p100:T.amberBd}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>👥</div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:14,fontWeight:600,color:T.ink}}>{r.name}</div>
+                  <div style={{fontSize:12,color:T.soft,marginTop:2}}>{r.phone} \u00b7 {r.note||"No special requests"}</div>
+                </div>
+                <div style={{textAlign:"center",minWidth:80}}>
+                  <div style={{fontSize:13,fontWeight:600,color:T.ink}}>{r.guests} guests</div>
+                  <div style={{fontSize:11,color:T.soft,marginTop:2}}>party size</div>
+                </div>
+                <div style={{textAlign:"center",minWidth:140}}>
+                  <div style={{fontSize:13,fontWeight:600,color:T.ink}}>{r.date}</div>
+                </div>
+                <div><span className={`badge ${r.status==="confirmed"?"badge-green":"badge-amber"}`}>{r.status==="confirmed"?"\u2713 Confirmed":"\u25cf Pending"}</span></div>
+                <div style={{display:"flex",gap:6}}>
+                  <button className="btn-secondary" style={{fontSize:12,padding:"6px 12px"}}>Edit</button>
+                  <button className="btn-danger" style={{fontSize:12,padding:"6px 12px"}}>Cancel</button>
+                </div>
+              </div>
+            ))}
+          </>
+        )}
+        {totalPages > 1 && (
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:16,marginTop:10,borderTop:`1px solid ${T.paper}`}}>
+            <div style={{fontSize:13,color:T.soft}}>Showing {(page-1)*perPage + 1} to {Math.min(page*perPage, reservations.length)} of {reservations.length} reservations</div>
+            <div style={{display:"flex",gap:8}}>
+              <button disabled={page === 1} onClick={() => setPage(p => Math.max(1, p-1))} style={{padding:"6px 14px",borderRadius:50,border:`1.5px solid ${T.line}`,background:page===1?"transparent":T.white,color:page===1?T.faint:T.mid,fontSize:13,fontWeight:600,cursor:page===1?"default":"pointer",transition:"all .18s"}}>Previous</button>
+              <button disabled={page === totalPages} onClick={() => setPage(p => Math.min(totalPages, p+1))} style={{padding:"6px 14px",borderRadius:50,border:`1.5px solid ${T.line}`,background:page===totalPages?"transparent":T.white,color:page===totalPages?T.faint:T.mid,fontSize:13,fontWeight:600,cursor:page===totalPages?"default":"pointer",transition:"all .18s"}}>Next</button>
+            </div>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   PAGE 5 — MY AGENT
+═══════════════════════════════════════════ */
+function PageMyAgent() {
+  const [tab, setTab] = useState("Overview");
+  return (
+    <>
+      <TopBar title={<>My <strong>Agent</strong></>} subtitle="Configure and monitor Aria, your AI phone agent" />
+
+      <div className="resp-grid-3">
+        {[{ic:"📞",l:"Calls answered today",v:"13"},{ic:"⏱️",l:"Avg. handle time",v:"1:18"},{ic:"✅",l:"Successful outcomes",v:"92%"}].map(k=>(
+          <div className="kpi-card" key={k.l} style={{display:"flex",alignItems:"center",gap:14}}>
+            <div style={{width:44,height:44,borderRadius:12,background:T.p50,border:`1.5px solid ${T.p100}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{k.ic}</div>
+            <div><div className="kpi-label" style={{marginBottom:4}}>{k.l}</div><div className="kpi-value" style={{fontSize:26}}>{k.v}</div></div>
+          </div>
+        ))}
+      </div>
+
+      <div className="resp-grid-dashboard-hub">
+        <div>
+          <div className="card" style={{marginBottom:16}}>
+            <div style={{display:"flex",gap:6,marginBottom:22}}>
+              {["Overview","Performance","Transcripts"].map(t=>(
+                <button key={t} onClick={()=>setTab(t)} style={{padding:"7px 16px",borderRadius:50,border:`1.5px solid ${tab===t?T.p500:T.line}`,background:tab===t?T.p50:"transparent",color:tab===t?T.p700:T.mid,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>{t}</button>
+              ))}
+            </div>
+
+            {tab==="Overview" && (
+              <>
+                <div className="agent-card">
+                  <div className="agent-avatar">🤖</div>
+                  <div><div className="agent-name" style={{fontSize:16}}>Aria</div><div className="agent-status"><div className="agent-status-dot"/>Active · answering calls right now</div></div>
+                  <button className="agent-edit-btn">Edit agent</button>
+                </div>
+                <div style={{marginTop:20,display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
+                  {[["🎙️","Voice","Aria · Warm"],["🌍","Language","English"],["🔀","Call rules","Transfer"],["🔌","POS","Toast"],["⏰","Hours","11am–11pm"],["📋","Menu","Synced today"]].map(([ic,l,v])=>(
+                    <div key={l} style={{background:T.paper,border:`1.5px solid ${T.line}`,borderRadius:12,padding:"12px 14px"}}>
+                      <div style={{fontSize:11,color:T.soft,marginBottom:4,textTransform:"uppercase",letterSpacing:".5px",fontWeight:700}}>{ic} {l}</div>
+                      <div style={{fontSize:13.5,fontWeight:600,color:T.ink}}>{v}</div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {tab==="Performance" && (
+              <div>
+                {[["Answer rate","98%",98],["Orders completed","84%",84],["Customer satisfaction","4.8/5",96],["Avg. call resolution","92%",92]].map(([l,v,pct])=>(
+                  <div key={l} style={{marginBottom:20}}>
+                    <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+                      <span style={{fontSize:13.5,fontWeight:600,color:T.ink}}>{l}</span>
+                      <span style={{fontSize:13.5,fontWeight:700,color:T.p600}}>{v}</span>
+                    </div>
+                    <div className="prog-track"><div className="prog-fill" style={{width:`${pct}%`}}/></div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {tab==="Transcripts" && (
+              <div>
+                {[{time:"2:14pm",dur:"1:42",outcome:"Order placed"},{time:"1:58pm",dur:"0:38",outcome:"Menu enquiry"},{time:"11:30am",dur:"2:05",outcome:"Order placed"}].map((t,i)=>(
+                  <div key={i} style={{padding:"14px 0",borderBottom:`1px solid ${T.paper}`,cursor:"pointer"}}>
+                    <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+                      <span style={{fontSize:13,fontWeight:600,color:T.ink}}>Call at {t.time}</span>
+                      <span className="badge badge-purple">{t.outcome}</span>
+                    </div>
+                    <div style={{fontSize:12,color:T.soft,background:T.paper,borderRadius:10,padding:"10px 12px",fontWeight: "700"}}>
+                      "Thanks for calling Tony's! Would you like to place an order for delivery or collection today?…"
+                    </div>
+                    <div style={{fontSize:11.5,color:T.soft,marginTop:6}}>Duration: {t.dur} · <span style={{color:T.p500,cursor:"pointer"}}>View full transcript →</span></div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <div className="card" style={{marginBottom:16}}>
+            <div className="card-head">Live preview</div>
+            <div style={{background:T.paper,borderRadius:14,padding:16}}>
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
+                <div style={{width:36,height:36,borderRadius:10,background:`linear-gradient(135deg,${T.p400},${T.p700})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>🤖</div>
+                <div><div style={{fontSize:13,fontWeight:600,color:T.ink}}>Aria</div><div style={{fontSize:11,color:T.soft}}>AI agent preview</div></div>
+                <div className="live-badge" style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:4,background:T.greenBg,border:`1px solid ${T.greenBd}`,borderRadius:50,padding:"3px 9px",fontSize:10,fontWeight:700,color:T.green}}><div style={{width:5,height:5,borderRadius:"50%",background:T.green,animation:"pulse 2s infinite"}}/>LIVE</div>
+              </div>
+              <div style={{background:T.p50,border:`1px solid ${T.p100}`,borderRadius:12,padding:"10px 13px",fontSize:12.5,color:T.ink2,lineHeight:1.55}}>
+                <span style={{fontSize:10,fontWeight:700,display:"block",marginBottom:4,color:T.p500}}>ARIA</span>
+                "Thanks for calling Tony's Pizzeria! I'm Aria, your AI assistant. Would you like to place an order, check our hours, or something else?"
+              </div>
+              <div className="waveform" style={{justifyContent:"center",marginTop:8}}>
+                {Array.from({length:14},(_,i)=><div key={i} className="wave-bar" style={{animationDelay:`${i*.07}s`}}/>)}
+              </div>
+            </div>
+          </div>
+          <div className="card">
+            <div className="card-head">Quick settings</div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(180px, 1fr))",gap:14}}>
+              {[["Accept orders","Allow Aria to take phone orders",true],["Take reservations","Allow booking via phone",true],["Answer after hours","Handle calls outside business hours",true]].map(([title,desc,on])=>(
+                <div key={title} style={{background:T.paper,borderRadius:12,padding:"16px 14px",display:"flex",flexDirection:"column",gap:10}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                    <h4 style={{margin:0,fontSize:13,fontWeight:700,color:T.ink}}>{title}</h4>
+                    <label className="toggle"><input type="checkbox" defaultChecked={on}/><div className="toggle-track"/><div className="toggle-thumb"/></label>
+                  </div>
+                  <p style={{margin:0,fontSize:12,color:T.soft,lineHeight:1.4}}>{desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   PAGE 6 — VOICE & SCRIPT
+═══════════════════════════════════════════ */
+function PageVoiceScript() {
+  const [voice, setVoice] = useState(0);
+  const [greeting, setGreeting] = useState("Thanks for calling Tony's Pizzeria! I'm Aria, your AI assistant. Would you like to place an order, check our hours, or something else?");
+  const [closing, setClosing] = useState("Thanks so much for calling Tony's! Your order will be with you shortly. Have a wonderful evening!");
+  const voices = [{n:"Aria",d:"Warm & professional",lang:"EN-GB"},{n:"Leo",d:"Friendly & upbeat",lang:"EN-GB"},{n:"Nova",d:"Calm & precise",lang:"EN-US"},{n:"Finn",d:"Casual & relaxed",lang:"EN-AU"}];
+  return (
+    <>
+      <TopBar title={<>Voice <strong>&</strong> Script</>} subtitle="Customise how Aria sounds and what she says">
+        <button className="btn-primary" style={{fontSize:13,padding:"9px 20px"}}>Save changes</button>
+      </TopBar>
+
+      <div className="resp-grid-dashboard-hub">
+        <div>
+          <div className="card" style={{marginBottom:16}}>
+            <div className="card-head">Choose a voice</div>
+            <div className="resp-grid-2">
+              {voices.map((v,i)=>(
+                <div key={v.n} className={`voice-card ${voice===i?"selected":""}`} onClick={()=>setVoice(i)}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+                    <div><div style={{fontSize:15,fontWeight:600,color:T.ink,marginBottom:3}}>{v.n}</div><div style={{fontSize:12,color:T.soft}}>{v.d}</div></div>
+                    <span className="badge badge-purple">{v.lang}</span>
+                  </div>
+                  <div className="voice-play">▶</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="card" style={{marginBottom:16}}>
+            <div className="card-head">Agent identity & script</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+              {/* Name your agent */}
+              <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`}}>
+                <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:4,letterSpacing:".3px",textTransform:"uppercase"}}>Name your agent</label>
+                <p style={{fontSize:12,color:T.soft,lineHeight:1.4,margin:"0 0 10px 0"}}>This is the name customers will hear when Aria introduces herself.</p>
+                <input defaultValue="Aria" style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",transition:"border-color .2s, box-shadow .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)"}}/>
+              </div>
+              {/* Opening greeting */}
+              <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`}}>
+                <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:4,letterSpacing:".3px",textTransform:"uppercase"}}>Opening greeting</label>
+                <p style={{fontSize:11.5,color:T.soft,lineHeight:1.4,margin:"0 0 10px 0"}}>💡 Keep under 20 seconds of speech for the best experience</p>
+                <textarea rows={3} value={greeting} onChange={e=>setGreeting(e.target.value)} style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",resize:"none",lineHeight:1.6,transition:"border-color .2s, box-shadow .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)"}}/>
+              </div>
+            </div>
+          </div>
+
+          <div className="card">
+            <div className="card-head">Call handling rules</div>
+            <p style={{fontSize:12,color:T.soft,margin:"-8px 0 16px 0"}}>When Aria can't help…</p>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,alignItems:"stretch"}}>
+              {/* Transfer to number - select */}
+              <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`,display:"flex",flexDirection:"column"}}>
+                <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:8,letterSpacing:".3px",textTransform:"uppercase"}}>Transfer to number</label>
+                <select style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",cursor:"pointer",transition:"border-color .2s, box-shadow .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)",flex:1}}><option>Transfer to number</option><option>Take a voicemail</option><option>Call back later</option></select>
+              </div>
+              {/* Transfer to number - input */}
+              <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`,display:"flex",flexDirection:"column"}}>
+                <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:8,letterSpacing:".3px",textTransform:"uppercase"}}>Transfer to number</label>
+                <input defaultValue="+44 161 234 5678" style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",transition:"border-color .2s, box-shadow .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)",flex:1}}/>
+              </div>
+            </div>
+            {/* Offer to take a message */}
+            <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`,display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:14}}>
+              <div>
+                <h4 style={{margin:0,fontSize:13.5,fontWeight:600,color:T.ink}}>Offer to take a message</h4>
+                <p style={{margin:"2px 0 0",fontSize:12,color:T.soft}}>Before transferring, offer to take a message</p>
+              </div>
+              <label className="toggle"><input type="checkbox" defaultChecked/><div className="toggle-track"/><div className="toggle-thumb"/></label>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div className="card" style={{marginBottom:16,position:"sticky",top:20}}>
+            <div className="card-head">Live preview</div>
+            <div style={{background:T.paper,borderRadius:14,padding:16,marginBottom:16}}>
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
+                <div style={{width:36,height:36,borderRadius:10,background:`linear-gradient(135deg,${T.p400},${T.p700})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>🤖</div>
+                <div><div style={{fontSize:13,fontWeight:600,color:T.ink}}>{voices[voice].n}</div><div style={{fontSize:11,color:T.soft}}>{voices[voice].d}</div></div>
+              </div>
+              <div style={{background:T.p50,border:`1px solid ${T.p100}`,borderRadius:12,padding:"10px 13px",fontSize:12.5,color:T.ink2,lineHeight:1.55,fontWeight: "700"}}>"{greeting}"</div>
+              <div className="waveform" style={{justifyContent:"center",marginTop:10}}>
+                {Array.from({length:14},(_,i)=><div key={i} className="wave-bar" style={{animationDelay:`${i*.07}s`}}/>)}
+              </div>
+              <button className="btn-primary" style={{width:"100%",justifyContent:"center",marginTop:4}}>▶ Play preview</button>
+            </div>
+            <div style={{background:T.amberBg,border:`1.5px solid ${T.amberBd}`,borderRadius:12,padding:"12px 14px"}}>
+              <div style={{fontSize:12,fontWeight:700,color:T.amber,marginBottom:4}}>📝 Script tip</div>
+              <div style={{fontSize:12,color:T.mid,lineHeight:1.55}}>Keep your greeting warm and concise. Customers respond best to greetings under 15 seconds.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   PAGE 7 — MENU
+═══════════════════════════════════════════ */
+function PageMenu() {
+  const [activeCategory, setActiveCategory] = useState("Pizzas");
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  useEffect(()=>{ const h=()=>setIsMobile(window.innerWidth<=768); window.addEventListener('resize',h); return ()=>window.removeEventListener('resize',h); },[]);
+  const categories = ["Pizzas","Pasta","Sides","Desserts","Drinks"];
+  const items = {
+    Pizzas: [
+      {name:"Margherita",price:"£12.50",desc:"Tomato, mozzarella, fresh basil",status:"active"},
+      {name:"Pepperoni",price:"£14.50",desc:"Tomato, mozzarella, pepperoni",status:"active"},
+      {name:"Quattro Formaggi",price:"£15.00",desc:"Four cheese blend, truffle oil",status:"active"},
+      {name:"Calzone",price:"£14.00",desc:"Folded pizza, ricotta, ham",status:"active"},
+      {name:"Vegan Garden",price:"£13.50",desc:"Roasted vegetables, vegan cheese",status:"active"},
+    ],
+    Pasta: [
+      {name:"Spaghetti Carbonara",price:"£13.00",desc:"Pancetta, egg, parmesan",status:"active"},
+      {name:"Penne Arrabiata",price:"£11.50",desc:"Spicy tomato, garlic",status:"active"},
+    ],
+    Sides: [
+      {name:"Garlic Bread",price:"£4.50",desc:"Toasted with garlic butter",status:"active"},
+      {name:"Mixed Salad",price:"£5.00",desc:"Seasonal greens",status:"active"},
+    ],
+    Desserts: [{name:"Tiramisu",price:"£6.50",desc:"Classic Italian",status:"active"}],
+    Drinks: [{name:"Soft drinks",price:"£2.50",desc:"Coke, Fanta, Sprite",status:"active"}],
+  };
+  return (
+    <>
+      <TopBar title={<>Menu <strong>Manager</strong></>} subtitle="Items Aria knows and can take orders for">
+        <button className="btn-secondary" style={{fontSize:13,padding:"8px 18px"}}>Import from URL</button>
+        <button className="btn-primary" style={{fontSize:13,padding:"9px 20px"}}>+ Add item</button>
+      </TopBar>
+
+      {isMobile && (
+        <div style={{display:"flex",gap:6,marginBottom:16,overflowX:"auto",paddingBottom:4}}>
+          {categories.map(c=>(
+            <button key={c} onClick={()=>setActiveCategory(c)} style={{padding:"7px 16px",borderRadius:50,border:`1.5px solid ${activeCategory===c?T.p500:T.line}`,background:activeCategory===c?T.p50:"transparent",color:activeCategory===c?T.p700:T.mid,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif",whiteSpace:"nowrap",flexShrink:0}}>{c} <span style={{fontSize:11,color:activeCategory===c?T.p400:T.faint}}>({(items[c]||[]).length})</span></button>
+          ))}
+        </div>
+      )}
+
+      <div className="resp-grid-sidebar-left">
+        {!isMobile && (
+          <div className="card" style={{padding:16,height:"fit-content"}}>
+            <div style={{fontSize:11,fontWeight:700,color:T.soft,textTransform:"uppercase",letterSpacing:".8px",marginBottom:12}}>Categories</div>
+            {categories.map(c=>(
+              <div key={c} onClick={()=>setActiveCategory(c)} style={{padding:"10px 12px",borderRadius:10,cursor:"pointer",fontSize:13.5,fontWeight:500,color:activeCategory===c?T.p700:T.mid,background:activeCategory===c?T.p50:"transparent",border:`1.5px solid ${activeCategory===c?T.p100:"transparent"}`,marginBottom:2,transition:"all .18s"}}>
+                {c} <span style={{fontSize:11,color:activeCategory===c?T.p400:T.faint,float:"right"}}>{(items[c]||[]).length}</span>
+              </div>
+            ))}
+            <div style={{marginTop:16,paddingTop:16,borderTop:`1px solid ${T.line}`}}>
+              <div style={{padding:"10px 12px",borderRadius:10,cursor:"pointer",fontSize:13.5,fontWeight:500,color:T.mid,border:`1.5px dashed ${T.line}`,textAlign:"center"}}>+ Add category</div>
+            </div>
+          </div>
+        )}
+
+        <div className="card">
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20,flexWrap:"wrap",gap:10}}>
+            <div className="card-head" style={{marginBottom:0}}>{activeCategory}</div>
+            <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+              <div style={{fontSize:12,color:T.soft}}>{(items[activeCategory]||[]).length} items</div>
+              <button className="btn-secondary" style={{fontSize:12,padding:"6px 14px"}}>Sync POS</button>
+            </div>
+          </div>
+          {isMobile ? (
+            <div style={{display:"flex",flexDirection:"column",gap:10}}>
+              {(items[activeCategory]||[]).map((item,i)=>(
+                <div key={i} style={{background:T.paper,border:`1.5px solid ${T.line}`,borderRadius:14,padding:"14px 16px"}}>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
+                    <div style={{display:"flex",alignItems:"center",gap:10}}>
+                      <div style={{width:36,height:36,borderRadius:10,background:T.p50,border:`1.5px solid ${T.p100}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>🍕</div>
+                      <div style={{fontSize:14,fontWeight:600,color:T.ink}}>{item.name}</div>
+                    </div>
+                    <div style={{fontSize:15,fontWeight:700,color:T.p600}}>{item.price}</div>
+                  </div>
+                  <div style={{fontSize:12,color:T.soft,marginBottom:10,paddingLeft:46}}>{item.desc}</div>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:8,borderTop:`1px solid ${T.line}`}}>
+                    <span className="badge badge-green">Active</span>
+                    <div style={{display:"flex",gap:6}}>
+                      <button className="btn-secondary" style={{fontSize:12,padding:"5px 12px"}}>Edit</button>
+                      <button className="btn-danger" style={{fontSize:12,padding:"5px 12px"}}>Remove</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <>
+              {(items[activeCategory]||[]).map((item,i)=>(
+                <div key={i} style={{display:"flex",alignItems:"center",gap:14,padding:"13px 0",borderBottom:`1px solid ${T.paper}`}}>
+                  <div style={{width:42,height:42,borderRadius:12,background:T.p50,border:`1.5px solid ${T.p100}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>🍕</div>
+                  <div style={{flex:1}}><div style={{fontSize:14,fontWeight:600,color:T.ink}}>{item.name}</div><div style={{fontSize:12,color:T.soft,marginTop:2}}>{item.desc}</div></div>
+                  <div style={{fontSize:15,fontWeight:700,color:T.p600,minWidth:60,textAlign:"right"}}>{item.price}</div>
+                  <span className="badge badge-green">Active</span>
+                  <div style={{display:"flex",gap:6}}>
+                    <button className="btn-secondary" style={{fontSize:12,padding:"5px 12px"}}>Edit</button>
+                    <button className="btn-danger" style={{fontSize:12,padding:"5px 12px"}}>Remove</button>
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   PAGE 8 — INTEGRATIONS
+═══════════════════════════════════════════ */
+function PageIntegrations() {
+  const integrations = [
+    {logo:"🍞",name:"Toast POS",desc:"Sync orders directly to your Toast system in real-time",status:"connected",category:"POS"},
+    {logo:"🔷",name:"Clover",desc:"Full order and inventory sync with Clover",status:"available",category:"POS"},
+    {logo:"🟦",name:"Square",desc:"Connect your Square account for seamless order flow",status:"available",category:"POS"},
+    {logo:"📅",name:"OpenTable",desc:"Two-way reservation sync with OpenTable",status:"connected",category:"Reservations"},
+    {logo:"🗓️",name:"Resy",desc:"Real-time reservation management via Resy",status:"available",category:"Reservations"},
+    {logo:"📊",name:"Google Analytics",desc:"Track call conversion and customer behaviour",status:"available",category:"Analytics"},
+    {logo:"💬",name:"Slack",desc:"Get notified in Slack for orders, calls, and alerts",status:"connected",category:"Notifications"},
+    {logo:"📱",name:"Twilio",desc:"Advanced phone number management and call routing",status:"connected",category:"Phone"},
+  ];
+  const categories = ["All",...[...new Set(integrations.map(i=>i.category))]];
+  const [cat, setCat] = useState("All");
+  const filtered = cat==="All"?integrations:integrations.filter(i=>i.category===cat);
+  return (
+    <>
+      <TopBar title={<>Integrations</>} subtitle="Connect Talkativ to the tools you already use">
+        <button className="btn-secondary" style={{fontSize:13,padding:"8px 18px"}}>Request integration</button>
+      </TopBar>
+
+      <div style={{display:"flex",gap:6,marginBottom:22}}>
+        {categories.map(c=>(
+          <button key={c} onClick={()=>setCat(c)} style={{padding:"7px 16px",borderRadius:50,border:`1.5px solid ${cat===c?T.p500:T.line}`,background:cat===c?T.p50:"transparent",color:cat===c?T.p700:T.mid,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>{c}</button>
+        ))}
+      </div>
+
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(280px, 1fr))",gap:20}}>
+        {filtered.map((int,i)=>(
+          <div key={i} style={{background:T.white,border:`1.5px solid ${T.line}`,borderRadius:16,padding:24,display:"flex",flexDirection:"column",transition:"all .2s",cursor:"pointer"}} onMouseEnter={e=>{e.currentTarget.style.borderColor=T.p300;e.currentTarget.style.boxShadow=`0 8px 24px rgba(112,53,245,.08)`}} onMouseLeave={e=>{e.currentTarget.style.borderColor=T.line;e.currentTarget.style.boxShadow="none"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16}}>
+              <div style={{width:52,height:52,borderRadius:14,background:T.paper,border:`1px solid ${T.line}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26}}>{int.logo}</div>
+              <span className="badge badge-purple" style={{fontSize:10,fontWeight:700}}>{int.category}</span>
+            </div>
+            <div style={{fontSize:17,fontWeight:700,color:T.ink,marginBottom:6}}>{int.name}</div>
+            <div style={{fontSize:13,color:T.soft,lineHeight:1.5,flex:1}}>{int.desc}</div>
+            <div style={{marginTop:24,paddingTop:16,borderTop:`1px solid ${T.paper}`,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              {int.status==="connected"
+                ? <><span className="badge badge-green" style={{padding:"5px 10px"}}>✓ Connected</span><button className="btn-danger" style={{fontSize:12,padding:"6px 14px"}}>Disconnect</button></>
+                : <><div/><button className="btn-primary" style={{fontSize:12,padding:"6px 16px"}}>Connect</button></>
+              }
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   PAGE 9 — BILLING
+═══════════════════════════════════════════ */
+function PageBilling() {
+  const invoices = [
+    {date:"1 Mar 2026",desc:"Growth plan · March 2026",amount:"£399.00",status:"paid"},
+    {date:"1 Feb 2026",desc:"Growth plan · February 2026",amount:"£399.00",status:"paid"},
+    {date:"1 Jan 2026",desc:"Growth plan · January 2026",amount:"£399.00",status:"paid"},
+    {date:"1 Dec 2025",desc:"Growth plan · December 2025",amount:"£399.00",status:"paid"},
+    {date:"1 Nov 2025",desc:"Starter plan · November 2025",amount:"£199.00",status:"paid"},
+  ];
+  return (
+    <>
+      <TopBar title={<>Billing</>} subtitle="Manage your subscription and payment details" />
+
+      <div className="resp-grid-2">
+        <div className="card" style={{background:`linear-gradient(135deg,${T.ink},${T.ink2})`,border:"none"}}>
+          <div style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,.45)",textTransform:"uppercase",letterSpacing:".8px",marginBottom:12}}>Current plan</div>
+          <div style={{fontFamily:"'Playfair Display',serif",fontSize:32,fontWeight:900,color:"white",marginBottom:4}}>Growth</div>
+          <div style={{fontSize:14,color:"rgba(255,255,255,.6)",marginBottom:24}}>£399/month · Renews 1 April 2026</div>
+          <div style={{display:"flex",gap:8}}>
+            <button style={{background:"rgba(255,255,255,.15)",border:"1px solid rgba(255,255,255,.2)",borderRadius:50,padding:"9px 20px",fontSize:13,fontWeight:600,color:"white",cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>Change plan</button>
+            <button style={{background:"transparent",border:"1px solid rgba(255,255,255,.15)",borderRadius:50,padding:"9px 20px",fontSize:13,fontWeight:600,color:"rgba(255,255,255,.6)",cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>Cancel</button>
+          </div>
+        </div>
+        <div className="card">
+          <div style={{fontSize:11,fontWeight:700,color:T.soft,textTransform:"uppercase",letterSpacing:".8px",marginBottom:12}}>Usage this month</div>
+          {[["Calls handled","1,247","Unlimited"],["Orders taken","486","Unlimited"],["Reservations booked","87","Unlimited"]].map(([l,v,limit])=>(
+            <div key={l} style={{display:"flex",justifyContent:"space-between",padding:"10px 0",borderBottom:`1px solid ${T.paper}`}}>
+              <span style={{fontSize:13.5,color:T.mid}}>{l}</span>
+              <div style={{textAlign:"right"}}>
+                <span style={{fontSize:13.5,fontWeight:700,color:T.ink}}>{v}</span>
+                <span style={{fontSize:11.5,color:T.soft,marginLeft:6}}>{limit}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="resp-grid-dashboard-hub">
+        <div>
+          <div style={{fontSize:17,fontWeight:700,color:T.ink,marginBottom:16}}>Invoice history</div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(260px, 1fr))",gap:16}}>
+            {invoices.map((inv,i)=>(
+              <div key={i} style={{background:T.white,border:`1px solid ${T.line}`,borderRadius:14,padding:20,transition:"all .2s",cursor:"pointer"}} onMouseEnter={e=>{e.currentTarget.style.borderColor=T.p300;e.currentTarget.style.boxShadow=`0 8px 24px rgba(112,53,245,.08)`}} onMouseLeave={e=>{e.currentTarget.style.borderColor=T.line;e.currentTarget.style.boxShadow="none"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+                  <div style={{fontSize:20,background:T.p50,border:`1px solid ${T.p100}`,borderRadius:10,width:42,height:42,display:"flex",alignItems:"center",justifyContent:"center"}}>🧾</div>
+                  <span className="badge badge-green" style={{padding:"4px 8px"}}>Paid</span>
+                </div>
+                <div style={{fontSize:14,fontWeight:600,color:T.ink,marginBottom:4}}>{inv.desc}</div>
+                <div style={{fontSize:12,color:T.soft,marginBottom:16}}>{inv.date}</div>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",borderTop:`1px solid ${T.paper}`,paddingTop:14}}>
+                  <div style={{fontSize:16,fontWeight:700,color:T.ink}}>{inv.amount}</div>
+                  <button style={{fontSize:12,padding:"6px 14px",background:"#fff",border:`1.5px solid ${T.line}`,color:T.ink,borderRadius:6,fontWeight:600,cursor:"pointer"}}>Download</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="card" style={{height:"fit-content",position:"sticky",top:20}}>
+          <div className="card-head">Payment method</div>
+          <div style={{background:T.paper,border:`1.5px solid ${T.line}`,borderRadius:14,padding:"16px 18px",marginBottom:18}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+              <span style={{fontSize:22}}>💳</span>
+              <span className="badge badge-green">Default</span>
+            </div>
+            <div style={{fontSize:16,fontWeight:700,color:T.ink,letterSpacing:1.5,marginBottom:6}}>•••• •••• •••• 4242</div>
+            <div style={{fontSize:12,color:T.soft}}>Expires 12/27 · Visa</div>
+          </div>
+          <button style={{width:"100%",background:`linear-gradient(135deg, ${T.ink}, ${T.ink2})`,border:"none",color:"white",fontWeight:600,fontSize:14,padding:"12px 0",borderRadius:10,cursor:"pointer",marginBottom:12,boxShadow:`0 4px 12px rgba(0,0,0,0.15)`}}>Update payment method</button>
+          <p style={{fontSize:12,color:T.soft,textAlign:"center",margin:0}}>🔒 Secured by Stripe</p>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   PAGE 10 — SETTINGS
+═══════════════════════════════════════════ */
+function PageSettings() {
+  const [section, setSection] = useState("Business");
+  const [showPw, setShowPw] = useState({current:false,new_:false,confirm:false});
+  const sections = ["Business","Notifications","Phone","Team","Security"];
+  return (
+    <>
+      <TopBar title={<>Settings</>} subtitle="Manage your account and business preferences">
+        <button className="btn-primary" style={{fontSize:13,padding:"9px 20px"}}>Save changes</button>
+      </TopBar>
+
+      <div className="resp-grid-sidebar-left">
+        <div className="card" style={{padding:16,height:"fit-content"}}>
+          {sections.map(s=>(
+            <div key={s} onClick={()=>setSection(s)} style={{padding:"10px 12px",borderRadius:10,cursor:"pointer",fontSize:13.5,fontWeight:500,color:section===s?T.p700:T.mid,background:section===s?T.p50:"transparent",border:`1.5px solid ${section===s?T.p100:"transparent"}`,marginBottom:2,transition:"all .18s"}}>{s}</div>
+          ))}
+        </div>
+
+        <div>
+          {section==="Business" && (
+            <div className="card">
+              <div className="card-head">Business details</div>
+              
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+                <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`}}>
+                  <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:8,letterSpacing:".3px",textTransform:"uppercase"}}>Business name</label>
+                  <input defaultValue="Tony's Pizzeria" style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",transition:"border-color .2s, box-shadow .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)"}}/>
+                </div>
+                <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`}}>
+                  <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:8,letterSpacing:".3px",textTransform:"uppercase"}}>Business type</label>
+                  <select style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",cursor:"pointer",transition:"border-color .2s, box-shadow .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)"}}><option>Pizza Restaurant</option><option>Café</option><option>Bar & Restaurant</option></select>
+                </div>
+                <div style={{gridColumn:"1 / -1",background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`}}>
+                  <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:8,letterSpacing:".3px",textTransform:"uppercase"}}>Address</label>
+                  <input defaultValue="14 High Street, Manchester M1 1AE" style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",transition:"border-color .2s, box-shadow .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)"}}/>
+                </div>
+                <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`}}>
+                  <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:8,letterSpacing:".3px",textTransform:"uppercase"}}>Phone number</label>
+                  <input defaultValue="+44 161 234 5678" style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",transition:"border-color .2s, box-shadow .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)"}}/>
+                </div>
+                <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`}}>
+                  <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:8,letterSpacing:".3px",textTransform:"uppercase"}}>Email</label>
+                  <input defaultValue="info@tonys-pizzeria.com" type="email" style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",transition:"border-color .2s, box-shadow .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)"}}/>
+                </div>
+              </div>
+              <div style={{marginTop:16,paddingTop:20,borderTop:`1px solid ${T.line}`}}>
+                <div style={{fontSize:13,fontWeight:700,color:T.ink,marginBottom:16}}>Opening hours</div>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(280px, 1fr))",gap:12}}>
+                  {["Monday–Thursday","Friday–Saturday","Sunday"].map((day,i)=>(
+                    <div key={day} style={{background:T.paper,borderRadius:12,padding:"14px 16px",display:"flex",alignItems:"center",gap:12}}>
+                      <div style={{fontSize:13,fontWeight:600,color:T.ink,minWidth:130}}>{day}</div>
+                      <input className="fi" defaultValue={i===1?"11:00am":"12:00pm"} style={{width:80,padding:"8px 10px",backgroundColor:T.white,color:T.ink,textAlign:"center",fontSize:12}}/>
+                      <span style={{color:T.soft,fontSize:13}}>to</span>
+                      <input className="fi" defaultValue={i===0?"10:00pm":i===1?"11:30pm":"9:00pm"} style={{width:80,padding:"8px 10px",backgroundColor:T.white,color:T.ink,textAlign:"center",fontSize:12}}/>
+                      <label className="toggle" style={{marginLeft:"auto"}}><input type="checkbox" defaultChecked/><div className="toggle-track"/><div className="toggle-thumb"/></label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {section==="Notifications" && (
+            <div>
+              <div style={{fontSize:17,fontWeight:700,color:T.ink,marginBottom:16}}>Notification preferences</div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(260px, 1fr))",gap:16}}>
+                {[["📞","New order via call","Get notified when Aria takes a phone order",true],["📅","New reservation","Alert when a table is booked",true],["📱","Missed call","Get notified when a call is missed",true],["📊","Weekly report","Summary of calls and orders every Monday",false],["⚠️","Agent offline","Alert if Aria stops responding",true],["💳","Payment processed","Confirmation for each charge",false]].map(([ic,h,d,on])=>(
+                  <div key={h} style={{background:T.white,border:`1.5px solid ${T.line}`,borderRadius:14,padding:20,transition:"all .2s"}} onMouseEnter={e=>{e.currentTarget.style.borderColor=T.p300;e.currentTarget.style.boxShadow=`0 6px 20px rgba(112,53,245,.06)`}} onMouseLeave={e=>{e.currentTarget.style.borderColor=T.line;e.currentTarget.style.boxShadow="none"}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+                      <div style={{width:42,height:42,borderRadius:12,background:T.p50,border:`1px solid ${T.p100}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>{ic}</div>
+                      <label className="toggle"><input type="checkbox" defaultChecked={on}/><div className="toggle-track"/><div className="toggle-thumb"/></label>
+                    </div>
+                    <div style={{fontSize:14,fontWeight:700,color:T.ink,marginBottom:4}}>{h}</div>
+                    <div style={{fontSize:12.5,color:T.soft,lineHeight:1.4}}>{d}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {section==="Phone" && (
+            <div className="card">
+              <div className="card-head">Phone number settings</div>
+              <div className="info-block" style={{marginBottom:20,marginTop:0}}>
+                <div style={{display:"flex",alignItems:"center",gap:12}}>
+                  <div style={{fontSize:28}}>📞</div>
+                  <div>
+                    <div style={{fontSize:16,fontWeight:700,color:T.p600}}>+44 161 792 4831</div>
+                    <div style={{fontSize:12,color:T.soft,marginTop:3}}>Your Talkativ number · Manchester area code</div>
+                  </div>
+                  <span className="badge badge-green" style={{marginLeft:"auto"}}>Active</span>
+                </div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:20,alignItems:"stretch"}}>
+                <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`,display:"flex",flexDirection:"column"}}>
+                  <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:8,letterSpacing:".3px",textTransform:"uppercase"}}>Forward to (backup number)</label>
+                  <input defaultValue="+44 161 234 5678" style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",transition:"border-color .2s, box-shadow .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)",flex:1}}/>
+                </div>
+                <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`,display:"flex",flexDirection:"column"}}>
+                  <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:8,letterSpacing:".3px",textTransform:"uppercase"}}>Rings before Aria answers</label>
+                  <select style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",cursor:"pointer",transition:"border-color .2s, box-shadow .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)",flex:1}}><option>Immediately</option><option>After 2 rings</option><option>After 3 rings</option></select>
+                </div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+                {[["Call recording","Record all calls for quality assurance",true],["Voicemail fallback","If transfer fails, offer voicemail",true]].map(([title,desc,on])=>(
+                  <div key={title} style={{background:T.paper,borderRadius:12,padding:"16px 14px",display:"flex",flexDirection:"column",gap:10}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                      <h4 style={{margin:0,fontSize:13,fontWeight:700,color:T.ink}}>{title}</h4>
+                      <label className="toggle"><input type="checkbox" defaultChecked={on}/><div className="toggle-track"/><div className="toggle-thumb"/></label>
+                    </div>
+                    <p style={{margin:0,fontSize:12,color:T.soft,lineHeight:1.4}}>{desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {section==="Team" && (
+            <div>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
+                <div style={{fontSize:17,fontWeight:700,color:T.ink}}>Team members</div>
+                <button className="btn-primary" style={{fontSize:13,padding:"8px 18px"}}>+ Invite member</button>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(260px, 1fr))",gap:16}}>
+                {[{name:"Tony Chen",email:"tony@tonys-pizzeria.com",role:"Owner",av:"TC"},{name:"Maria Lopez",email:"maria@tonys-pizzeria.com",role:"Manager",av:"ML"},{name:"Jake Smith",email:"jake@tonys-pizzeria.com",role:"Staff",av:"JS"}].map((m,i)=>(
+                  <div key={i} style={{background:T.white,border:`1.5px solid ${T.line}`,borderRadius:14,padding:20,transition:"all .2s"}} onMouseEnter={e=>{e.currentTarget.style.borderColor=T.p300;e.currentTarget.style.boxShadow=`0 6px 20px rgba(112,53,245,.06)`}} onMouseLeave={e=>{e.currentTarget.style.borderColor=T.line;e.currentTarget.style.boxShadow="none"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:14}}>
+                      <div style={{width:44,height:44,borderRadius:"50%",background:`linear-gradient(135deg,${T.p400},${T.p700})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:"white",flexShrink:0}}>{m.av}</div>
+                      <div>
+                        <div style={{fontSize:14,fontWeight:600,color:T.ink}}>{m.name}</div>
+                        <div style={{fontSize:12,color:T.soft,marginTop:2}}>{m.email}</div>
+                      </div>
+                    </div>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",borderTop:`1px solid ${T.paper}`,paddingTop:14}}>
+                      <span className="badge badge-purple">{m.role}</span>
+                      {m.role!=="Owner"&&<button className="btn-danger" style={{fontSize:12,padding:"5px 12px"}}>Remove</button>}
                     </div>
                   </div>
                 ))}
               </div>
-              <div style={{ marginTop: "auto", fontSize: 13, color: T.p600, fontWeight: 700, display:"flex", alignItems:"center", gap:4 }}>View all orders <span style={{fontSize:14}}>→</span></div>
             </div>
+          )}
 
-            {/* Bookings Widget */}
-            <div style={{ background: T.white, border: `1.5px solid ${T.line}`, borderRadius: 20, padding: 28, display: "flex", flexDirection: "column", boxShadow: "0 4px 16px rgba(134,87,255,.04)", transition: "transform .2s", cursor: "pointer" }} onClick={() => onNavigate && onNavigate('reservations')}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
-                <div style={{ width: 44, height: 44, borderRadius: 12, background: T.p100, display:"flex", alignItems:"center", justifyContent:"center", color:T.p700, fontSize:18 }}>📅</div>
-                <div style={{ display: "flex", alignItems: "center", gap: -4 }}>
-                   <div style={{ width: 28, height: 28, borderRadius: "50%", background: T.mist, border: "2px solid white", display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:600 }}>G</div>
-                   <div style={{ width: 28, height: 28, borderRadius: "50%", background: T.paper, border: "2px solid white", display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:600, marginLeft: -8 }}>T</div>
-                   <div style={{ width: 28, height: 28, borderRadius: "50%", background: T.p50, border: "2px solid white", display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, fontWeight:700, marginLeft: -8, color: T.p600 }}>+12</div>
+          {section==="Security" && (
+            <div className="card">
+              <div className="card-head">Security settings</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:14,alignItems:"stretch"}}>
+                <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`,display:"flex",flexDirection:"column"}}>
+                  <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:8,letterSpacing:".3px",textTransform:"uppercase"}}>Current password</label>
+                  <div style={{position:"relative",flex:1,display:"flex"}}>
+                    <input type={showPw.current?"text":"password"} placeholder="Enter current password" style={{width:"100%",padding:"13px 48px 13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",transition:"border-color .2s, box-shadow .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)",flex:1}}/>
+                    <button onClick={()=>setShowPw(p=>({...p,current:!p.current}))} style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",padding:0,lineHeight:1,display:"flex",alignItems:"center"}}>{showPw.current?<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={T.soft} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={T.soft} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>}</button>
+                  </div>
+                </div>
+                <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`,display:"flex",flexDirection:"column"}}>
+                  <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:8,letterSpacing:".3px",textTransform:"uppercase"}}>New password</label>
+                  <div style={{position:"relative",flex:1,display:"flex"}}>
+                    <input type={showPw.new_?"text":"password"} placeholder="At least 8 characters" style={{width:"100%",padding:"13px 48px 13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",transition:"border-color .2s, box-shadow .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)",flex:1}}/>
+                    <button onClick={()=>setShowPw(p=>({...p,new_:!p.new_}))} style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",padding:0,lineHeight:1,display:"flex",alignItems:"center"}}>{showPw.new_?<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={T.soft} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={T.soft} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>}</button>
+                  </div>
+                </div>
+                <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`,display:"flex",flexDirection:"column"}}>
+                  <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:8,letterSpacing:".3px",textTransform:"uppercase"}}>Confirm new password</label>
+                  <div style={{position:"relative",flex:1,display:"flex"}}>
+                    <input type={showPw.confirm?"text":"password"} placeholder="Repeat new password" style={{width:"100%",padding:"13px 48px 13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",transition:"border-color .2s, box-shadow .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)",flex:1}}/>
+                    <button onClick={()=>setShowPw(p=>({...p,confirm:!p.confirm}))} style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",padding:0,lineHeight:1,display:"flex",alignItems:"center"}}>{showPw.confirm?<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={T.soft} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={T.soft} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>}</button>
+                  </div>
                 </div>
               </div>
-              <div style={{ fontSize: 17, fontWeight: 700, color: T.ink, marginBottom: 20 }}>Bookings</div>
-              <div style={{ display: "flex", gap: 28, marginBottom: 24 }}>
-                <div>
-                  <div style={{ fontSize: 32, fontWeight: 800, color: T.ink, lineHeight: 1, marginBottom: 8 }}>48</div>
-                  <div style={{ fontSize: 10, color: T.soft, fontWeight: 700, letterSpacing: .8, textTransform: "uppercase" }}>Reserved/Booked</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: 32, fontWeight: 800, color: T.ink, lineHeight: 1, marginBottom: 8 }}>12</div>
-                  <div style={{ fontSize: 10, color: T.soft, fontWeight: 700, letterSpacing: .8, textTransform: "uppercase" }}>Updated</div>
-                </div>
-              </div>
-              <div style={{ background: T.paper, border: `1.5px solid ${T.line}`, borderRadius: 12, padding: "14px 16px", display: "flex", flexDirection: "column", gap: 6, marginBottom: 24 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, fontWeight: 600 }}>
-                  <div style={{ color: T.mid }}>Cancellation Rate</div>
-                  <div style={{ color: T.red }}>4.2%</div>
-                </div>
-                <div style={{ fontSize: 12, color: T.soft }}><strong style={{ color: T.red }}>2</strong> Cancelled today</div>
-              </div>
-              <div style={{ marginTop: "auto", fontSize: 13, color: T.p600, fontWeight: 700, display:"flex", alignItems:"center", gap:4 }}>View all reservations <span style={{fontSize:14}}>→</span></div>
-            </div>
-
-          </div>
-
-          {/* SECONDARY HUB (Agent, Knowledge Base, Settings) */}
-          <div className="resp-grid-dashboard-hub" style={{ gap: 24 }}>
-             
-             {/* Agent Overview */}
-             <div style={{ background: `linear-gradient(135deg, ${T.ink}, #2D3748)`, borderRadius: 20, padding: 28, display: "flex", flexDirection: "column", color: "white", boxShadow: "0 8px 24px rgba(0,0,0,0.12)", position: "relative", overflow: "hidden" }}>
-                <div style={{ position: "absolute", top: -20, right: -20, width: 120, height: 120, borderRadius: "50%", background: "rgba(255,255,255,0.05)" }} />
-                
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24, position: "relative" }}>
-                  <div style={{ fontSize: 17, fontWeight: 700, color: "white" }}>Your Agent</div>
-                  <div style={{ width: 10, height: 10, borderRadius: "50%", background: T.green, boxShadow: "0 0 12px rgba(16,185,129,0.8)" }} />
-                </div>
-                
-                <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 32, position: "relative" }}>
-                  <div style={{ width: 56, height: 56, borderRadius: "50%", background: `linear-gradient(135deg, ${T.p300}, ${T.p600})`, color: "white", fontSize: 24, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold" }}>E</div>
+              <div style={{paddingTop:20,borderTop:`1px solid ${T.line}`,marginTop:16}}>
+                <div style={{fontSize:13,fontWeight:700,color:T.ink,marginBottom:16}}>Two-factor authentication</div>
+                <div style={{background:T.paper,borderRadius:12,padding:"16px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                   <div>
-                    <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 4 }}>Emily</div>
-                    <div style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", fontWeight: 500 }}>Active · Tony's Pizzeria</div>
+                    <h4 style={{margin:0,fontSize:13,fontWeight:700,color:T.ink}}>Enable 2FA</h4>
+                    <p style={{margin:0,fontSize:12,color:T.soft,marginTop:4}}>Require a code when logging in from a new device</p>
                   </div>
-                </div>
-
-                <button onClick={() => onNavigate && onNavigate('agent')} style={{ marginTop: "auto", width: "100%", padding: "12px", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 12, fontSize: 13.5, fontWeight: 700, color: "white", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "background .2s" }}>
-                  Edit agent configuration →
-                </button>
-             </div>
-
-             {/* Knowledge Base */}
-             <div style={{ background: T.white, border: `1.5px solid ${T.line}`, borderRadius: 20, padding: 28, display: "flex", flexDirection: "column", boxShadow: "0 4px 16px rgba(134,87,255,.04)" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 10, background: T.p50, color: T.p700, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>📚</div>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: T.ink }}>Knowledge Base</div>
-                </div>
-                
-                <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 28 }}>
-                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                     <span style={{ fontSize: 13.5, color: T.mid, fontWeight: 600 }}>Active FAQs</span>
-                     <span style={{ fontSize: 15, fontWeight: 800, color: T.ink }}>12</span>
-                   </div>
-                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                     <span style={{ fontSize: 13.5, color: T.mid, fontWeight: 600 }}>Menu Items</span>
-                     <span style={{ fontSize: 15, fontWeight: 800, color: T.ink }}>48</span>
-                   </div>
-                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                     <span style={{ fontSize: 13.5, color: T.mid, fontWeight: 600 }}>Files Synced</span>
-                     <span style={{ fontSize: 13, fontWeight: 700, color: T.green }}>Up to date ✓</span>
-                   </div>
-                </div>
-
-                <button onClick={() => onNavigate && onNavigate('knowledge-base')} style={{ marginTop: "auto", width: "100%", padding: "12px", background: T.paper, border: `1px solid ${T.line}`, borderRadius: 12, fontSize: 13, fontWeight: 700, color: T.ink, cursor: "pointer", transition: "all .2s" }}>
-                  Update knowledge base →
-                </button>
-             </div>
-
-             {/* System Settings */}
-             <div style={{ background: T.white, border: `1.5px solid ${T.line}`, borderRadius: 20, padding: 28, display: "flex", flexDirection: "column", boxShadow: "0 4px 16px rgba(134,87,255,.04)" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 10, background: T.paper, color: T.ink, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>⚙️</div>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: T.ink }}>System Setup</div>
-                </div>
-                
-                <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 32 }}>
-                  <div onClick={() => onNavigate && onNavigate('billing')} style={{ padding: "14px 16px", background: T.paper, borderRadius: 12, fontSize: 13.5, fontWeight: 600, color: T.ink, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", border: `1px solid transparent`, transition: "border .2s" }}>
-                    <span>Billing & Plans</span>
-                    <span style={{ color: T.soft }}>→</span>
-                  </div>
-                  <div onClick={() => onNavigate && onNavigate('settings')} style={{ padding: "14px 16px", background: T.paper, borderRadius: 12, fontSize: 13.5, fontWeight: 600, color: T.ink, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", border: `1px solid transparent`, transition: "border .2s" }}>
-                    <span>Account Settings</span>
-                    <span style={{ color: T.soft }}>→</span>
-                  </div>
-                </div>
-
-                <div style={{ marginTop: "auto", fontSize: 11.5, color: T.soft, fontWeight: 600, textAlign: "center" }}>
-                  Current Plan: <span style={{ color: T.p600, fontWeight: 800 }}>Pro Business</span>
-                </div>
-             </div>
-
-          </div>
-        </div>
-      </main>
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════
-   ORDERS SCREEN
-═══════════════════════════════════════════ */
-function OrdersScreen({ onBack, onNavigate }) {
-  const [activeCall, setActiveCall] = useState(null);
-  
-  const callLogs = [
-    { id: "442", n: "+1 (415) 555-0921", t: "14:20 · Today", txt: `"1x Large Pepperoni, 2x Garlic Bread"`, s: "Preparing", sb: "#FEF3C7", sc: "#B45309", dur: "£32.50", ic: "O" },
-    { id: "441", n: "+1 (212) 555-8844", t: "13:05 · Today", txt: `"2x Margherita, 1x Coke (1.5L)"`, s: "Out for Delivery", sb: "#DBEAFE", sc: "#1D4ED8", dur: "£28.00", ic: "O" },
-    { id: "440", n: "Unknown Caller", t: "12:30 · Today", txt: `"1x Vegan Supreme, 1x Water"`, s: "Completed", sb: "#D1FAE5", sc: "#065F46", dur: "£18.50", ic: "✓" },
-    { id: "439", n: "+1 (650) 555-1234", t: "Yesterday 12:15", txt: `"Order #122 contains a gluten-free pizza, right?"`, s: "Cancelled", sb: "#FECACA", sc: "#B91C1C", dur: "£0.00", ic: "×" },
-    { id: "438", n: "+44 7911 123456", t: "16 Mar 2026", txt: `"1x BBQ Chicken, 1x Fries"`, s: "Completed", sb: "#D1FAE5", sc: "#065F46", dur: "£15.50", ic: "✓" },
-    { id: "437", n: "+1 (310) 555-9876", t: "16 Mar 2026", txt: `"1x Meat Feast, 1x Diet Coke"`, s: "Completed", sb: "#D1FAE5", sc: "#065F46", dur: "£19.00", ic: "✓" },
-    { id: "436", n: "+1 (888) 555-0000", t: "15 Mar 2026", txt: `"1x Hawaiian, Extra Pineapple"`, s: "Completed", sb: "#D1FAE5", sc: "#065F46", dur: "£14.50", ic: "✓" }
-  ];
-
-  return (
-    <div className="dash-wrap" style={{ background: "#F8F7FA" }}>
-      <style>{G}</style>
-      <aside className="dash-sidebar" style={{ display: "flex", flexDirection: "column" }}>
-        <div className="dash-logo"><div className="dash-logo-mark">t</div>talkativ</div>
-        <div className="dash-section-label">Main</div>
-        {[["Dashboard", "dashboard"], ["Calls", "calls"], ["Orders", "orders"], ["Reservations", "reservations"]].map(([l, route]) => (
-          <div key={l} className={`dash-nav-item ${route === "orders" ? "active" : ""}`} onClick={() => route && onNavigate ? onNavigate(route) : null}>{l}</div>
-        ))}
-        <div className="dash-section-label">Agent</div>
-        {[["My Agent", "agent"], ["Knowledge base", "knowledge-base"]].map(([l, route]) => (
-          <div key={l} className="dash-nav-item" onClick={() => route && onNavigate && onNavigate(route)}>{l}</div>
-        ))}
-        <div className="dash-section-label">Account</div>
-        {[["Billing", "billing"], ["Settings", "settings"]].map(([l, route]) => (
-          <div key={l} className="dash-nav-item" onClick={() => route && onNavigate ? onNavigate(route) : null}>{l}</div>
-        ))}
-        
-        <div style={{ marginTop: "auto", borderTop: `1.5px solid ${T.line}`, paddingTop: 20 }}>
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 24, padding: "0 8px" }}>
-            <div style={{ width: 36, height: 36, borderRadius: "50%", background: `linear-gradient(135deg,${T.p400},${T.p700})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "white" }}>TC</div>
-            <div>
-               <div style={{ fontSize: 14.5, fontWeight: 800, color: T.ink, marginBottom: 2 }}>Tony's Pizzeria</div>
-               <div style={{ fontSize: 12.5, color: T.soft, fontWeight: 600, cursor: "pointer", textDecoration: "underline", textDecorationThickness: "1px", textUnderlineOffset: 3 }} onClick={() => onNavigate && onNavigate('landing')}>Logout</div>
-            </div>
-          </div>
-          <button style={{ width: "100%", padding: "12px", background: "white", border: `1.5px solid ${T.line}`, borderRadius: 10, fontSize: 13, fontWeight: 700, color: T.ink, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "all .2s" }}>
-             Customer support ↗
-          </button>
-        </div>
-      </aside>
-
-      <main className="dash-main" style={{ padding: 0 }}>
-        {/* TOP BAR */}
-        <div className="dash-topbar" style={{ padding: "24px 32px", borderBottom: `1.5px solid ${T.line}` }}>
-          <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
-            <button className="resp-show-mobile" onClick={() => document.body.classList.add('mob-nav-open')} style={{ background: "transparent", border: "none", fontSize: 26, cursor: "pointer", padding: 0, color: T.ink, marginTop: -2 }}>☰</button>
-            <div>
-            <div className="dash-date">Wednesday · 18 March 2026</div>
-            <div className="dash-greeting">Good afternoon, Tony 👋</div>
-          </div>
-            </div>
-          <div className="dash-topbar-right">
-            <div className="dash-live-badge"><div style={{ width: 7, height: 7, borderRadius: "50%", background: T.green, animation: "pulse 2s infinite" }} />Agent live</div>
-            <button onClick={onBack} style={{ background: T.white, border: `1.5px solid ${T.line}`, borderRadius: 9, padding: "7px 16px", fontSize: 12.5, fontWeight: 500, color: T.mid, cursor: "pointer", transition: "all .18s" }}>← Back to demo</button>
-            <div className="dash-avatar" style={{ cursor: "pointer" }}>TC</div>
-          </div>
-        </div>
-
-        {/* CONTENT */}
-        <div className="resp-main-pad">
-          <div className={activeCall ? "resp-grid-split" : "resp-grid-single"}>
-            {/* Orders History */}
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-                <div style={{ fontSize: 17, fontWeight: 700, color: T.ink }}>Order history</div>
-                <div style={{ display: "flex", gap: 16, fontSize: 12.5, fontWeight: 600 }}>
-                  <div style={{ color: T.p600, cursor: "pointer" }}>All</div>
-                  <div style={{ color: T.mid, cursor: "pointer" }}>Completed</div>
-                  <div style={{ color: T.mid, cursor: "pointer" }}>Cancelled</div>
+                  <label className="toggle"><input type="checkbox"/><div className="toggle-track"/><div className="toggle-thumb"/></label>
                 </div>
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                {callLogs.map((r) => {
-                  const isActive = activeCall && activeCall.id === r.id;
-                  return (
-                    <div key={r.id} onClick={() => setActiveCall(isActive ? null : r)} style={{ background: isActive ? "white" : T.paper, border: `1.5px solid ${isActive ? T.p400 : "transparent"}`, borderRadius: 16, padding: "20px", display: "flex", alignItems: "flex-start", gap: 16, boxShadow: isActive ? "0 4px 16px rgba(134,87,255,0.12)" : "none", cursor: "pointer", transition: "all .2s" }}>
-                      <div style={{ width: 44, height: 44, borderRadius: "50%", background: isActive ? T.p50 : "white", border: `1.5px solid ${isActive ? T.p200 : T.line}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight:"bold", color: r.s==="Cancelled"? "#B91C1C" : (isActive ? T.p600 : T.ink) }}>{r.ic}</div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                          <div style={{ fontSize: 14.5, fontWeight: 700, color: T.ink }}>{r.n}</div>
-                          <div style={{ fontSize: 12, color: T.soft, fontWeight: 600 }}>{r.t}</div>
-                        </div>
-                        <div style={{ fontSize: 13.5, color: T.mid, marginBottom: 12 }}>{r.txt}</div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                          <span style={{ fontSize: 10.5, fontWeight: 700, background: r.sb, color: r.sc, padding: "4px 8px", borderRadius: 4 }}>{r.s}</span>
-                          <span style={{ fontSize: 11.5, color: T.soft, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
-                            {r.dur}
-                          </span>
-                        </div>
-                      </div>
+              <div style={{paddingTop:20,borderTop:`1px solid ${T.line}`,marginTop:16}}>
+                <div style={{fontSize:13,fontWeight:700,color:T.ink,marginBottom:12}}>Active sessions</div>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(240px, 1fr))",gap:12}}>
+                  {[["Chrome · MacBook Pro","Manchester, UK · Active now"],["Safari · iPhone 15","Manchester, UK · 2h ago"]].map(([device,loc])=>(
+                    <div key={device} style={{background:T.paper,borderRadius:12,padding:"14px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                      <div><div style={{fontSize:13,fontWeight:600,color:T.ink}}>{device}</div><div style={{fontSize:11.5,color:T.soft,marginTop:2}}>{loc}</div></div>
+                      <button className="btn-danger" style={{fontSize:12,padding:"5px 12px"}}>Revoke</button>
                     </div>
-                  );
-                })}
-              </div>
-              
-              {/* Pagination */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 24, padding: "0 8px" }}>
-                <div style={{ fontSize: 13, color: T.soft, fontWeight: 500 }}>Showing 1-7 of 156 orders</div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button style={{ background: "white", border: `1px solid ${T.line}`, borderRadius: 8, padding: "6px 14px", fontSize: 13, fontWeight: 600, color: T.soft, cursor: "not-allowed" }}>Previous</button>
-                  <button style={{ background: "white", border: `1px solid ${T.line}`, borderRadius: 8, padding: "6px 14px", fontSize: 13, fontWeight: 600, color: T.ink, cursor: "pointer" }}>Next</button>
-                </div>
-              </div>
-            </div>
-
-            {/* Order Details */}
-            {activeCall && (
-              <div style={{ background: "white", border: `1.5px solid ${T.line}`, borderRadius: 20, padding: 32, boxShadow: "0 4px 24px rgba(0,0,0,0.04)", position: "sticky", top: 32 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 20, fontWeight: 800, color: T.ink, marginBottom: 4 }}>Order Details</div>
-                    <div style={{ fontSize: 12.5, color: T.soft, fontWeight: 600 }}>ID: #ORD-5541-{activeCall.id}</div>
-                  </div>
-                  <div style={{ textAlign: "right", display: "flex", gap: 16, alignItems: "flex-start" }}>
-                    <div>
-                      <div style={{ fontSize: 11.5, color: T.soft, marginTop: 4 }}>Processed via VoiceCore™</div>
-                    </div>
-                    <button onClick={() => setActiveCall(null)} style={{ background: T.paper, border: `1px solid ${T.line}`, width: 28, height: 28, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 16, color: T.mid, fontWeight: "bold", padding: 0, marginTop: -4 }}>×</button>
-                  </div>
-                </div>
-
-                {/* Items */}
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-                  <div style={{ fontSize: 11.5, fontWeight: 800, color: T.soft, letterSpacing: 1.5, textTransform: "uppercase" }}>Order Items</div>
-                  <div style={{ fontSize: 14, color: T.mid, fontWeight: "bold", cursor: "pointer", transform:"rotate(-45deg)" }}>⚲</div>
-                </div>
-
-                <div style={{ background: T.paper, padding: "16px", borderRadius: "16px", fontSize: 13.5, color: T.ink, lineHeight: 1.6, marginBottom: 40 }}>
-                   <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: 12, borderBottom: `1px dashed ${T.line}`, marginBottom: 12 }}>
-                     <div>{activeCall.txt.replace(/"/g, '')}</div>
-                     <div style={{ fontWeight: 700 }}>{activeCall.dur}</div>
-                   </div>
-                   <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, color: T.ink }}>
-                     <div>Total</div>
-                     <div>{activeCall.dur}</div>
-                   </div>
-                </div>
-
-                {/* Special Requests */}
-                <div style={{ marginBottom: 24 }}>
-                  <div style={{ fontSize: 11.5, fontWeight: 800, color: T.soft, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 12 }}>Special Requests & Allergies</div>
-                  <div style={{ background: "#FEF2F2", border: "1px solid #FCA5A5", padding: "12px 16px", borderRadius: "12px", fontSize: 13.5, color: "#991B1B", lineHeight: 1.6, fontWeight: 600 }}>
-                     "Severe nut allergy. Celebrating 10th anniversary. Preferred seating near window if possible."
-                  </div>
-                </div>
-                
-                {/* AI Context */}
-                <div style={{ marginBottom: 32 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                    <div style={{ fontSize: 11.5, fontWeight: 800, color: T.soft, letterSpacing: 1.5, textTransform: "uppercase", display:"flex", alignItems:"center", gap: 6 }}>
-                      <div style={{ width: 14, height: 14, borderRadius: "50%", background: T.p600, display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: 8 }}>✦</div>
-                      Talkativ AI Context
-                    </div>
-                    <div style={{ fontSize: 12, color: T.p600, fontWeight: 700, cursor: "pointer", display:"flex", alignItems:"center", gap:4 }}>View Full Call Log <span style={{fontSize: 14}}>↗</span></div>
-                  </div>
-                  <div style={{ background: T.p50, border: `1px solid ${T.p100}`, padding: "16px", borderRadius: "16px", display: "flex", alignItems: "flex-start", gap: 14 }}>
-                    <div style={{ width: 32, height: 32, borderRadius: "50%", background: T.white, display: "flex", alignItems: "center", justifyContent: "center", color: T.p600, fontSize: 14, cursor:"pointer", border:`1px solid ${T.line}`, flexShrink: 0, boxShadow: "0 2px 8px rgba(134,87,255,0.15)", transform:"scaleX(1.1)" }}>▶</div>
-                    <div style={{ fontSize: 13.5, color: T.ink, lineHeight: 1.6, flex: 1, fontStyle: "italic", fontWeight: 500 }}>
-                      "The caller mentioned they want a specific vintage wine if available. I confirmed our sommelier would be notified."
-                    </div>
-                  </div>
-                </div>
-
-                {/* Bottom intent panel */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 24 }}>
-                  <div style={{ background: T.paper, borderRadius: 20, padding: "14px 20px" }}>
-                    <div style={{ fontSize: 10, color: T.soft, fontWeight: 700, letterSpacing: .5, textTransform: "uppercase", marginBottom: 4 }}>Status</div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: T.ink }}>{activeCall.s}</div>
-                  </div>
-                  <div style={{ background: T.paper, borderRadius: 20, padding: "14px 20px" }}>
-                    <div style={{ fontSize: 10, color: T.soft, fontWeight: 700, letterSpacing: .5, textTransform: "uppercase", marginBottom: 4 }}>Order Type</div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: T.ink }}>{["441", "439", "436"].includes(activeCall.id) ? "Delivery" : "Collection"}</div>
-                  </div>
-                  <div style={{ background: "#F6FBF9", borderRadius: 20, padding: "14px 20px" }}>
-                    <div style={{ fontSize: 10, color: T.soft, fontWeight: 700, letterSpacing: .5, textTransform: "uppercase", marginBottom: 4 }}>Payment</div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: "#059669" }}>{["441", "439", "436"].includes(activeCall.id) ? (activeCall.id === "441" ? "Pay on Delivery" : "Paid Now") : "Pay at counter"}</div>
-                  </div>
-                </div>
-
-                <button style={{ width: "100%", background: T.p100, color: T.p700, border: "none", borderRadius: 30, padding: "16px", fontSize: 14.5, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "background .2s" }}>
-                  🍕 Print Ticket to Kitchen
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </main>
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════
-   RESERVATIONS SCREEN
-═══════════════════════════════════════════ */
-function ReservationsScreen({ onBack, onNavigate }) {
-  const [activeCall, setActiveCall] = useState(null);
-  
-  const callLogs = [
-    { id: "882", n: "+1 (415) 555-0921", t: "Tomorrow, 19:00", txt: `"Party of 4. Inside seating."`, s: "Confirmed", sb: "#D1FAE5", sc: "#065F46", dur: "4 Ppl", ic: "R" },
-    { id: "881", n: "+1 (212) 555-8844", t: "Friday, 20:00", txt: `"Party of 2. Window seat if possible."`, s: "Pending", sb: "#FEF3C7", sc: "#B45309", dur: "2 Ppl", ic: "R" },
-    { id: "880", n: "+1 (650) 555-1234", t: "Saturday, 18:30", txt: `"Party of 6. High chair needed."`, s: "Confirmed", sb: "#D1FAE5", sc: "#065F46", dur: "6 Ppl", ic: "✓" },
-    { id: "879", n: "Unknown Caller", t: "Sun, 12:15", txt: `"Party of 8 for brunch."`, s: "Cancelled", sb: "#FECACA", sc: "#B91C1C", dur: "8 Ppl", ic: "×" },
-    { id: "878", n: "+44 7911 123456", t: "16 Mar 2026", txt: `"Table for 3. Celebrating anniversary."`, s: "Confirmed", sb: "#D1FAE5", sc: "#065F46", dur: "3 Ppl", ic: "✓" },
-    { id: "877", n: "+1 (310) 555-9876", t: "16 Mar 2026", txt: `"Party of 5. Outdoor patio."`, s: "Confirmed", sb: "#D1FAE5", sc: "#065F46", dur: "5 Ppl", ic: "✓" },
-    { id: "876", n: "+1 (888) 555-0000", t: "15 Mar 2026", txt: `"Party of 2. Quiet corner requested."`, s: "Confirmed", sb: "#D1FAE5", sc: "#065F46", dur: "2 Ppl", ic: "✓" }
-  ];
-
-  return (
-    <div className="dash-wrap" style={{ background: "#F8F7FA" }}>
-      <style>{G}</style>
-      <aside className="dash-sidebar" style={{ display: "flex", flexDirection: "column" }}>
-        <div className="dash-logo"><div className="dash-logo-mark">t</div>talkativ</div>
-        <div className="dash-section-label">Main</div>
-        {[["Dashboard", "dashboard"], ["Calls", "calls"], ["Orders", "orders"], ["Reservations", "reservations"]].map(([l, route]) => (
-          <div key={l} className={`dash-nav-item ${route === "reservations" ? "active" : ""}`} onClick={() => route && onNavigate ? onNavigate(route) : null}>{l}</div>
-        ))}
-        <div className="dash-section-label">Agent</div>
-        {[["My Agent", "agent"], ["Knowledge base", "knowledge-base"]].map(([l, route]) => (
-          <div key={l} className="dash-nav-item" onClick={() => route && onNavigate && onNavigate(route)}>{l}</div>
-        ))}
-        <div className="dash-section-label">Account</div>
-        {[["Billing", "billing"], ["Settings", "settings"]].map(([l, route]) => (
-          <div key={l} className="dash-nav-item" onClick={() => route && onNavigate ? onNavigate(route) : null}>{l}</div>
-        ))}
-        
-        <div style={{ marginTop: "auto", borderTop: `1.5px solid ${T.line}`, paddingTop: 20 }}>
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 24, padding: "0 8px" }}>
-            <div style={{ width: 36, height: 36, borderRadius: "50%", background: `linear-gradient(135deg,${T.p400},${T.p700})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "white" }}>TC</div>
-            <div>
-               <div style={{ fontSize: 14.5, fontWeight: 800, color: T.ink, marginBottom: 2 }}>Tony's Pizzeria</div>
-               <div style={{ fontSize: 12.5, color: T.soft, fontWeight: 600, cursor: "pointer", textDecoration: "underline", textDecorationThickness: "1px", textUnderlineOffset: 3 }} onClick={() => onNavigate && onNavigate('landing')}>Logout</div>
-            </div>
-          </div>
-          <button style={{ width: "100%", padding: "12px", background: "white", border: `1.5px solid ${T.line}`, borderRadius: 10, fontSize: 13, fontWeight: 700, color: T.ink, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "all .2s" }}>
-             Customer support ↗
-          </button>
-        </div>
-      </aside>
-
-      <main className="dash-main" style={{ padding: 0 }}>
-        {/* TOP BAR */}
-        <div className="dash-topbar" style={{ padding: "24px 32px", borderBottom: `1.5px solid ${T.line}` }}>
-          <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
-            <button className="resp-show-mobile" onClick={() => document.body.classList.add('mob-nav-open')} style={{ background: "transparent", border: "none", fontSize: 26, cursor: "pointer", padding: 0, color: T.ink, marginTop: -2 }}>☰</button>
-            <div>
-            <div className="dash-date">Wednesday · 18 March 2026</div>
-            <div className="dash-greeting">Good afternoon, Tony 👋</div>
-          </div>
-            </div>
-          <div className="dash-topbar-right">
-            <div className="dash-live-badge"><div style={{ width: 7, height: 7, borderRadius: "50%", background: T.green, animation: "pulse 2s infinite" }} />Agent live</div>
-            <button onClick={onBack} style={{ background: T.white, border: `1.5px solid ${T.line}`, borderRadius: 9, padding: "7px 16px", fontSize: 12.5, fontWeight: 500, color: T.mid, cursor: "pointer", transition: "all .18s" }}>← Back to demo</button>
-            <div className="dash-avatar" style={{ cursor: "pointer" }}>TC</div>
-          </div>
-        </div>
-
-        {/* CONTENT */}
-        <div className="resp-main-pad">
-          <div className={activeCall ? "resp-grid-split" : "resp-grid-single"}>
-            {/* Reservations History */}
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-                <div style={{ fontSize: 17, fontWeight: 700, color: T.ink }}>Reservation history</div>
-                <div style={{ display: "flex", gap: 16, fontSize: 12.5, fontWeight: 600 }}>
-                  <div style={{ color: T.p600, cursor: "pointer" }}>All</div>
-                  <div style={{ color: T.mid, cursor: "pointer" }}>Confirmed</div>
-                  <div style={{ color: T.mid, cursor: "pointer" }}>Cancelled</div>
-                </div>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                {callLogs.map((r) => {
-                  const isActive = activeCall && activeCall.id === r.id;
-                  return (
-                    <div key={r.id} onClick={() => setActiveCall(isActive ? null : r)} style={{ background: isActive ? "white" : T.paper, border: `1.5px solid ${isActive ? T.p400 : "transparent"}`, borderRadius: 16, padding: "20px", display: "flex", alignItems: "flex-start", gap: 16, boxShadow: isActive ? "0 4px 16px rgba(134,87,255,0.12)" : "none", cursor: "pointer", transition: "all .2s" }}>
-                      <div style={{ width: 44, height: 44, borderRadius: "50%", background: isActive ? T.p50 : "white", border: `1.5px solid ${isActive ? T.p200 : T.line}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight:"bold", color: r.s==="Cancelled"? "#B91C1C" : (isActive ? T.p600 : T.ink) }}>{r.ic}</div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                          <div style={{ fontSize: 14.5, fontWeight: 700, color: T.ink }}>{r.n}</div>
-                          <div style={{ fontSize: 12, color: T.soft, fontWeight: 600 }}>{r.t}</div>
-                        </div>
-                        <div style={{ fontSize: 13.5, color: T.mid, marginBottom: 12 }}>{r.txt}</div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                          <span style={{ fontSize: 10.5, fontWeight: 700, background: r.sb, color: r.sc, padding: "4px 8px", borderRadius: 4 }}>{r.s}</span>
-                          <span style={{ fontSize: 11.5, color: T.soft, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
-                            {r.dur}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              
-              {/* Pagination */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 24, padding: "0 8px" }}>
-                <div style={{ fontSize: 13, color: T.soft, fontWeight: 500 }}>Showing 1-7 of 48 bookings</div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button style={{ background: "white", border: `1px solid ${T.line}`, borderRadius: 8, padding: "6px 14px", fontSize: 13, fontWeight: 600, color: T.soft, cursor: "not-allowed" }}>Previous</button>
-                  <button style={{ background: "white", border: `1px solid ${T.line}`, borderRadius: 8, padding: "6px 14px", fontSize: 13, fontWeight: 600, color: T.ink, cursor: "pointer" }}>Next</button>
-                </div>
-              </div>
-            </div>
-
-            {/* Reservation Details */}
-            {activeCall && (
-              <div style={{ background: "white", border: `1.5px solid ${T.line}`, borderRadius: 20, padding: 32, boxShadow: "0 4px 24px rgba(0,0,0,0.04)", position: "sticky", top: 32 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 20, fontWeight: 800, color: T.ink, marginBottom: 4 }}>Reservation Details</div>
-                    <div style={{ fontSize: 12.5, color: T.soft, fontWeight: 600 }}>ID: #RSV-9921-{activeCall.id}</div>
-                  </div>
-                  <div style={{ textAlign: "right", display: "flex", gap: 16, alignItems: "flex-start" }}>
-                    <div>
-                      <div style={{ fontSize: 11.5, color: T.soft, marginTop: 4 }}>Processed via VoiceCore™</div>
-                    </div>
-                    <button onClick={() => setActiveCall(null)} style={{ background: T.paper, border: `1px solid ${T.line}`, width: 28, height: 28, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 16, color: T.mid, fontWeight: "bold", padding: 0, marginTop: -4 }}>×</button>
-                  </div>
-                </div>
-
-                {/* Info Text */}
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-                  <div style={{ fontSize: 11.5, fontWeight: 800, color: T.soft, letterSpacing: 1.5, textTransform: "uppercase" }}>Request Info</div>
-                  <div style={{ fontSize: 14, color: T.mid, fontWeight: "bold", cursor: "pointer", transform:"rotate(-45deg)" }}>⚲</div>
-                </div>
-
-                <div style={{ background: T.paper, padding: "16px", borderRadius: "16px", fontSize: 13.5, color: T.ink, lineHeight: 1.6, marginBottom: 40 }}>
-                   <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: 12, borderBottom: `1px dashed ${T.line}`, marginBottom: 12 }}>
-                     <div>{activeCall.txt.replace(/"/g, '')}</div>
-                     <div style={{ fontWeight: 700 }}>{activeCall.dur}</div>
-                   </div>
-                   <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, color: T.ink }}>
-                     <div>Time Requested</div>
-                     <div>{activeCall.t}</div>
-                   </div>
-                </div>
-
-                {/* Special Requests */}
-                <div style={{ marginBottom: 24 }}>
-                  <div style={{ fontSize: 11.5, fontWeight: 800, color: T.soft, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 12 }}>Special Requests & Allergies</div>
-                  <div style={{ background: "#FEF2F2", border: "1px solid #FCA5A5", padding: "12px 16px", borderRadius: "12px", fontSize: 13.5, color: "#991B1B", lineHeight: 1.6, fontWeight: 600 }}>
-                     "Severe nut allergy. Celebrating 10th anniversary. Preferred seating near window if possible."
-                  </div>
-                </div>
-                
-                {/* AI Context */}
-                <div style={{ marginBottom: 32 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                    <div style={{ fontSize: 11.5, fontWeight: 800, color: T.soft, letterSpacing: 1.5, textTransform: "uppercase", display:"flex", alignItems:"center", gap: 6 }}>
-                      <div style={{ width: 14, height: 14, borderRadius: "50%", background: T.p600, display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: 8 }}>✦</div>
-                      Talkativ AI Context
-                    </div>
-                    <div style={{ fontSize: 12, color: T.p600, fontWeight: 700, cursor: "pointer", display:"flex", alignItems:"center", gap:4 }}>View Full Call Log <span style={{fontSize: 14}}>↗</span></div>
-                  </div>
-                  <div style={{ background: T.p50, border: `1px solid ${T.p100}`, padding: "16px", borderRadius: "16px", display: "flex", alignItems: "flex-start", gap: 14 }}>
-                    <div style={{ width: 32, height: 32, borderRadius: "50%", background: T.white, display: "flex", alignItems: "center", justifyContent: "center", color: T.p600, fontSize: 14, cursor:"pointer", border:`1px solid ${T.line}`, flexShrink: 0, boxShadow: "0 2px 8px rgba(134,87,255,0.15)", transform:"scaleX(1.1)" }}>▶</div>
-                    <div style={{ fontSize: 13.5, color: T.ink, lineHeight: 1.6, flex: 1, fontStyle: "italic", fontWeight: 500 }}>
-                      "The caller mentioned they want a specific vintage wine if available. I confirmed our sommelier would be notified."
-                    </div>
-                  </div>
-                </div>
-
-                {/* Bottom intent panel (4 items for Reservations) */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
-                  <div style={{ background: T.paper, borderRadius: 20, padding: "14px 20px" }}>
-                    <div style={{ fontSize: 10, color: T.soft, fontWeight: 700, letterSpacing: .5, textTransform: "uppercase", marginBottom: 4 }}>Status</div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: T.ink }}>{activeCall.s}</div>
-                  </div>
-                  <div style={{ background: "#F6FBF9", borderRadius: 20, padding: "14px 20px" }}>
-                    <div style={{ fontSize: 10, color: T.soft, fontWeight: 700, letterSpacing: .5, textTransform: "uppercase", marginBottom: 4 }}>Party Size</div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: "#059669" }}>{activeCall.dur}</div>
-                  </div>
-                  <div style={{ background: T.paper, borderRadius: 20, padding: "14px 20px" }}>
-                    <div style={{ fontSize: 10, color: T.soft, fontWeight: 700, letterSpacing: .5, textTransform: "uppercase", marginBottom: 4 }}>Table</div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: T.ink }}>T-08 (Window)</div>
-                  </div>
-                  <div style={{ background: T.paper, borderRadius: 20, padding: "14px 20px" }}>
-                    <div style={{ fontSize: 10, color: T.soft, fontWeight: 700, letterSpacing: .5, textTransform: "uppercase", marginBottom: 4 }}>Deposit</div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: T.ink }}>$40 Paid</div>
-                  </div>
-                </div>
-
-                <button style={{ width: "100%", background: T.p100, color: T.p700, border: "none", borderRadius: 30, padding: "16px", fontSize: 14.5, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "background .2s" }}>
-                  📅 Send Calendar Invite
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </main>
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════
-   AGENT SCREEN
-═══════════════════════════════════════════ */
-function AgentScreen({ onBack, onNavigate }) {
-  const [activeVoice, setActiveVoice] = useState('a');
-  const [is247, setIs247] = useState(false);
-  const scheduleDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
-  return (
-    <div className="dash-wrap" style={{ background: "#F8F7FA" }}>
-      <style>{G}</style>
-      <aside className="dash-sidebar" style={{ display: "flex", flexDirection: "column" }}>
-        <div className="dash-logo"><div className="dash-logo-mark">t</div>talkativ</div>
-        <div className="dash-section-label">Main</div>
-        {[["Dashboard", "dashboard"], ["Calls", "calls"], ["Orders", "orders"], ["Reservations", "reservations"]].map(([l, route]) => (
-          <div key={l} className="dash-nav-item" onClick={() => route && onNavigate && onNavigate(route)}>{l}</div>
-        ))}
-        <div className="dash-section-label">Agent</div>
-        {[["My Agent", "agent"], ["Knowledge base", "knowledge-base"]].map(([l, route]) => (
-          <div key={l} className={`dash-nav-item ${route === "agent" ? "active" : ""}`} onClick={() => route && onNavigate && onNavigate(route)}>{l}</div>
-        ))}
-        <div className="dash-section-label">Account</div>
-        {[["Billing", "billing"], ["Settings", "settings"]].map(([l, route]) => (
-          <div key={l} className="dash-nav-item" onClick={() => route && onNavigate ? onNavigate(route) : null}>{l}</div>
-        ))}
-        
-        <div style={{ marginTop: "auto", borderTop: `1.5px solid ${T.line}`, paddingTop: 20 }}>
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 24, padding: "0 8px" }}>
-            <div style={{ width: 36, height: 36, borderRadius: "50%", background: `linear-gradient(135deg,${T.p400},${T.p700})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "white" }}>TC</div>
-            <div>
-               <div style={{ fontSize: 14.5, fontWeight: 800, color: T.ink, marginBottom: 2 }}>Tony's Pizzeria</div>
-               <div style={{ fontSize: 12.5, color: T.soft, fontWeight: 600, cursor: "pointer", textDecoration: "underline", textDecorationThickness: "1px", textUnderlineOffset: 3 }} onClick={() => onNavigate && onNavigate('landing')}>Logout</div>
-            </div>
-          </div>
-          <button style={{ width: "100%", padding: "12px", background: "white", border: `1.5px solid ${T.line}`, borderRadius: 10, fontSize: 13, fontWeight: 700, color: T.ink, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "all .2s" }}>
-             Customer support ↗
-          </button>
-        </div>
-      </aside>
-
-      <main className="dash-main" style={{ padding: 0 }}>
-        {/* TOP BAR */}
-        <div className="dash-topbar" style={{ padding: "24px 32px", borderBottom: `1.5px solid ${T.line}` }}>
-          <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
-            <button className="resp-show-mobile" onClick={() => document.body.classList.add('mob-nav-open')} style={{ background: "transparent", border: "none", fontSize: 26, cursor: "pointer", padding: 0, color: T.ink, marginTop: -2 }}>☰</button>
-            <div>
-            <div className="dash-date">Wednesday · 18 March 2026</div>
-            <div className="dash-greeting">Good afternoon, Tony 👋</div>
-          </div>
-            </div>
-          <div className="dash-topbar-right">
-            <div className="dash-live-badge"><div style={{ width: 7, height: 7, borderRadius: "50%", background: T.green, animation: "pulse 2s infinite" }} />Agent live</div>
-            <button onClick={onBack} style={{ background: T.white, border: `1.5px solid ${T.line}`, borderRadius: 9, padding: "7px 16px", fontSize: 12.5, fontWeight: 500, color: T.mid, cursor: "pointer", transition: "all .18s" }}>← Back to demo</button>
-            <div className="dash-avatar" style={{ cursor: "pointer" }}>TC</div>
-          </div>
-        </div>
-
-        {/* CONTENT */}
-        <div className="resp-main-pad" style={{ maxWidth: 1100, margin: "0 auto" }}>
-          
-          <div style={{ marginBottom: 32, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div>
-              <h1 style={{ fontSize: 28, fontWeight: 800, color: T.ink, marginBottom: 8, letterSpacing: "-0.5px" }}>Customize your receptionist's identity</h1>
-              <p style={{ fontSize: 14.5, color: T.mid }}>Configure your AI agent's personality, core identity, and greeting.</p>
-            </div>
-            <button style={{ padding: "14px 28px", background: T.ink, border: "none", borderRadius: 16, fontSize: 14, fontWeight: 700, color: "white", cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", transition: "all .2s" }}>Save Configuration</button>
-          </div>
-
-          {/* TOP IDENTITY BANNER */}
-          <div style={{ background: "white", border: `1.5px solid ${T.line}`, borderRadius: 24, padding: "32px", marginBottom: 32, boxShadow: "0 4px 24px rgba(0,0,0,0.02)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-              <div style={{ width: 80, height: 80, borderRadius: "50%", background: `linear-gradient(135deg, ${T.p300}, ${T.p600})`, color: "white", fontSize: 32, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", boxShadow: "0 8px 16px rgba(134,87,255,0.2)" }}>E</div>
-              <div>
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
-                  <div style={{ fontSize: 22, fontWeight: 800, color: T.ink }}>Emily</div>
-                  <div style={{ background: T.p50, color: T.p700, fontSize: 11.5, fontWeight: 700, padding: "4px 10px", borderRadius: 20 }}>✦ AI Receptionist</div>
-                </div>
-                <div style={{ display: "flex", gap: 20, color: T.mid, fontSize: 13.5, fontWeight: 600 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>🏢 Tech Fix Web Design Hosting Training SEO Tyngsboro MA</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>📞 +1 978 932 8576</div>
-                </div>
-              </div>
-            </div>
-
-            <div style={{ borderLeft: `1px dashed ${T.line}`, paddingLeft: 32, display: "flex", flexDirection: "column", gap: 8 }}>
-               <div style={{ fontSize: 11, fontWeight: 800, color: T.soft, letterSpacing: 0.5, textTransform: "uppercase" }}>Capabilities</div>
-               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                 <div style={{ width: 16, height: 16, borderRadius: "50%", background: T.green, display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: 10 }}>✓</div>
-                 <span style={{ fontSize: 13.5, fontWeight: 600, color: T.ink }}>Inbound calls only</span>
-               </div>
-            </div>
-          </div>
-
-          <div className="resp-grid-2" style={{ alignItems: "start", marginBottom: 32 }}>
-            
-            {/* Identity & Greeting (Left) */}
-            <div style={{ background: "white", border: `1.5px solid ${T.line}`, borderRadius: 24, padding: "32px", boxShadow: "0 4px 24px rgba(0,0,0,0.02)", display: "flex", flexDirection: "column", gap: 24 }}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: T.ink }}>Agent Profile</div>
-              
-              <div className="resp-grid-2" style={{ gap: 20 }}>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: T.ink, marginBottom: 8 }}>Agent Name</div>
-                  <input type="text" defaultValue="Emily" style={{ width: "100%", padding: "14px 16px", borderRadius: 12, border: `1.5px solid ${T.line}`, fontSize: 14.5, fontWeight: 500, color: T.ink, background: T.paper }} />
-                </div>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: T.ink, marginBottom: 8 }}>Gender</div>
-                  <select defaultValue="Female" style={{ width: "100%", padding: "14px 16px", borderRadius: 12, border: `1.5px solid ${T.line}`, fontSize: 14.5, fontWeight: 500, color: T.ink, background: T.paper, appearance: "auto" }}>
-                    <option>Female</option>
-                    <option>Male</option>
-                    <option>Custom</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: T.ink, marginBottom: 8 }}>Greeting Phrase</div>
-                <textarea defaultValue="Hi, thank you for calling Tech Fix Web Design Hosting Training SEO Tyngsboro MA! I am Emily, I can speak many languages. How can I help you today?" style={{ width: "100%", padding: "16px", borderRadius: 12, border: `1.5px solid ${T.line}`, fontSize: 14.5, fontWeight: 500, color: T.ink, background: T.paper, minHeight: 110, resize: "vertical", fontFamily: "inherit", lineHeight: 1.5 }} />
-              </div>
-              
-              <button style={{ background: "transparent", border: `1.5px solid ${T.p500}`, borderRadius: 12, padding: "12px", fontSize: 13.5, fontWeight: 700, color: T.p600, cursor: "pointer", display:"flex", alignItems:"center", justifyContent: "center", gap:8, width: "100%", transition: "all .2s" }}>
-                <div style={{ width: 24, height: 24, borderRadius: "50%", background: T.p600, display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: 10 }}>▶</div>
-                Listen to agent voice with greeting message
-              </button>
-            </div>
-
-            {/* Voice Selection (Right) */}
-            <div style={{ background: "white", border: `1.5px solid ${T.line}`, borderRadius: 24, padding: "32px", boxShadow: "0 4px 24px rgba(0,0,0,0.02)" }}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: T.ink, marginBottom: 24 }}>Choose a Voice</div>
-              
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                {[
-                  { id: 'a', name: 'Voice A', desc: 'Energetic & Pushy' },
-                  { id: 'b', name: 'Voice B', desc: 'Steady & Confident' },
-                  { id: 'c', name: 'Voice C', desc: 'Soft & Relaxed' }
-                ].map(v => {
-                  const isActive = activeVoice === v.id;
-                  return (
-                    <div key={v.id} onClick={() => setActiveVoice(v.id)} style={{ padding: "20px 24px", border: `1.5px solid ${isActive ? T.p500 : T.line}`, borderRadius: 16, background: isActive ? T.p50 : "white", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", transition: "all .2s" }}>
-                       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                         <div style={{ width: 44, height: 44, borderRadius: "50%", background: isActive ? "white" : T.paper, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: isActive ? "0 4px 12px rgba(134,87,255,0.15)" : "none", color: isActive ? T.p600 : T.mid, fontSize: 16 }}>🎙</div>
-                         <div>
-                            <div style={{ fontSize: 15, fontWeight: 700, color: isActive ? T.p700 : T.ink, marginBottom: 4 }}>{v.name}</div>
-                            <div style={{ fontSize: 13, color: isActive ? T.p600 : T.mid, fontWeight: 500 }}>{v.desc}</div>
-                         </div>
-                       </div>
-                       
-                       <div style={{ width: 20, height: 20, borderRadius: "50%", border: `2px solid ${isActive ? T.p600 : T.line}`, background: isActive ? T.p600 : "transparent", display: "flex", alignItems: "center", justifyContent: "center", transition: "all .2s" }}>
-                         {isActive && <div style={{ width: 8, height: 8, borderRadius: "50%", background: "white" }} />}
-                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-          </div>
-
-          {/* Working Schedule (Full Width Bottom) */}
-          <div style={{ background: "white", border: `1.5px solid ${T.line}`, borderRadius: 24, padding: "32px", boxShadow: "0 4px 24px rgba(0,0,0,0.02)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 32 }}>
-               <div>
-                 <h2 style={{ fontSize: 18, fontWeight: 800, color: T.ink, marginBottom: 8 }}>Thinking about main receptionist scenarios during working hours</h2>
-                 <p style={{ fontSize: 14, color: T.mid }}>I found that you work on this schedule. Is that correct?</p>
-               </div>
-               
-               <div onClick={() => setIs247(!is247)} style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
-                 <span style={{ fontSize: 14, fontWeight: 600, color: T.ink }}>We operate 24/7</span>
-                 <div style={{ width: 44, height: 24, borderRadius: 12, background: is247 ? T.green : T.mist, position: "relative", transition: "all .2s" }}>
-                   <div style={{ width: 20, height: 20, borderRadius: "50%", background: "white", position: "absolute", top: 2, left: is247 ? 22 : 2, transition: "all .2s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
-                 </div>
-               </div>
-            </div>
-             
-             <div style={{ borderTop: `1px solid ${T.line}`, paddingTop: 32, display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 16, opacity: is247 ? 0.3 : 1, pointerEvents: is247 ? "none" : "auto", transition: "opacity .3s", overflowX: "auto", paddingBottom: 16 }}>
-                {scheduleDays.map(d => {
-                  const isWeekend = d === "Sat" || d === "Sun";
-                  return (
-                    <div key={d} style={{ display: "flex", flexDirection: "column", gap: 12, background: isWeekend ? T.paper : "white", border: `1.5px solid ${isWeekend ? "transparent" : T.line}`, padding: "20px 16px", borderRadius: 16, textAlign: "center" }}>
-                      <span style={{ fontSize: 14, fontWeight: 800, color: isWeekend ? T.mid : T.ink }}>{d}</span>
-                      {!isWeekend ? (
-                        <>
-                          <select style={{ width: "100%", padding: "10px", borderRadius: 8, border: `1px solid ${T.line}`, fontSize: 13, color: T.ink, background: T.paper, outline: "none" }}>
-                            <option>09:00 AM</option>
-                          </select>
-                          <select style={{ width: "100%", padding: "10px", borderRadius: 8, border: `1px solid ${T.line}`, fontSize: 13, color: T.ink, background: T.paper, outline: "none" }}>
-                            <option>05:00 PM</option>
-                          </select>
-                        </>
-                      ) : (
-                        <div style={{ fontSize: 13, color: T.mid, padding: "10px 0", fontWeight: 600 }}>Closed</div>
-                      )}
-                    </div>
-                  )
-                })}
-             </div>
-          </div>
-
-        </div>
-      </main>
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════
-   KNOWLEDGE BASE SCREEN
-═══════════════════════════════════════════ */
-function KnowledgeBaseScreen({ onBack, onNavigate }) {
-  const [faqs, setFaqs] = useState([
-    { id: 1, q: "Do you have vegan options?", a: "Yes, we offer a dedicated vegan menu with several options." },
-    { id: 2, q: "Is the meat halal?", a: "All our chicken and beef is 100% certified halal." }
-  ]);
-  const [menuItems, setMenuItems] = useState([
-    { id: 1, name: "Margherita Pizza", price: "£12.50", desc: "Classic tomato, fresh mozzarella, basil" },
-    { id: 2, name: "Spicy Pepperoni", price: "£14.50", desc: "Double pepperoni, chili flakes, hot honey" }
-  ]);
-  const [syncUrl, setSyncUrl] = useState("https://tonys-pizzeria.com/menu");
-
-  const addFaq = () => setFaqs([...faqs, { id: Date.now(), q: "", a: "" }]);
-  const updateFaq = (id, field, val) => setFaqs(faqs.map(f => f.id === id ? { ...f, [field]: val } : f));
-  const deleteFaq = (id) => setFaqs(faqs.filter(f => f.id !== id));
-
-  const addMenuItem = () => setMenuItems([...menuItems, { id: Date.now(), name: "", price: "", desc: "" }]);
-  const updateMenuItem = (id, field, val) => setMenuItems(menuItems.map(m => m.id === id ? { ...m, [field]: val } : m));
-  const deleteMenuItem = (id) => setMenuItems(menuItems.filter(m => m.id !== id));
-
-  return (
-    <div className="dash-wrap" style={{ background: "#F8F7FA" }}>
-      <style>{G}</style>
-      <aside className="dash-sidebar" style={{ display: "flex", flexDirection: "column" }}>
-        <div className="dash-logo"><div className="dash-logo-mark">t</div>talkativ</div>
-        <div className="dash-section-label">Main</div>
-        {[["Dashboard", "dashboard"], ["Calls", "calls"], ["Orders", "orders"], ["Reservations", "reservations"]].map(([l, route]) => (
-          <div key={l} className="dash-nav-item" onClick={() => route && onNavigate ? onNavigate(route) : null}>{l}</div>
-        ))}
-        <div className="dash-section-label">Agent</div>
-        {[["My Agent", "agent"], ["Knowledge base", "knowledge-base"]].map(([l, route]) => (
-          <div key={l} className={`dash-nav-item ${route === "knowledge-base" ? "active" : ""}`} onClick={() => route && onNavigate && onNavigate(route)}>{l}</div>
-        ))}
-        <div className="dash-section-label">Account</div>
-        {[["Billing", "billing"], ["Settings", "settings"]].map(([l, route]) => (
-          <div key={l} className="dash-nav-item" onClick={() => route && onNavigate ? onNavigate(route) : null}>{l}</div>
-        ))}
-        <div style={{ marginTop: "auto", borderTop: `1.5px solid ${T.line}`, paddingTop: 20 }}>
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 24, padding: "0 8px" }}>
-            <div style={{ width: 36, height: 36, borderRadius: "50%", background: `linear-gradient(135deg,${T.p400},${T.p700})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "white" }}>TC</div>
-            <div>
-               <div style={{ fontSize: 14.5, fontWeight: 800, color: T.ink, marginBottom: 2 }}>Tony's Pizzeria</div>
-               <div style={{ fontSize: 12.5, color: T.soft, fontWeight: 600, cursor: "pointer", textDecoration: "underline", textDecorationThickness: "1px", textUnderlineOffset: 3 }} onClick={() => onNavigate && onNavigate('landing')}>Logout</div>
-            </div>
-          </div>
-          <button style={{ width: "100%", padding: "12px", background: "white", border: `1.5px solid ${T.line}`, borderRadius: 10, fontSize: 13, fontWeight: 700, color: T.ink, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "all .2s" }}>
-             Customer support ↗
-          </button>
-        </div>
-      </aside>
-
-      <main className="dash-main" style={{ padding: 0 }}>
-        {/* TOP BAR */}
-        <div className="dash-topbar" style={{ padding: "24px 32px", borderBottom: `1.5px solid ${T.line}`, background: "white", position: "sticky", top: 0, zIndex: 10 }}>
-          <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
-            <button className="resp-show-mobile" onClick={() => document.body.classList.add('mob-nav-open')} style={{ background: "transparent", border: "none", fontSize: 26, cursor: "pointer", padding: 0, color: T.ink, marginTop: -2 }}>☰</button>
-            <div>
-            <div className="dash-greeting">Train your AI Agent</div>
-          </div>
-            </div>
-          <div className="dash-topbar-right">
-            <button style={{ background: T.ink, border: "none", borderRadius: 9, padding: "9px 20px", fontSize: 13, fontWeight: 700, color: "white", cursor: "pointer", transition: "all .18s", boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}>Save Changes</button>
-          </div>
-        </div>
-
-        {/* CONTENT */}
-        <div className="resp-main-pad" style={{ maxWidth: 1000, margin: "0 auto" }}>
-          
-          {/* FILE UPLOAD & SYNC URL */}
-          <section style={{ background: "white", border: `1.5px solid ${T.line}`, borderRadius: 20, padding: 32, marginBottom: 32, boxShadow: "0 4px 16px rgba(134,87,255,.04)" }}>
-            <div style={{ fontSize: 18, fontWeight: 800, color: T.ink, marginBottom: 8 }}>Documents & Sync URL</div>
-            <div style={{ fontSize: 13.5, color: T.mid, marginBottom: 24, lineHeight: 1.5 }}>Upload PDF, PNG, or DOCX files of your menu or business guidelines, or provide a URL for our AI to automatically sync.</div>
-            
-            <div className="resp-grid-2">
-              <div style={{ border: `2px dashed ${T.p200}`, background: T.p50, borderRadius: 16, padding: "32px 24px", textAlign: "center", cursor: "pointer", transition: "all .2s" }}>
-                <div style={{ width: 48, height: 48, borderRadius: "50%", background: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, margin: "0 auto 16px", color: T.p600, boxShadow: "0 2px 12px rgba(134,87,255,0.1)" }}>📄</div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: T.p700, marginBottom: 4 }}>Click to upload files</div>
-                <div style={{ fontSize: 12, color: T.p400 }}>Supports PDF, PNG, DOCX (Max 10MB)</div>
-              </div>
-              
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                <div>
-                  <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: T.soft, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 8 }}>Live Sync URL</label>
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <input value={syncUrl} onChange={e => setSyncUrl(e.target.value)} style={{ flex: 1, padding: "12px 16px", borderRadius: 10, border: `1.5px solid ${T.line}`, fontSize: 14, outline: "none", background: "white", color: T.ink }} placeholder="https://website.com/menu" />
-                    <button style={{ background: T.paper, border: `1.5px solid ${T.line}`, borderRadius: 10, padding: "0 16px", fontSize: 13, fontWeight: 600, color: T.ink, cursor: "pointer" }}>Sync Now</button>
-                  </div>
-                </div>
-                
-                <div>
-                  <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: T.soft, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 8 }}>Uploaded Files</label>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: "#F6FBF9", border: `1px solid #D1FAE5`, borderRadius: 10 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <div style={{ padding: "6px", background: "white", borderRadius: 6, fontSize: 12 }}>📋</div>
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: "#065F46" }}>menu_spring_2026.pdf</div>
-                        <div style={{ fontSize: 11, color: "#059669" }}>Synced 2 hours ago</div>
-                      </div>
-                    </div>
-                    <button style={{ background: "transparent", border: "none", color: T.red, cursor: "pointer", fontSize: 16, fontWeight: "bold" }}>×</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* MENU LIST */}
-          <section style={{ background: "white", border: `1.5px solid ${T.line}`, borderRadius: 20, padding: 32, marginBottom: 32, boxShadow: "0 4px 16px rgba(134,87,255,.04)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-              <div>
-                <div style={{ fontSize: 18, fontWeight: 800, color: T.ink, marginBottom: 4 }}>Menu Items</div>
-                <div style={{ fontSize: 13.5, color: T.mid }}>Manage what your AI can offer and quote prices for.</div>
-              </div>
-              <button onClick={addMenuItem} style={{ background: T.p100, color: T.p700, border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>+ Add Item</button>
-            </div>
-            
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {menuItems.map(item => (
-                <div key={item.id} style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr 2fr 40px", gap: 12, alignItems: "start", background: T.paper, padding: 16, borderRadius: 12, border: `1px solid ${T.line}` }}>
-                  <input value={item.name} onChange={e => updateMenuItem(item.id, 'name', e.target.value)} placeholder="Item Name (e.g. Margherita)" style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: `1px solid ${T.line}`, fontSize: 13.5, outline: "none", background: "white", color: T.ink }} />
-                  <input value={item.price} onChange={e => updateMenuItem(item.id, 'price', e.target.value)} placeholder="Price (e.g. £12.50)" style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: `1px solid ${T.line}`, fontSize: 13.5, outline: "none", background: "white", color: T.ink }} />
-                  <input value={item.desc} onChange={e => updateMenuItem(item.id, 'desc', e.target.value)} placeholder="Description or dietary info" style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: `1px solid ${T.line}`, fontSize: 13.5, outline: "none", background: "white", color: T.ink }} />
-                  <button onClick={() => deleteMenuItem(item.id)} style={{ height: "40px", background: "white", border: `1px solid ${T.line}`, borderRadius: 8, color: T.red, fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>×</button>
-                </div>
-              ))}
-              {menuItems.length === 0 && <div style={{ fontSize: 13.5, color: T.soft, textAlign: "center", padding: 24 }}>No menu items added.</div>}
-            </div>
-          </section>
-
-          {/* MENU FAQ */}
-          <section style={{ background: "white", border: `1.5px solid ${T.line}`, borderRadius: 20, padding: 32, marginBottom: 32, boxShadow: "0 4px 16px rgba(134,87,255,.04)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-              <div>
-                <div style={{ fontSize: 18, fontWeight: 800, color: T.ink, marginBottom: 4 }}>Frequently Asked Questions</div>
-                <div style={{ fontSize: 13.5, color: T.mid }}>Train your AI on how to answer specific questions perfectly.</div>
-              </div>
-              <button onClick={addFaq} style={{ background: T.p100, color: T.p700, border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>+ Add FAQ</button>
-            </div>
-            
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              {faqs.map(faq => (
-                <div key={faq.id} style={{ display: "flex", gap: 12, alignItems: "flex-start", background: T.paper, padding: 16, borderRadius: 12, border: `1px solid ${T.line}` }}>
-                  <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 12 }}>
-                    <input value={faq.q} onChange={e => updateFaq(faq.id, 'q', e.target.value)} placeholder="Question" style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${T.line}`, fontSize: 14, fontWeight: 600, outline: "none", background: "white", color: T.ink }} />
-                    <textarea value={faq.a} onChange={e => updateFaq(faq.id, 'a', e.target.value)} placeholder="Answer" rows={2} style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${T.line}`, fontSize: 13.5, outline: "none", resize: "vertical", background: "white", color: T.ink }} />
-                  </div>
-                  <button onClick={() => deleteFaq(faq.id)} style={{ height: "42px", width: "42px", flexShrink: 0, background: "white", border: `1px solid ${T.line}`, borderRadius: 8, color: T.red, fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>×</button>
-                </div>
-              ))}
-              {faqs.length === 0 && <div style={{ fontSize: 13.5, color: T.soft, textAlign: "center", padding: 24 }}>No FAQs added.</div>}
-            </div>
-          </section>
-
-          {/* POLICIES GRID */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32 }}>
-            {/* BUSINESS OPENING HOURS */}
-            <section style={{ background: "white", border: `1.5px solid ${T.line}`, borderRadius: 20, padding: 32, boxShadow: "0 4px 16px rgba(134,87,255,.04)" }}>
-              <div style={{ fontSize: 17, fontWeight: 800, color: T.ink, marginBottom: 20 }}>Business Hours</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map(day => {
-                   const isWeekend = day === "Sunday";
-                   return (
-                    <div key={day} style={{ display: "grid", gridTemplateColumns: "90px 1fr 1fr", gap: 12, alignItems: "center" }}>
-                      <span style={{ fontSize: 13.5, fontWeight: 600, color: isWeekend ? T.mid : T.ink }}>{day}</span>
-                      {!isWeekend ? (
-                        <>
-                          <input type="time" defaultValue="09:00" style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px solid ${T.line}`, fontSize: 13, color: T.ink, background: "white", outline: "none" }} />
-                          <input type="time" defaultValue="17:00" style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px solid ${T.line}`, fontSize: 13, color: T.ink, background: "white", outline: "none" }} />
-                        </>
-                      ) : (
-                        <div style={{ gridColumn: "span 2", fontSize: 13, color: T.mid, padding: "8px 12px", background: "white", borderRadius: 8, textAlign: "center", border: `1px solid transparent` }}>Closed</div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            </section>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
-              {/* RESERVATION POLICIES */}
-              <section style={{ background: "white", border: `1.5px solid ${T.line}`, borderRadius: 20, padding: 24, boxShadow: "0 4px 16px rgba(134,87,255,.04)" }}>
-                <div style={{ fontSize: 16, fontWeight: 800, color: T.ink, marginBottom: 16 }}>Reservation Policies</div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                  <div>
-                    <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: T.soft, marginBottom: 6 }}>Maximum Party Size</label>
-                    <input type="number" defaultValue={8} style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: `1px solid ${T.line}`, fontSize: 14, outline: "none", color: T.ink, background: "white" }} />
-                  </div>
-                  <div>
-                    <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: T.soft, marginBottom: 6 }}>Booking Window</label>
-                    <select style={{ width: "100%", padding: "10px 30px 10px 14px", borderRadius: 8, border: `1px solid ${T.line}`, fontSize: 14, outline: "none", background: "white", color: T.ink, cursor: "pointer", fontFamily: "inherit" }}>
-                      <option>Up to 30 days in advance</option>
-                      <option>Up to 14 days in advance</option>
-                      <option>Up to 7 days in advance</option>
-                    </select>
-                  </div>
-                </div>
-              </section>
-
-              {/* ORDERING POLICIES */}
-              <section style={{ background: "white", border: `1.5px solid ${T.line}`, borderRadius: 20, padding: 24, boxShadow: "0 4px 16px rgba(134,87,255,.04)" }}>
-                <div style={{ fontSize: 16, fontWeight: 800, color: T.ink, marginBottom: 16 }}>Ordering Policies</div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-                  <div style={{ gridColumn: "span 2" }}>
-                    <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: T.soft, marginBottom: 6 }}>Delivery Radius</label>
-                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                      <input type="number" defaultValue={3} style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: `1px solid ${T.line}`, fontSize: 14, outline: "none", background: "white", color: T.ink }} />
-                      <span style={{ fontSize: 14, color: T.mid, fontWeight: 600 }}>miles</span>
-                    </div>
-                  </div>
-                  <div>
-                    <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: T.soft, marginBottom: 6 }}>Minimum Order</label>
-                    <div style={{ position: "relative" }}>
-                      <span style={{ position: "absolute", left: 12, top: 10, fontSize: 14, color: T.mid }}>£</span>
-                      <input type="number" defaultValue={15} style={{ width: "100%", padding: "10px 14px 10px 24px", borderRadius: 8, border: `1px solid ${T.line}`, fontSize: 14, outline: "none", background: "white", color: T.ink }} />
-                    </div>
-                  </div>
-                  <div>
-                    <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: T.soft, marginBottom: 6 }}>Delivery Fee</label>
-                    <div style={{ position: "relative" }}>
-                      <span style={{ position: "absolute", left: 12, top: 10, fontSize: 14, color: T.mid }}>£</span>
-                      <input type="number" defaultValue={2.5} style={{ width: "100%", padding: "10px 14px 10px 24px", borderRadius: 8, border: `1px solid ${T.line}`, fontSize: 14, outline: "none", background: "white", color: T.ink }} />
-                    </div>
-                  </div>
-                </div>
-              </section>
-            </div>
-          </div>
-          <div style={{ height: 60 }} />
-        </div>
-      </main>
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════
-   BILLING & PLANS SCREEN
-═══════════════════════════════════════════ */
-function BillingScreen({ onBack, onNavigate }) {
-  const [reservationDeposit, setReservationDeposit] = useState(true);
-  const [deliveryDeposit, setDeliveryDeposit] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = 3;
-
-  return (
-    <div className="dash-wrap" style={{ background: "#F8F7FA" }}>
-      <style>{G}</style>
-      <aside className="dash-sidebar" style={{ display: "flex", flexDirection: "column" }}>
-        <div className="dash-logo"><div className="dash-logo-mark">t</div>talkativ</div>
-        <div className="dash-section-label">Main</div>
-        {[["Dashboard", "dashboard"], ["Calls", "calls"], ["Orders", "orders"], ["Reservations", "reservations"]].map(([l, route]) => (
-          <div key={l} className="dash-nav-item" onClick={() => route && onNavigate ? onNavigate(route) : null}>{l}</div>
-        ))}
-        <div className="dash-section-label">Agent</div>
-        {[["My Agent", "agent"], ["Knowledge base", "knowledge-base"]].map(([l, route]) => (
-          <div key={l} className="dash-nav-item" onClick={() => route && onNavigate && onNavigate(route)}>{l}</div>
-        ))}
-        <div className="dash-section-label">Account</div>
-        {[["Billing", "billing"], ["Settings", "settings"]].map(([l, route]) => (
-          <div key={l} className={`dash-nav-item ${route === "billing" ? "active" : ""}`} onClick={() => route && onNavigate ? onNavigate(route) : null}>{l}</div>
-        ))}
-        <div style={{ marginTop: "auto", borderTop: `1.5px solid ${T.line}`, paddingTop: 20 }}>
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 24, padding: "0 8px" }}>
-            <div style={{ width: 36, height: 36, borderRadius: "50%", background: `linear-gradient(135deg,${T.p400},${T.p700})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "white" }}>TC</div>
-            <div>
-               <div style={{ fontSize: 14.5, fontWeight: 800, color: T.ink, marginBottom: 2 }}>Tony's Pizzeria</div>
-               <div style={{ fontSize: 12.5, color: T.soft, fontWeight: 600, cursor: "pointer", textDecoration: "underline", textDecorationThickness: "1px", textUnderlineOffset: 3 }} onClick={() => onNavigate && onNavigate('landing')}>Logout</div>
-            </div>
-          </div>
-          <button style={{ width: "100%", padding: "12px", background: "white", border: `1.5px solid ${T.line}`, borderRadius: 10, fontSize: 13, fontWeight: 700, color: T.ink, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "all .2s" }}>
-             Customer support ↗
-          </button>
-        </div>
-      </aside>
-
-      <main className="dash-main" style={{ padding: 0 }}>
-        {/* TOP BAR */}
-        <div className="dash-topbar" style={{ padding: "24px 32px", borderBottom: `1.5px solid ${T.line}`, background: "white", position: "sticky", top: 0, zIndex: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
-            <button className="resp-show-mobile" onClick={() => document.body.classList.add('mob-nav-open')} style={{ background: "transparent", border: "none", fontSize: 26, cursor: "pointer", padding: 0, color: T.ink, marginTop: -2 }}>☰</button>
-            <div>
-            <div style={{ fontSize: 24, fontWeight: 800, color: T.ink, marginBottom: 4 }}>Billing & Plans</div>
-            <div style={{ fontSize: 14, color: T.mid }}>Manage your subscription, monitor usage, and update your payment information with ease.</div>
-          </div>
-          <div>
-            <button style={{ background: T.p100, border: "none", borderRadius: 20, padding: "10px 20px", fontSize: 13, fontWeight: 700, color: T.p700, cursor: "pointer", transition: "all .18s" }}>Download All Invoices</button>
-          </div>
-            </div>
-        </div>
-
-        {/* CONTENT */}
-        <div className="resp-main-pad" style={{ maxWidth: 1050, margin: "0 auto", display: "flex", flexDirection: "column", gap: 24 }}>
-          
-          <div className="resp-grid-2">
-            {/* CURRENT PLAN */}
-            <div style={{ background: `linear-gradient(135deg, #6C3CE9, #5527D1)`, borderRadius: 24, padding: 32, display: "flex", flexDirection: "column", color: "white", position: "relative", overflow: "hidden", boxShadow: "0 12px 24px rgba(108,60,233,0.2)" }}>
-              <div style={{ position: "absolute", top: 24, right: 24, fontSize: 24, opacity: 0.2 }}>✨</div>
-              <div style={{ background: "rgba(255,255,255,0.15)", display: "inline-block", padding: "4px 12px", borderRadius: 20, fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 24, alignSelf: "flex-start" }}>Current Plan</div>
-              
-              <div style={{ fontSize: 32, fontWeight: 800, marginBottom: 8 }}>Pro Business</div>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: "auto" }}>
-                <span style={{ fontSize: 42, fontWeight: 800 }}>$99</span>
-                <span style={{ fontSize: 15, opacity: 0.8, fontWeight: 600 }}>/ month</span>
-              </div>
-
-              <div style={{ height: 1, background: "rgba(255,255,255,0.15)", margin: "32px 0 24px 0" }} />
-              
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div>
-                  <div style={{ fontSize: 11, opacity: 0.8, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>Next Renewal</div>
-                  <div style={{ fontSize: 14.5, fontWeight: 700 }}>October 12, 2026</div>
-                </div>
-                <button style={{ background: "white", color: "#6C3CE9", border: "none", borderRadius: 24, padding: "10px 24px", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}>Change Plan</button>
-              </div>
-            </div>
-
-            {/* USAGE METRICS */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              {/* Calls Used */}
-              <div style={{ background: "white", borderRadius: 24, padding: 24, border: `1px solid ${T.line}`, boxShadow: "0 4px 16px rgba(134,87,255,.04)" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontSize: 15, fontWeight: 800, color: T.ink }}>Calls Used</span>
-                  </div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: T.mid }}>1,248 / 5,000</div>
-                </div>
-                <div style={{ height: 8, background: T.paper, borderRadius: 4, overflow: "hidden", marginBottom: 12 }}>
-                  <div style={{ width: "25%", height: "100%", background: "#6C3CE9", borderRadius: 4 }} />
-                </div>
-                <div style={{ fontSize: 11, color: T.soft, fontStyle: "italic" }}>25% of monthly allowance used</div>
-              </div>
-
-              {/* Agent Usage */}
-              <div style={{ background: "white", borderRadius: 24, padding: 24, border: `1px solid ${T.line}`, boxShadow: "0 4px 16px rgba(134,87,255,.04)" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontSize: 15, fontWeight: 800, color: T.ink }}>Agent Usage</span>
-                  </div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: "#6C3CE9" }}>88%</div>
-                </div>
-                <div style={{ display: "flex", gap: 4, height: 16, marginBottom: 12 }}>
-                  {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <div key={i} style={{ flex: 1, background: i <= 5 ? "#8B5CF6" : T.paper, borderRadius: 2, opacity: i === 5 ? 0.7 : 1 }} />
                   ))}
                 </div>
-                <div style={{ fontSize: 11, color: T.soft, fontStyle: "italic" }}>Agent active capacity approaching limit</div>
               </div>
             </div>
-          </div>
-
-          <div className="resp-grid-split">
-            {/* PAYMENT METHOD */}
-            <div style={{ background: "white", borderRadius: 24, padding: 32, border: `1px solid ${T.line}`, boxShadow: "0 4px 16px rgba(134,87,255,.04)" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-                <div style={{ fontSize: 17, fontWeight: 800, color: T.ink }}>Payment Method</div>
-                <div style={{ fontSize: 18, color: T.mid }}>💳</div>
-              </div>
-              <div style={{ background: "#F8F7FA", borderRadius: 16, padding: "20px 24px", display: "flex", alignItems: "center", gap: 16, marginBottom: 24 }}>
-                <div style={{ background: "#1A1F36", color: "white", fontSize: 11, fontWeight: 800, padding: "6px 12px", borderRadius: 6, fontStyle: "italic" }}>VISA</div>
-                <div>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: T.ink, letterSpacing: 2 }}>•••• •••• •••• 4242</div>
-                  <div style={{ fontSize: 12, color: T.soft, marginTop: 4 }}>Expires 12/26</div>
-                </div>
-              </div>
-              <div style={{ display: "flex", gap: 12 }}>
-                <button style={{ flex: 1, background: "white", border: `1.5px solid ${T.line}`, borderRadius: 20, padding: "10px", fontSize: 13, fontWeight: 700, color: "#6C3CE9", cursor: "pointer" }}>Edit</button>
-                <button style={{ flex: 1, background: T.paper, border: "none", borderRadius: 20, padding: "10px", fontSize: 13, fontWeight: 700, color: T.ink, cursor: "pointer" }}>Add New</button>
-              </div>
-            </div>
-
-            {/* TAX INFORMATION */}
-            <div style={{ background: "white", borderRadius: 24, padding: 32, border: `1px solid ${T.line}`, boxShadow: "0 4px 16px rgba(134,87,255,.04)", position: "relative" }}>
-              <button style={{ position: "absolute", top: 32, right: 32, background: "transparent", border: "none", color: "#6C3CE9", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>✎ Update Details</button>
-              <div style={{ fontSize: 17, fontWeight: 800, color: T.ink, marginBottom: 24 }}>Tax Information</div>
-              
-              <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-                <div className="resp-grid-2">
-                  <div>
-                    <div style={{ fontSize: 10, fontWeight: 800, color: T.soft, letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>Business Name</div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: T.ink }}>Tony's Pizzeria</div>
-                  </div>
-                </div>
-                <div>
-                  <div style={{ fontSize: 10, fontWeight: 800, color: T.soft, letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>Billing Address</div>
-                  <div style={{ fontSize: 14, color: T.ink, lineHeight: 1.6 }}>
-                    123 Culinary Way, Suite 400<br />
-                    Manchester, M2 1WU<br />
-                    United Kingdom
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* DEPOSIT SETTINGS */}
-          <div style={{ background: "white", borderRadius: 24, padding: 32, border: `1px solid ${T.line}`, boxShadow: "0 4px 16px rgba(134,87,255,.04)" }}>
-            <div style={{ fontSize: 17, fontWeight: 800, color: T.ink, marginBottom: 24 }}>Deposit Settings</div>
-            <div className="resp-grid-2" style={{ gap: 32 }}>
-              
-              <div style={{ padding: "24px", border: `1.5px solid ${T.line}`, borderRadius: 16, background: "#F8F7FA" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                  <div style={{ fontSize: 15, fontWeight: 800, color: T.ink }}>Reservation Deposit</div>
-                  {/* Toggle Switch */}
-                  <div onClick={() => setReservationDeposit(!reservationDeposit)} style={{ width: 44, height: 24, borderRadius: 12, background: reservationDeposit ? "#6C3CE9" : T.mist, position: "relative", cursor: "pointer", transition: "all .2s" }}>
-                    <div style={{ width: 20, height: 20, borderRadius: "50%", background: "white", position: "absolute", top: 2, left: reservationDeposit ? 22 : 2, transition: "all .2s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
-                  </div>
-                </div>
-                <div style={{ fontSize: 13, color: T.mid, marginBottom: 20 }}>Require a deposit for booking slots</div>
-                <div>
-                  <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: T.soft, marginBottom: 8 }}>Deposit Amount ($)</label>
-                  <input type="number" defaultValue={25.00} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: `1px solid ${T.line}`, fontSize: 14, outline: "none", background: "white", color: T.ink }} disabled={!reservationDeposit} />
-                </div>
-              </div>
-
-              <div style={{ padding: "24px", border: `1.5px solid ${T.line}`, borderRadius: 16, background: "#F8F7FA" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                  <div style={{ fontSize: 15, fontWeight: 800, color: T.ink }}>Delivery Deposit</div>
-                  {/* Toggle Switch */}
-                  <div onClick={() => setDeliveryDeposit(!deliveryDeposit)} style={{ width: 44, height: 24, borderRadius: 12, background: deliveryDeposit ? "#6C3CE9" : T.mist, position: "relative", cursor: "pointer", transition: "all .2s" }}>
-                    <div style={{ width: 20, height: 20, borderRadius: "50%", background: "white", position: "absolute", top: 2, left: deliveryDeposit ? 22 : 2, transition: "all .2s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
-                  </div>
-                </div>
-                <div style={{ fontSize: 13, color: T.mid, marginBottom: 20 }}>Upfront payment for delivery services</div>
-                <div>
-                  <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: T.soft, marginBottom: 8 }}>Deposit Amount ($)</label>
-                  <input type="number" placeholder="Enter amount..." style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: `1px solid ${T.line}`, fontSize: 14, outline: "none", background: "white", color: T.ink }} disabled={!deliveryDeposit} />
-                </div>
-              </div>
-
-            </div>
-          </div>
-
-          {/* BILLING HISTORY */}
-          <div style={{ overflowX: "auto", background: "white", borderRadius: 24, padding: "32px 32px 24px", border: `1px solid ${T.line}`, boxShadow: "0 4px 16px rgba(134,87,255,.04)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-              <div style={{ fontSize: 17, fontWeight: 800, color: T.ink }}>Billing History</div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: T.mid, cursor: "pointer" }}>
-                Showing last 6 months <span style={{ fontSize: 10 }}>▼</span>
-              </div>
-            </div>
-
-            <div style={{ minWidth: 600, display: "grid", gridTemplateColumns: "1.5fr 2fr 1fr 1fr 40px", gap: 16, padding: "12px 0", borderBottom: `2px solid ${T.paper}`, fontSize: 11, fontWeight: 800, color: T.soft, letterSpacing: 1, textTransform: "uppercase" }}>
-              <div>Invoice Date</div>
-              <div>Invoice ID</div>
-              <div>Amount</div>
-              <div>Status</div>
-              <div></div>
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              {[
-                { d: "Sep 12, 2026", id: "#INV-2026-009", a: "$99.00", s: "Paid" },
-                { d: "Aug 12, 2026", id: "#INV-2026-008", a: "$99.00", s: "Paid" },
-                { d: "Jul 12, 2026", id: "#INV-2026-007", a: "$99.00", s: "Paid" },
-                { d: "Jun 12, 2026", id: "#INV-2026-006", a: "$142.50", s: "Paid", meta: "Included overages" },
-              ].map((inv, i) => (
-                <div key={i} style={{ minWidth: 600, display: "grid", gridTemplateColumns: "1.5fr 2fr 1fr 1fr 40px", gap: 16, padding: "20px 0", borderBottom: i === 3 ? "none" : `1px solid ${T.paper}`, alignItems: "center", fontSize: 14 }}>
-                  <div style={{ fontWeight: 600, color: T.ink }}>{inv.d}</div>
-                  <div style={{ color: T.mid }}>{inv.id}</div>
-                  <div style={{ fontWeight: 800, color: T.ink }}>{inv.a}</div>
-                  <div>
-                    <span style={{ background: "#D1FAE5", color: "#065F46", padding: "4px 10px", borderRadius: 12, fontSize: 11, fontWeight: 700 }}>{inv.s}</span>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    {inv.meta && <div style={{ fontSize: 11, fontStyle: "italic", color: T.soft, whiteSpace: "nowrap", position: "relative", right: 20 }}>{inv.meta}</div>}
-                    <button style={{ background: "transparent", border: "none", color: "#6C3CE9", cursor: "pointer", fontSize: 16, fontWeight: "bold" }}>↓</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Pagination Controls */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 24, paddingTop: 20, borderTop: `1px solid ${T.line}` }}>
-              <div style={{ fontSize: 13, color: T.soft, fontWeight: 500 }}>Showing 1-4 of 12 invoices</div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button 
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  style={{ background: currentPage === 1 ? T.paper : "white", border: `1px solid ${T.line}`, borderRadius: 8, padding: "6px 14px", fontSize: 13, fontWeight: 600, color: currentPage === 1 ? T.soft : T.ink, cursor: currentPage === 1 ? "not-allowed" : "pointer", transition: "all .2s" }}>
-                  Previous
-                </button>
-                <button 
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                  style={{ background: currentPage === totalPages ? T.paper : "white", border: `1px solid ${T.line}`, borderRadius: 8, padding: "6px 14px", fontSize: 13, fontWeight: 600, color: currentPage === totalPages ? T.soft : T.ink, cursor: currentPage === totalPages ? "not-allowed" : "pointer", transition: "all .2s" }}>
-                  Next
-                </button>
-              </div>
-            </div>
-
-          </div>
-
-          <div style={{ height: 60 }} />
+          )}
         </div>
-      </main>
-    </div>
+      </div>
+    </>
   );
 }
 
 /* ═══════════════════════════════════════════
-   SETTINGS SCREEN
+   APP
 ═══════════════════════════════════════════ */
-function SettingsScreen({ onBack, onNavigate }) {
-  const [profileName, setProfileName] = useState("Tony's Pizzeria");
-  const [email, setEmail] = useState("tony@tonyspizzeria.com");
-  const [phone, setPhone] = useState("+1 (555) 123-4567");
+const PAGE_MAP = {
+  "Dashboard":    PageDashboard,
+  "Calls":        PageCalls,
+  "Orders":       PageOrders,
+  "Reservations": PageReservations,
+  "My Agent":     PageMyAgent,
+  "Voice & Script": PageVoiceScript,
+  "Menu":         PageMenu,
+  "Integrations": PageIntegrations,
+  "Billing":      PageBilling,
+  "Settings":     PageSettings,
+};
 
-  const [emailAlerts, setEmailAlerts] = useState(true);
-  const [smsAlerts, setSmsAlerts] = useState(false);
-  const [autoReply, setAutoReply] = useState(true);
 
+function DashboardApp({ onBack }) {
+  const [active, setActive] = useState("Dashboard");
+  const PageComponent = PAGE_MAP[active] || PageDashboard;
   return (
-    <div className="dash-wrap" style={{ background: "#F8F7FA" }}>
-      <style>{G}</style>
-      <aside className="dash-sidebar" style={{ display: "flex", flexDirection: "column" }}>
-        <div className="dash-logo"><div className="dash-logo-mark">t</div>talkativ</div>
-        <div className="dash-section-label">Main</div>
-        {[["Dashboard", "dashboard"], ["Calls", "calls"], ["Orders", "orders"], ["Reservations", "reservations"]].map(([l, route]) => (
-          <div key={l} className="dash-nav-item" onClick={() => route && onNavigate ? onNavigate(route) : null}>{l}</div>
-        ))}
-        <div className="dash-section-label">Agent</div>
-        {[["My Agent", "agent"], ["Knowledge base", "knowledge-base"]].map(([l, route]) => (
-          <div key={l} className="dash-nav-item" onClick={() => route && onNavigate && onNavigate(route)}>{l}</div>
-        ))}
-        <div className="dash-section-label">Account</div>
-        {[["Billing", "billing"], ["Settings", "settings"]].map(([l, route]) => (
-          <div key={l} className={`dash-nav-item ${route === "settings" ? "active" : ""}`} onClick={() => route && onNavigate ? onNavigate(route) : null}>{l}</div>
-        ))}
-        <div style={{ marginTop: "auto", borderTop: `1.5px solid ${T.line}`, paddingTop: 20 }}>
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 24, padding: "0 8px" }}>
-            <div style={{ width: 36, height: 36, borderRadius: "50%", background: `linear-gradient(135deg,${T.p400},${T.p700})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "white" }}>TC</div>
-            <div>
-               <div style={{ fontSize: 14.5, fontWeight: 800, color: T.ink, marginBottom: 2 }}>Tony's Pizzeria</div>
-               <div style={{ fontSize: 12.5, color: T.soft, fontWeight: 600, cursor: "pointer", textDecoration: "underline", textDecorationThickness: "1px", textUnderlineOffset: 3 }} onClick={() => onNavigate && onNavigate('landing')}>Logout</div>
-            </div>
-          </div>
-          <button style={{ width: "100%", padding: "12px", background: "white", border: `1.5px solid ${T.line}`, borderRadius: 10, fontSize: 13, fontWeight: 700, color: T.ink, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "all .2s" }}>
-             Customer support ↗
-          </button>
-        </div>
-      </aside>
-
-      <main className="dash-main" style={{ padding: 0 }}>
-        {/* TOP BAR */}
-        <div className="dash-topbar" style={{ padding: "24px 32px", borderBottom: `1.5px solid ${T.line}`, background: "white", position: "sticky", top: 0, zIndex: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
-            <button className="resp-show-mobile" onClick={() => document.body.classList.add('mob-nav-open')} style={{ background: "transparent", border: "none", fontSize: 26, cursor: "pointer", padding: 0, color: T.ink, marginTop: -2 }}>☰</button>
-            <div>
-            <div style={{ fontSize: 24, fontWeight: 800, color: T.ink, marginBottom: 4 }}>Settings</div>
-            <div style={{ fontSize: 14, color: T.mid }}>Manage your business profile, team members, and overall application preferences.</div>
-          </div>
-          <div>
-            <button style={{ background: T.ink, border: "none", borderRadius: 20, padding: "10px 20px", fontSize: 13, fontWeight: 700, color: "white", cursor: "pointer", transition: "all .18s", boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}>Save Changes</button>
-          </div>
-            </div>
-        </div>
-
-        {/* CONTENT */}
-        <div className="resp-main-pad" style={{ maxWidth: 900, margin: "0 auto", display: "flex", flexDirection: "column", gap: 32 }}>
-          
-          {/* PROFILE CARD */}
-          <section style={{ background: "white", borderRadius: 24, padding: 32, border: `1px solid ${T.line}`, boxShadow: "0 4px 16px rgba(134,87,255,.04)" }}>
-            <div style={{ fontSize: 18, fontWeight: 800, color: T.ink, marginBottom: 24 }}>Business Profile</div>
-            
-            <div style={{ display: "flex", alignItems: "center", gap: 24, marginBottom: 32 }}>
-              <div style={{ width: 80, height: 80, borderRadius: "50%", background: `linear-gradient(135deg,${T.p400},${T.p700})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 800, color: "white", boxShadow: "0 4px 12px rgba(134,87,255,0.2)" }}>TC</div>
-              <div style={{ display: "flex", gap: 12 }}>
-                <button style={{ background: "white", border: `1.5px solid ${T.line}`, borderRadius: 20, padding: "8px 16px", fontSize: 13, fontWeight: 700, color: T.ink, cursor: "pointer" }}>Upload New</button>
-                <button style={{ background: "transparent", border: "none", color: T.red, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Remove</button>
-              </div>
-            </div>
-
-            <div className="resp-grid-2">
-              <div>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: T.soft, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 8 }}>Business Name</label>
-                <input value={profileName} onChange={e => setProfileName(e.target.value)} style={{ width: "100%", padding: "12px 16px", borderRadius: 10, border: `1.5px solid ${T.line}`, fontSize: 14, outline: "none", color: T.ink, background: "#F8F7FA" }} />
-              </div>
-              <div style={{ gridColumn: "span 1" }}></div>
-              <div>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: T.soft, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 8 }}>Email Address</label>
-                <input value={email} onChange={e => setEmail(e.target.value)} style={{ width: "100%", padding: "12px 16px", borderRadius: 10, border: `1.5px solid ${T.line}`, fontSize: 14, outline: "none", color: T.ink, background: "#F8F7FA" }} />
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: T.soft, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 8 }}>Phone Number</label>
-                <input value={phone} onChange={e => setPhone(e.target.value)} style={{ width: "100%", padding: "12px 16px", borderRadius: 10, border: `1.5px solid ${T.line}`, fontSize: 14, outline: "none", color: T.ink, background: "#F8F7FA" }} />
-              </div>
-              
-              <div>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: T.soft, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 8 }}>Order notification email</label>
-                <input placeholder="orders@tonyspizzeria.com" style={{ width: "100%", padding: "12px 16px", borderRadius: 10, border: `1.5px solid ${T.line}`, fontSize: 14, outline: "none", color: T.ink, background: "#F8F7FA" }} />
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: T.soft, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 8 }}>Order webhook url</label>
-                <input placeholder="https://api.example.com/webhook" style={{ width: "100%", padding: "12px 16px", borderRadius: 10, border: `1.5px solid ${T.line}`, fontSize: 14, outline: "none", color: T.ink, background: "#F8F7FA" }} />
-              </div>
-            </div>
-          </section>
-
-
-
-          {/* SECURITY */}
-          <section style={{ background: "white", borderRadius: 24, padding: 32, border: `1px solid ${T.line}`, boxShadow: "0 4px 16px rgba(134,87,255,.04)" }}>
-            <div style={{ fontSize: 18, fontWeight: 800, color: T.ink, marginBottom: 24 }}>Security</div>
-            
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#F8F7FA", padding: "20px 24px", borderRadius: 16 }}>
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: T.ink, marginBottom: 4 }}>Password</div>
-                <div style={{ fontSize: 12, color: T.soft }}>Last changed 3 months ago</div>
-              </div>
-              <button style={{ background: "white", border: `1.5px solid ${T.line}`, borderRadius: 20, padding: "8px 20px", fontSize: 13, fontWeight: 700, color: T.ink, cursor: "pointer" }}>Change Password</button>
-            </div>
-            
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#FEF2F2", padding: "20px 24px", borderRadius: 16, marginTop: 16 }}>
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: "#991B1B", marginBottom: 4 }}>Delete Account</div>
-                <div style={{ fontSize: 12, color: "#B91C1C" }}>Permanently remove your account and all associated data.</div>
-              </div>
-              <button style={{ background: "#DC2626", border: "none", borderRadius: 20, padding: "8px 20px", fontSize: 13, fontWeight: 700, color: "white", cursor: "pointer" }}>Delete account</button>
-            </div>
-          </section>
-
-          <div style={{ height: 60 }} />
-        </div>
+    <div className="dash-wrap">
+      <Sidebar active={active} onNav={(p) => { setActive(p); document.body.classList.remove('mob-nav-open'); window.scrollTo(0,0); }} />
+      <main className="dash-main" key={active}>
+        <div className="dash-overlay" onClick={() => document.body.classList.remove('mob-nav-open')} />
+        <PageComponent />
       </main>
     </div>
   );
 }
 
-/* ═══════════════════════════════════════════
-   APP ROUTER
-═══════════════════════════════════════════ */
 export default function App() {
   const [screen, setScreen] = useState("landing");
   const [step, setStep] = useState(0);
 
   const go = s => { document.body.classList.remove('mob-nav-open'); setScreen(s); window.scrollTo(0, 0); };
 
-  const nextOb = () => { if (step < 4) { setStep(step + 1); go(`ob${step + 1}`); } else go("success"); };
+  const nextOb = () => { if (step < 7) { setStep(step + 1); go(`ob${step + 1}`); } else go("success"); };
   const backOb = () => { if (step > 0) { setStep(step - 1); go(`ob${step - 1}`); } else go("landing"); };
 
-    const renderScreen = () => {
+  const renderScreen = () => {
     if (screen === "landing")   return <Landing onCTA={() => { setStep(0); go("ob0"); }} />;
-      if (screen === "ob0")       return <Step0 onNext={nextOb} onBack={backOb} />;
-      if (screen === "ob1")       return <Step2 onNext={nextOb} onBack={backOb} />;
-      if (screen === "ob2")       return <Step4 onNext={nextOb} onBack={backOb} />;
-      if (screen === "ob3")       return <Step5 onNext={nextOb} onBack={backOb} />;
-      if (screen === "ob4")       return <Step6 onNext={() => go("success")} onBack={backOb} />;
-      if (screen === "success")         return <SuccessScreen onDashboard={() => go("dashboard")} />;
-      if (screen === "dashboard")       return <Dashboard onBack={() => go("landing")} onNavigate={go} />;
-      if (screen === "calls")           return <CallsScreen onBack={() => go("landing")} onNavigate={go} />;
-      if (screen === "orders")          return <OrdersScreen onBack={() => go("landing")} onNavigate={go} />;
-      if (screen === "reservations")    return <ReservationsScreen onBack={() => go("landing")} onNavigate={go} />;
-      if (screen === "agent")           return <AgentScreen onBack={() => go("landing")} onNavigate={go} />;
-      if (screen === "knowledge-base")  return <KnowledgeBaseScreen onBack={() => go("landing")} onNavigate={go} />;
-      if (screen === "billing")         return <BillingScreen onBack={() => go("landing")} onNavigate={go} />;
-      if (screen === "settings")        return <SettingsScreen onBack={() => go("landing")} onNavigate={go} />;
+    if (screen === "ob0")       return <Step0 onNext={nextOb} onBack={backOb} />;
+    if (screen === "ob1")       return <Step1 onNext={nextOb} onBack={backOb} />;
+    if (screen === "ob2")       return <Step2 onNext={nextOb} onBack={backOb} />;
+    if (screen === "ob3")       return <Step3 onNext={nextOb} onBack={backOb} />;
+    if (screen === "ob4")       return <Step4 onNext={nextOb} onBack={backOb} />;
+    if (screen === "ob5")       return <Step5 onNext={nextOb} onBack={backOb} />;
+    if (screen === "ob6")       return <Step6 onNext={nextOb} onBack={backOb} />;
+    if (screen === "ob7")       return <Step7 onNext={() => go("success")} onBack={backOb} />;
+    if (screen === "success")   return <SuccessScreen onDashboard={() => go("dashboard")} />;
+    if (screen === "dashboard") return <DashboardApp onBack={() => go("landing")} />;
   };
 
   return (
     <>
-      <div className="dash-overlay" onClick={() => document.body.classList.remove('mob-nav-open')} />
+      <style>{G}</style>
       {renderScreen()}
     </>
   );
