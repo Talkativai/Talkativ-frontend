@@ -1101,7 +1101,7 @@ function ObShell({ step, children, onNext, onBack, nextLabel = "Continue →" })
 /* ═══════════════════════════════════════════
    LANDING PAGE
 ═══════════════════════════════════════════ */
-function Landing({ onCTA }) {
+function Landing({ onCTA, onLogin }) {
   return (
     <div style={{ background: T.ivory }}>
       <style>{G}</style>
@@ -1118,6 +1118,7 @@ function Landing({ onCTA }) {
           ))}
         </div>
         <div className="nav-right">
+          <button className="btn-ghost" onClick={onLogin}>Log in</button>
           <button className="btn-primary" onClick={onCTA}>Start free →</button>
         </div>
       </nav>
@@ -1719,7 +1720,7 @@ function TopBar({ title, subtitle, children }) {
 /* ═══════════════════════════════════════════
    PAGE 1 — DASHBOARD (HOME)
 ═══════════════════════════════════════════ */
-function PageDashboard() {
+function PageDashboard({ onNav }) {
   const calls = [
     { s:"live", n:"Incoming call",  d:"Live now · +44 7811 234 567", o:"Taking order",    b:"order" },
     { s:"done", n:"Sarah Williams", d:"Today 2:14pm · 1:42",          o:"Order — £34.50", b:"order" },
@@ -1763,7 +1764,7 @@ function PageDashboard() {
       <div className="resp-grid-dashboard-hub">
         <div>
           <div className="card" style={{marginBottom:16}}>
-            <div className="card-head">Recent calls <span className="card-link">View all →</span></div>
+            <div className="card-head">Recent calls <span className="card-link" onClick={()=>onNav&&onNav("Calls")} style={{cursor:"pointer"}}>View all →</span></div>
             {calls.map((c,i)=>(
               <div className="call-log-item" key={i}>
                 <div className={`call-dot ${c.s==="live"?"live":c.s==="done"?"done":"miss"}`}/>
@@ -1780,7 +1781,7 @@ function PageDashboard() {
             <div className="agent-card">
               <div className="agent-avatar">🤖</div>
               <div><div className="agent-name">Aria</div><div className="agent-status"><div className="agent-status-dot"/>Active · Tony's Pizzeria</div></div>
-              <button className="agent-edit-btn">Edit</button>
+              <button className="agent-edit-btn" onClick={()=>onNav&&onNav("My Agent")}>Edit</button>
             </div>
             <div className="agent-meta">
               {[["Voice","Aria · Warm"],["Language","English"],["Call rules","Transfer"],["POS","Toast ✓"]].map(([l,v])=>(
@@ -1791,8 +1792,8 @@ function PageDashboard() {
           <div className="card">
             <div className="card-head">Quick actions</div>
             <div className="quick-actions-grid">
-              {[["📞","Test call"],["📋","Update menu"],["⏰","Edit hours"]].map(([ic,l])=>(
-                <div key={l} className="qa-item"><div className="qa-icon">{ic}</div><div className="qa-label">{l}</div></div>
+              {[["📞","Test call",null],["📋","Update menu","Menu"],["⏰","Edit hours","Settings"]].map(([ic,l,nav])=>(
+                <div key={l} className="qa-item" onClick={()=>nav&&onNav&&onNav(nav)} style={{cursor:nav?"pointer":"default"}}><div className="qa-icon">{ic}</div><div className="qa-label">{l}</div></div>
               ))}
             </div>
           </div>
@@ -1807,6 +1808,7 @@ function PageDashboard() {
 ═══════════════════════════════════════════ */
 function PageCalls() {
   const [filter, setFilter] = useState("All");
+  const [timeFilter, setTimeFilter] = useState("Today");
   const [page, setPage] = useState(1);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   useEffect(()=>{ const h=()=>setIsMobile(window.innerWidth<=768); window.addEventListener('resize',h); return ()=>window.removeEventListener('resize',h); },[]);
@@ -1823,7 +1825,8 @@ function PageCalls() {
     { s:"done", n:"Ravi Sharma",    phone:"+44 7355 888 444", time:"Yesterday 3pm",dur:"2:22", outcome:"Order placed",    amount:"\u00a367.00",b:"order" },
   ];
   const tabs = ["All","Orders","Enquiries","Missed"];
-  const filtered = filter==="All"?calls:filter==="Orders"?calls.filter(c=>c.b==="order"):filter==="Missed"?calls.filter(c=>c.b==="missed"):calls.filter(c=>c.b==="info");
+  const timeFiltered = timeFilter==="Today"?calls.filter(c=>c.time.includes("Today")||c.time==="Live now"):timeFilter==="Yesterday"?calls.filter(c=>c.time.includes("Yesterday")):calls;
+  const filtered = filter==="All"?timeFiltered:filter==="Orders"?timeFiltered.filter(c=>c.b==="order"):filter==="Missed"?timeFiltered.filter(c=>c.b==="missed"):timeFiltered.filter(c=>c.b==="info");
   const perPage = 5;
   const totalPages = Math.ceil(filtered.length / perPage);
   const paginated = filtered.slice((page-1)*perPage, page*perPage);
@@ -1849,7 +1852,7 @@ function PageCalls() {
             ))}
           </div>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
-            <select style={{padding:"8px 16px",fontSize:13,border:`1.5px solid ${T.line}`,borderRadius:50,background:T.white,color:T.ink,fontFamily:"'Outfit',sans-serif",fontWeight:600,cursor:"pointer",outline:"none",transition:"border-color .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)"}}>
+            <select value={timeFilter} onChange={e=>{setTimeFilter(e.target.value);setPage(1)}} style={{padding:"8px 16px",fontSize:13,border:`1.5px solid ${T.line}`,borderRadius:50,background:T.white,color:T.ink,fontFamily:"'Outfit',sans-serif",fontWeight:600,cursor:"pointer",outline:"none",transition:"border-color .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)"}}>
               <option>Today</option><option>Yesterday</option><option>This week</option><option>This month</option>
             </select>
           </div>
@@ -1920,6 +1923,8 @@ function PageCalls() {
 ═══════════════════════════════════════════ */
 function PageOrders() {
   const [tab, setTab] = useState("Today");
+  const [typeFilter, setTypeFilter] = useState("All types");
+  const [statusFilter, setStatusFilter] = useState("All statuses");
   const [page, setPage] = useState(1);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   useEffect(()=>{ const h=()=>setIsMobile(window.innerWidth<=768); window.addEventListener('resize',h); return ()=>window.removeEventListener('resize',h); },[]);
@@ -1931,9 +1936,12 @@ function PageOrders() {
     { id:"ORD-0087", name:"Ravi Sharma",    items:"Family feast + 4 garlic breads",type:"Collection",status:"completed",amount:"£67.00", time:"Yesterday" },
     { id:"ORD-0086", name:"David Park",     items:"3x Quattro formaggi",          type:"Delivery",  status:"completed", amount:"£41.50", time:"Yesterday" },
   ];
+  const timeFiltered = tab==="Today"?orders.filter(o=>o.time.includes("pm")||o.time.includes("am")||o.time==="Now"):tab==="Yesterday"?orders.filter(o=>o.time==="Yesterday"):orders;
+  const typeFilteredOrders = typeFilter==="All types"?timeFiltered:timeFiltered.filter(o=>o.type===typeFilter);
+  const statusFilteredOrders = statusFilter==="All statuses"?typeFilteredOrders:statusFilter==="Completed"?typeFilteredOrders.filter(o=>o.status==="completed"):typeFilteredOrders.filter(o=>o.status==="live");
   const perPage = 5;
-  const totalPages = Math.ceil(orders.length / perPage);
-  const paginated = orders.slice((page-1)*perPage, page*perPage);
+  const totalPages = Math.ceil(statusFilteredOrders.length / perPage);
+  const paginated = statusFilteredOrders.slice((page-1)*perPage, page*perPage);
   const statusColor = { completed:"order", live:"purple" };
   return (
     <>
@@ -1955,10 +1963,10 @@ function PageOrders() {
             ))}
           </div>
           <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-            <select style={{padding:"8px 16px",fontSize:13,border:`1.5px solid ${T.line}`,borderRadius:50,background:T.white,color:T.ink,fontFamily:"'Outfit',sans-serif",fontWeight:600,cursor:"pointer",outline:"none",transition:"border-color .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)"}}>
+            <select value={typeFilter} onChange={e=>{setTypeFilter(e.target.value);setPage(1)}} style={{padding:"8px 16px",fontSize:13,border:`1.5px solid ${T.line}`,borderRadius:50,background:T.white,color:T.ink,fontFamily:"'Outfit',sans-serif",fontWeight:600,cursor:"pointer",outline:"none",transition:"border-color .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)"}}>
               <option>All types</option><option>Delivery</option><option>Collection</option>
             </select>
-            <select style={{padding:"8px 16px",fontSize:13,border:`1.5px solid ${T.line}`,borderRadius:50,background:T.white,color:T.ink,fontFamily:"'Outfit',sans-serif",fontWeight:600,cursor:"pointer",outline:"none",transition:"border-color .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)"}}>
+            <select value={statusFilter} onChange={e=>{setStatusFilter(e.target.value);setPage(1)}} style={{padding:"8px 16px",fontSize:13,border:`1.5px solid ${T.line}`,borderRadius:50,background:T.white,color:T.ink,fontFamily:"'Outfit',sans-serif",fontWeight:600,cursor:"pointer",outline:"none",transition:"border-color .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)"}}>
               <option>All statuses</option><option>Completed</option><option>Live</option>
             </select>
           </div>
@@ -2007,7 +2015,7 @@ function PageOrders() {
         )}
         {totalPages > 1 && (
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:16,marginTop:10,borderTop:`1px solid ${T.paper}`}}>
-            <div style={{fontSize:13,color:T.soft}}>Showing {(page-1)*perPage + 1} to {Math.min(page*perPage, orders.length)} of {orders.length} orders</div>
+            <div style={{fontSize:13,color:T.soft}}>Showing {(page-1)*perPage + 1} to {Math.min(page*perPage, statusFilteredOrders.length)} of {statusFilteredOrders.length} orders</div>
             <div style={{display:"flex",gap:8}}>
               <button disabled={page === 1} onClick={() => setPage(p => Math.max(1, p-1))} style={{padding:"6px 14px",borderRadius:50,border:`1.5px solid ${T.line}`,background:page===1?"transparent":T.white,color:page===1?T.faint:T.mid,fontSize:13,fontWeight:600,cursor:page===1?"default":"pointer",transition:"all .18s"}}>Previous</button>
               <button disabled={page === totalPages} onClick={() => setPage(p => Math.min(totalPages, p+1))} style={{padding:"6px 14px",borderRadius:50,border:`1.5px solid ${T.line}`,background:page===totalPages?"transparent":T.white,color:page===totalPages?T.faint:T.mid,fontSize:13,fontWeight:600,cursor:page===totalPages?"default":"pointer",transition:"all .18s"}}>Next</button>
@@ -2023,7 +2031,6 @@ function PageOrders() {
    PAGE 4 — RESERVATIONS
 ═══════════════════════════════════════════ */
 function PageReservations() {
-  const [view, setView] = useState("List");
   const [page, setPage] = useState(1);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   useEffect(()=>{ const h=()=>setIsMobile(window.innerWidth<=768); window.addEventListener('resize',h); return ()=>window.removeEventListener('resize',h); },[]);
@@ -2053,11 +2060,6 @@ function PageReservations() {
       <div className="card">
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20,flexWrap:"wrap",gap:10}}>
           <div className="card-head" style={{marginBottom:0}}>Upcoming bookings</div>
-          <div style={{display:"flex",gap:6}}>
-            {["List","Calendar"].map(v=>(
-              <button key={v} onClick={()=>{setView(v);setPage(1)}} style={{padding:"7px 16px",borderRadius:50,border:`1.5px solid ${view===v?T.p500:T.line}`,background:view===v?T.p50:"transparent",color:view===v?T.p700:T.mid,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>{v}</button>
-            ))}
-          </div>
         </div>
 
         {isMobile ? (
@@ -2129,6 +2131,40 @@ function PageReservations() {
 ═══════════════════════════════════════════ */
 function PageMyAgent() {
   const [tab, setTab] = useState("Overview");
+  const [selectedTranscript, setSelectedTranscript] = useState(null);
+  const transcripts = [
+    {time:"2:14pm",dur:"1:42",outcome:"Order placed",caller:"Sarah Williams",phone:"+44 7922 111 222",conversation:[
+      {role:"agent",text:"Thanks for calling Tony's Pizzeria! I'm Aria, your AI assistant. Would you like to place an order, check our hours, or something else?"},
+      {role:"caller",text:"Hi, I'd like to place an order for delivery please."},
+      {role:"agent",text:"Of course! I'd be happy to help you with a delivery order. Could I start with your name please?"},
+      {role:"caller",text:"It's Sarah Williams."},
+      {role:"agent",text:"Lovely, Sarah! What would you like to order today?"},
+      {role:"caller",text:"Can I get a large pepperoni pizza and a garlic bread please?"},
+      {role:"agent",text:"Great choices! That's one large pepperoni pizza and one garlic bread. Before I finalise your order, do you have any food allergies or dietary requirements I should be aware of?"},
+      {role:"caller",text:"No, no allergies. Thanks for asking!"},
+      {role:"agent",text:"Perfect! Your total comes to \u00a334.50. Could I get your delivery address please?"},
+      {role:"caller",text:"22 Oak Lane, Manchester M4 5FG."},
+      {role:"agent",text:"Wonderful! Your order has been placed \u2014 one large pepperoni and garlic bread for delivery to 22 Oak Lane. It should be with you in about 35 minutes. Thanks for calling Tony's, Sarah! Have a great evening!"},
+    ]},
+    {time:"1:58pm",dur:"0:38",outcome:"Menu enquiry",caller:"James Patel",phone:"+44 7933 444 555",conversation:[
+      {role:"agent",text:"Thanks for calling Tony's Pizzeria! I'm Aria, your AI assistant. How can I help?"},
+      {role:"caller",text:"Hi, do you have any vegan options on the menu?"},
+      {role:"agent",text:"Yes we do! We have a Vegan Margherita with plant-based cheese, a Roasted Vegetable Pizza, and our Garden Salad. Would you like to place an order?"},
+      {role:"caller",text:"Not right now, just checking. Thanks!"},
+      {role:"agent",text:"No problem at all! Feel free to call back when you're ready to order. Have a lovely day!"},
+    ]},
+    {time:"11:30am",dur:"2:05",outcome:"Order placed",caller:"Lucy Chen",phone:"+44 7711 999 888",conversation:[
+      {role:"agent",text:"Thanks for calling Tony's Pizzeria! I'm Aria. Would you like to place an order, make a reservation, or something else?"},
+      {role:"caller",text:"Hi, I'd like to order for collection please."},
+      {role:"agent",text:"Sure! Collection it is. What can I get for you today?"},
+      {role:"caller",text:"Two margherita pizzas and two tiramisus please."},
+      {role:"agent",text:"Perfect! Before I confirm, do you have any food allergies or dietary requirements?"},
+      {role:"caller",text:"I'm lactose intolerant \u2014 can you use dairy-free cheese on the pizzas?"},
+      {role:"agent",text:"Absolutely! I'll note dairy-free cheese on both margheritas. Your total is \u00a352.00. What name shall I put the order under?"},
+      {role:"caller",text:"Lucy Chen."},
+      {role:"agent",text:"All set, Lucy! Your order will be ready for collection in about 25 minutes. Thanks for calling Tony's!"},
+    ]},
+  ];
   return (
     <>
       <TopBar title={<>My <strong>Agent</strong></>} subtitle="Configure and monitor Aria, your AI phone agent" />
@@ -2185,18 +2221,51 @@ function PageMyAgent() {
 
             {tab==="Transcripts" && (
               <div>
-                {[{time:"2:14pm",dur:"1:42",outcome:"Order placed"},{time:"1:58pm",dur:"0:38",outcome:"Menu enquiry"},{time:"11:30am",dur:"2:05",outcome:"Order placed"}].map((t,i)=>(
+                {transcripts.map((t,i)=>(
                   <div key={i} style={{padding:"14px 0",borderBottom:`1px solid ${T.paper}`,cursor:"pointer"}}>
                     <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
-                      <span style={{fontSize:13,fontWeight:600,color:T.ink}}>Call at {t.time}</span>
+                      <div>
+                        <span style={{fontSize:13,fontWeight:600,color:T.ink}}>Call at {t.time}</span>
+                        <span style={{fontSize:12,color:T.soft,marginLeft:8}}>{t.caller}</span>
+                      </div>
                       <span className="badge badge-purple">{t.outcome}</span>
                     </div>
-                    <div style={{fontSize:12,color:T.soft,background:T.paper,borderRadius:10,padding:"10px 12px",fontWeight: "700"}}>
-                      "Thanks for calling Tony's! Would you like to place an order for delivery or collection today?…"
+                    <div style={{fontSize:12,color:T.soft,background:T.paper,borderRadius:10,padding:"10px 12px",fontWeight:"700"}}>
+                      "{t.conversation[0].text.substring(0,90)}…"
                     </div>
-                    <div style={{fontSize:11.5,color:T.soft,marginTop:6}}>Duration: {t.dur} · <span style={{color:T.p500,cursor:"pointer"}}>View full transcript →</span></div>
+                    <div style={{fontSize:11.5,color:T.soft,marginTop:6}}>Duration: {t.dur} · <span style={{color:T.p500,cursor:"pointer"}} onClick={()=>setSelectedTranscript(t)}>View full transcript →</span></div>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* Transcript Popup */}
+            {selectedTranscript && (
+              <div style={{position:"fixed",inset:0,zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:24}} onClick={()=>setSelectedTranscript(null)}>
+                <div style={{position:"absolute",inset:0,background:"rgba(19,13,46,.45)",backdropFilter:"blur(6px)"}}/>
+                <div onClick={e=>e.stopPropagation()} style={{position:"relative",width:"100%",maxWidth:560,maxHeight:"80vh",background:T.white,border:`1.5px solid ${T.line}`,borderRadius:22,boxShadow:`0 24px 80px rgba(134,87,255,.18)`,animation:"fadeUp .3s ease both",display:"flex",flexDirection:"column"}}>
+                  <div style={{padding:"24px 28px 16px",borderBottom:`1px solid ${T.line}`}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                      <div>
+                        <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:900,color:T.ink,margin:0}}>Call transcript</h3>
+                        <p style={{fontSize:13,color:T.soft,margin:"4px 0 0",fontWeight:300}}>{selectedTranscript.caller} · {selectedTranscript.time} · {selectedTranscript.dur}</p>
+                      </div>
+                      <button onClick={()=>setSelectedTranscript(null)} style={{width:32,height:32,borderRadius:"50%",border:`1.5px solid ${T.line}`,background:T.paper,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:T.mid}}>✕</button>
+                    </div>
+                    <div style={{display:"flex",gap:8,marginTop:12}}>
+                      <span className="badge badge-purple">{selectedTranscript.outcome}</span>
+                      <span className="badge badge-green" style={{padding:"4px 8px"}}>{selectedTranscript.phone}</span>
+                    </div>
+                  </div>
+                  <div style={{padding:"20px 28px",overflowY:"auto",flex:1}}>
+                    {selectedTranscript.conversation.map((msg,i)=>(
+                      <div key={i} style={{marginBottom:16,display:"flex",flexDirection:"column",alignItems:msg.role==="agent"?"flex-start":"flex-end"}}>
+                        <div style={{fontSize:10,fontWeight:700,color:msg.role==="agent"?T.p500:T.mid,textTransform:"uppercase",letterSpacing:".5px",marginBottom:4}}>{msg.role==="agent"?"🤖 Aria":"📞 Caller"}</div>
+                        <div style={{maxWidth:"85%",padding:"10px 14px",borderRadius:msg.role==="agent"?"2px 14px 14px 14px":"14px 2px 14px 14px",background:msg.role==="agent"?T.p50:T.paper,border:`1px solid ${msg.role==="agent"?T.p100:T.line}`,fontSize:13,color:T.ink,lineHeight:1.55}}>{msg.text}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -2583,7 +2652,13 @@ function PageBilling() {
 function PageSettings() {
   const [section, setSection] = useState("Business");
   const [showPw, setShowPw] = useState({current:false,new_:false,confirm:false});
-  const sections = ["Business","Notifications","Phone","Team","Security"];
+  const [showAddStaff, setShowAddStaff] = useState(false);
+  const [staffList, setStaffList] = useState([
+    {name:"Tony Chen",email:"tony@tonys-pizzeria.com",role:"Owner",av:"TC"},
+    {name:"Maria Lopez",username:"maria.lopez",role:"Manager",av:"ML"},
+    {name:"Jake Smith",username:"jake.smith",role:"Staff",av:"JS"},
+  ]);
+  const sections = ["Business","Ordering","Reservations","Notifications","Phone","Team","Security"];
   return (
     <>
       <TopBar title={<>Settings</>} subtitle="Manage your account and business preferences">
@@ -2700,25 +2775,63 @@ function PageSettings() {
             <div>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
                 <div style={{fontSize:17,fontWeight:700,color:T.ink}}>Team members</div>
-                <button className="btn-primary" style={{fontSize:13,padding:"8px 18px"}}>+ Invite member</button>
+                <button className="btn-primary" style={{fontSize:13,padding:"8px 18px"}} onClick={()=>setShowAddStaff(true)}>+ Add Staff</button>
               </div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(260px, 1fr))",gap:16}}>
-                {[{name:"Tony Chen",email:"tony@tonys-pizzeria.com",role:"Owner",av:"TC"},{name:"Maria Lopez",email:"maria@tonys-pizzeria.com",role:"Manager",av:"ML"},{name:"Jake Smith",email:"jake@tonys-pizzeria.com",role:"Staff",av:"JS"}].map((m,i)=>(
+                {staffList.map((m,i)=>(
                   <div key={i} style={{background:T.white,border:`1.5px solid ${T.line}`,borderRadius:14,padding:20,transition:"all .2s"}} onMouseEnter={e=>{e.currentTarget.style.borderColor=T.p300;e.currentTarget.style.boxShadow=`0 6px 20px rgba(112,53,245,.06)`}} onMouseLeave={e=>{e.currentTarget.style.borderColor=T.line;e.currentTarget.style.boxShadow="none"}}>
                     <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:14}}>
                       <div style={{width:44,height:44,borderRadius:"50%",background:`linear-gradient(135deg,${T.p400},${T.p700})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:"white",flexShrink:0}}>{m.av}</div>
                       <div>
                         <div style={{fontSize:14,fontWeight:600,color:T.ink}}>{m.name}</div>
-                        <div style={{fontSize:12,color:T.soft,marginTop:2}}>{m.email}</div>
+                        <div style={{fontSize:12,color:T.soft,marginTop:2}}>{m.username ? `@${m.username}` : m.email}</div>
                       </div>
                     </div>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",borderTop:`1px solid ${T.paper}`,paddingTop:14}}>
                       <span className="badge badge-purple">{m.role}</span>
-                      {m.role!=="Owner"&&<button className="btn-danger" style={{fontSize:12,padding:"5px 12px"}}>Remove</button>}
+                      {m.role!=="Owner"&&<button className="btn-danger" style={{fontSize:12,padding:"5px 12px"}} onClick={()=>setStaffList(prev=>prev.filter((_,j)=>j!==i))}>Remove</button>}
                     </div>
                   </div>
                 ))}
               </div>
+
+              {/* Add Staff Modal */}
+              {showAddStaff && (
+                <div style={{position:"fixed",inset:0,zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:24}} onClick={()=>setShowAddStaff(false)}>
+                  <div style={{position:"absolute",inset:0,background:"rgba(19,13,46,.45)",backdropFilter:"blur(6px)"}}/>
+                  <div onClick={e=>e.stopPropagation()} style={{position:"relative",width:"100%",maxWidth:460,background:T.white,border:`1.5px solid ${T.line}`,borderRadius:22,padding:32,boxShadow:`0 24px 80px rgba(134,87,255,.18)`,animation:"fadeUp .3s ease both"}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24}}>
+                      <div>
+                        <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:900,color:T.ink,margin:0,letterSpacing:"-.3px"}}>Add new staff</h3>
+                        <p style={{fontSize:13,color:T.soft,margin:"6px 0 0",fontWeight:300}}>Create credentials for a new team member</p>
+                      </div>
+                      <button onClick={()=>setShowAddStaff(false)} style={{width:32,height:32,borderRadius:"50%",border:`1.5px solid ${T.line}`,background:T.paper,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:T.mid}}>✕</button>
+                    </div>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+                      <div className="form-group" style={{marginBottom:0}}><label className="form-label">First name</label><input className="form-input" id="staff-fn" placeholder="Maria"/></div>
+                      <div className="form-group" style={{marginBottom:0}}><label className="form-label">Last name</label><input className="form-input" id="staff-ln" placeholder="Lopez"/></div>
+                    </div>
+                    <div className="form-group"><label className="form-label">Username</label><input className="form-input" id="staff-un" placeholder="e.g. maria.lopez"/></div>
+                    <div className="form-group"><label className="form-label">Password</label><input className="form-input" id="staff-pw" placeholder="At least 8 characters" type="password"/></div>
+                    <div className="form-group"><label className="form-label">Role</label>
+                      <select className="form-input" id="staff-role"><option value="Staff">Staff</option><option value="Manager">Manager</option></select>
+                    </div>
+                    <div style={{display:"flex",gap:10,marginTop:20}}>
+                      <button onClick={()=>setShowAddStaff(false)} className="btn-ghost" style={{flex:1}}>Cancel</button>
+                      <button onClick={()=>{
+                        const fn=document.getElementById("staff-fn")?.value||"";
+                        const ln=document.getElementById("staff-ln")?.value||"";
+                        const un=document.getElementById("staff-un")?.value||"";
+                        const rl=document.getElementById("staff-role")?.value||"Staff";
+                        if(fn&&ln&&un){
+                          setStaffList(prev=>[...prev,{name:`${fn} ${ln}`,username:un,role:rl,av:`${fn[0]}${ln[0]}`}]);
+                          setShowAddStaff(false);
+                        }
+                      }} className="btn-primary" style={{flex:1}}>Add staff member</button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -2771,9 +2884,344 @@ function PageSettings() {
               </div>
             </div>
           )}
+
+          {section==="Ordering" && (
+            <div className="card">
+              <div className="card-head">Ordering policy</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:20}}>
+                <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`}}>
+                  <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:8,letterSpacing:".3px",textTransform:"uppercase"}}>Delivery radius</label>
+                  <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                    <input defaultValue="5" style={{width:80,padding:"13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",textAlign:"center"}}/>
+                    <select style={{padding:"13px 14px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",cursor:"pointer"}}><option>Miles</option><option>Km</option></select>
+                  </div>
+                </div>
+                <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`}}>
+                  <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:8,letterSpacing:".3px",textTransform:"uppercase"}}>Minimum order amount</label>
+                  <div style={{display:"flex",alignItems:"center",gap:4}}>
+                    <span style={{fontSize:16,fontWeight:700,color:T.mid}}>£</span>
+                    <input defaultValue="15.00" style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none"}}/>
+                  </div>
+                </div>
+              </div>
+              <div style={{fontSize:13,fontWeight:700,color:T.ink,marginBottom:14}}>Payment options</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:20}}>
+                {[["💳","Pay now","Customer pays via payment link before order is prepared",true],["🚚","Pay on delivery / collection","Customer pays when order arrives or at pickup",true]].map(([ic,h,d,on])=>(
+                  <div key={h} style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                      <div style={{display:"flex",alignItems:"center",gap:8}}>
+                        <span style={{fontSize:20}}>{ic}</span>
+                        <h4 style={{margin:0,fontSize:13,fontWeight:700,color:T.ink}}>{h}</h4>
+                      </div>
+                      <label className="toggle"><input type="checkbox" defaultChecked={on}/><div className="toggle-track"/><div className="toggle-thumb"/></label>
+                    </div>
+                    <p style={{margin:0,fontSize:12,color:T.soft,lineHeight:1.4}}>{d}</p>
+                  </div>
+                ))}
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+                {[["🏠","Collection enabled","Allow customers to pick up orders in-store",true],["🚗","Delivery enabled","Deliver orders to customers within radius",true]].map(([ic,h,d,on])=>(
+                  <div key={h} style={{background:T.paper,borderRadius:12,padding:"16px 14px",display:"flex",flexDirection:"column",gap:10}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                      <div style={{display:"flex",alignItems:"center",gap:8}}>
+                        <span style={{fontSize:18}}>{ic}</span>
+                        <h4 style={{margin:0,fontSize:13,fontWeight:700,color:T.ink}}>{h}</h4>
+                      </div>
+                      <label className="toggle"><input type="checkbox" defaultChecked={on}/><div className="toggle-track"/><div className="toggle-thumb"/></label>
+                    </div>
+                    <p style={{margin:0,fontSize:12,color:T.soft,lineHeight:1.4}}>{d}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {section==="Reservations" && (
+            <div className="card">
+              <div className="card-head">Reservation policy</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:20}}>
+                <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`}}>
+                  <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:8,letterSpacing:".3px",textTransform:"uppercase"}}>Maximum party size</label>
+                  <input defaultValue="12" style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none"}}/>
+                </div>
+                <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`}}>
+                  <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:8,letterSpacing:".3px",textTransform:"uppercase"}}>Booking lead time</label>
+                  <select style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",cursor:"pointer"}}><option>30 minutes</option><option>1 hour</option><option>2 hours</option><option>Same day</option><option>24 hours</option></select>
+                </div>
+              </div>
+
+              <div style={{fontSize:13,fontWeight:700,color:T.ink,marginBottom:14}}>Deposit settings</div>
+              <div style={{background:T.p50,border:`1.5px solid ${T.p100}`,borderRadius:14,padding:"18px 20px",marginBottom:20}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+                  <div>
+                    <h4 style={{margin:0,fontSize:14,fontWeight:700,color:T.ink}}>Require deposit</h4>
+                    <p style={{margin:0,fontSize:12,color:T.soft,marginTop:4}}>When enabled, a payment link is sent to the customer after they agree to make a reservation</p>
+                  </div>
+                  <label className="toggle"><input type="checkbox" defaultChecked/><div className="toggle-track"/><div className="toggle-thumb"/></label>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+                  <div>
+                    <label style={{display:"block",fontSize:11,fontWeight:700,color:T.mid,marginBottom:6,letterSpacing:".3px",textTransform:"uppercase"}}>Deposit type</label>
+                    <select style={{width:"100%",padding:"11px 14px",border:`1.5px solid ${T.p200}`,borderRadius:10,background:T.white,color:T.ink,fontSize:13,fontFamily:"'Outfit',sans-serif",cursor:"pointer"}}><option>Per guest</option><option>Per table</option><option>Fixed amount</option></select>
+                  </div>
+                  <div>
+                    <label style={{display:"block",fontSize:11,fontWeight:700,color:T.mid,marginBottom:6,letterSpacing:".3px",textTransform:"uppercase"}}>Deposit amount</label>
+                    <div style={{display:"flex",alignItems:"center",gap:4}}>
+                      <span style={{fontSize:14,fontWeight:700,color:T.mid}}>£</span>
+                      <input defaultValue="10.00" style={{width:"100%",padding:"11px 14px",border:`1.5px solid ${T.p200}`,borderRadius:10,background:T.white,color:T.ink,fontSize:13,fontFamily:"'Outfit',sans-serif",outline:"none"}}/>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{fontSize:13,fontWeight:700,color:T.ink,marginBottom:14}}>Cancellation policy</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:20}}>
+                <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`}}>
+                  <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:8,letterSpacing:".3px",textTransform:"uppercase"}}>Free cancellation window</label>
+                  <select style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",cursor:"pointer"}}><option>2 hours before</option><option>4 hours before</option><option>24 hours before</option><option>48 hours before</option></select>
+                </div>
+                <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`}}>
+                  <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:8,letterSpacing:".3px",textTransform:"uppercase"}}>No-show fee</label>
+                  <div style={{display:"flex",alignItems:"center",gap:4}}>
+                    <span style={{fontSize:14,fontWeight:700,color:T.mid}}>£</span>
+                    <input defaultValue="10.00" style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none"}}/>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{fontSize:13,fontWeight:700,color:T.ink,marginBottom:14}}>Booking API integration</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+                {[["📅","OpenTable","Check table availability, make/update/cancel reservations via OpenTable",false],["🗓️","Free booking API","Use built-in table management for availability and reservation handling",true]].map(([ic,h,d,on])=>(
+                  <div key={h} style={{background:on?T.greenBg:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${on?T.greenBd:T.line}`}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                      <div style={{display:"flex",alignItems:"center",gap:8}}>
+                        <span style={{fontSize:20}}>{ic}</span>
+                        <h4 style={{margin:0,fontSize:13,fontWeight:700,color:T.ink}}>{h}</h4>
+                      </div>
+                      <label className="toggle"><input type="checkbox" defaultChecked={on}/><div className="toggle-track"/><div className="toggle-thumb"/></label>
+                    </div>
+                    <p style={{margin:0,fontSize:12,color:T.soft,lineHeight:1.4}}>{d}</p>
+                    {on && <span className="badge badge-green" style={{marginTop:10,display:"inline-block"}}>Active</span>}
+                  </div>
+                ))}
+              </div>
+              <div className="info-block" style={{marginTop:20}}>
+                <div style={{fontSize:12,color:T.mid,lineHeight:1.6}}>
+                  <strong>How it works:</strong> The AI agent will automatically check available tables, manage party sizes, make reservations, update existing bookings, or cancel tables — all based on the caller's request during the phone call.
+                </div>
+              </div>
+            </div>
+          )}
+
         </div>
       </div>
     </>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   PAYMENT LINK SCREEN
+   (Customer-facing page — sent via SMS/email by the AI agent)
+═══════════════════════════════════════════ */
+function PaymentLinkScreen({ onBack }) {
+  const [paid, setPaid] = useState(false);
+  if (paid) return <PaymentConfirmScreen onBack={onBack} />;
+  return (
+    <div style={{minHeight:"100vh",background:T.paper,display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
+      <style>{G}</style>
+      <div style={{width:"100%",maxWidth:480,animation:"fadeUp .6s ease both"}}>
+        {/* Header */}
+        <div style={{textAlign:"center",marginBottom:36}}>
+          <div style={{display:"inline-flex",alignItems:"center",gap:8,marginBottom:20}}>
+            <div style={{width:36,height:36,borderRadius:10,background:`linear-gradient(135deg,${T.p500},${T.p700})`,display:"flex",alignItems:"center",justifyContent:"center",color:"white",fontStyle:"italic",fontSize:16,fontFamily:"'Playfair Display',serif",fontWeight:700}}>t</div>
+            <span style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:700,color:T.ink}}>talkativ</span>
+          </div>
+          <h1 style={{fontFamily:"'Playfair Display',serif",fontSize:28,fontWeight:900,color:T.ink,marginBottom:8,letterSpacing:"-.5px"}}>Complete your payment</h1>
+          <p style={{fontSize:14,color:T.mid,fontWeight:300}}>Secure payment for your order at Tony's Pizzeria</p>
+        </div>
+
+        {/* Order Summary Card */}
+        <div style={{background:T.white,border:`1.5px solid ${T.line}`,borderRadius:20,padding:28,marginBottom:20,boxShadow:`0 8px 32px rgba(134,87,255,.06)`}}>
+          <div style={{fontSize:11,fontWeight:700,color:T.soft,textTransform:"uppercase",letterSpacing:".8px",marginBottom:16}}>Order summary</div>
+          <div style={{borderBottom:`1px solid ${T.paper}`,paddingBottom:14,marginBottom:14}}>
+            {[{n:"Large Pepperoni Pizza",q:1,p:"£14.99"},{n:"Garlic Bread",q:2,p:"£7.98"},{n:"Coke 330ml",q:2,p:"£3.98"}].map(i=>(
+              <div key={i.n} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0"}}>
+                <div>
+                  <span style={{fontSize:14,fontWeight:600,color:T.ink}}>{i.n}</span>
+                  <span style={{fontSize:12,color:T.soft,marginLeft:8}}>×{i.q}</span>
+                </div>
+                <span style={{fontSize:14,fontWeight:700,color:T.ink}}>{i.p}</span>
+              </div>
+            ))}
+          </div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0"}}>
+            <span style={{fontSize:13,color:T.soft}}>Delivery fee</span>
+            <span style={{fontSize:13,fontWeight:600,color:T.ink}}>£2.50</span>
+          </div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 0",borderTop:`1.5px solid ${T.line}`,marginTop:10}}>
+            <span style={{fontSize:16,fontWeight:700,color:T.ink}}>Total</span>
+            <span style={{fontFamily:"'Playfair Display',serif",fontSize:26,fontWeight:900,color:T.p600}}>£29.45</span>
+          </div>
+        </div>
+
+        {/* Payment Form */}
+        <div style={{background:T.white,border:`1.5px solid ${T.line}`,borderRadius:20,padding:28,boxShadow:`0 8px 32px rgba(134,87,255,.06)`}}>
+          <div style={{fontSize:11,fontWeight:700,color:T.soft,textTransform:"uppercase",letterSpacing:".8px",marginBottom:16}}>Payment details</div>
+          <div style={{marginBottom:14}}>
+            <label style={{display:"block",fontSize:12,fontWeight:600,color:T.mid,marginBottom:6}}>Card number</label>
+            <input placeholder="4242 4242 4242 4242" style={{width:"100%",padding:"14px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.paper,color:T.ink,fontSize:15,fontFamily:"'Outfit',sans-serif",outline:"none",letterSpacing:1}}/>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
+            <div>
+              <label style={{display:"block",fontSize:12,fontWeight:600,color:T.mid,marginBottom:6}}>Expiry date</label>
+              <input placeholder="MM / YY" style={{width:"100%",padding:"14px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.paper,color:T.ink,fontSize:15,fontFamily:"'Outfit',sans-serif",outline:"none"}}/>
+            </div>
+            <div>
+              <label style={{display:"block",fontSize:12,fontWeight:600,color:T.mid,marginBottom:6}}>CVC</label>
+              <input placeholder="123" style={{width:"100%",padding:"14px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.paper,color:T.ink,fontSize:15,fontFamily:"'Outfit',sans-serif",outline:"none"}}/>
+            </div>
+          </div>
+          <div style={{marginBottom:20}}>
+            <label style={{display:"block",fontSize:12,fontWeight:600,color:T.mid,marginBottom:6}}>Name on card</label>
+            <input placeholder="John Smith" style={{width:"100%",padding:"14px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.paper,color:T.ink,fontSize:15,fontFamily:"'Outfit',sans-serif",outline:"none"}}/>
+          </div>
+          <button onClick={()=>setPaid(true)} style={{width:"100%",padding:"16px",background:T.ink,color:"white",border:"none",borderRadius:14,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif",boxShadow:`0 4px 20px rgba(19,13,46,.2)`,transition:"all .22s"}}>Pay £29.45 →</button>
+          <div style={{textAlign:"center",marginTop:14}}>
+            <span style={{fontSize:12,color:T.soft}}>🔒 Secured by Stripe · 256-bit SSL encryption</span>
+          </div>
+        </div>
+
+        <div style={{textAlign:"center",marginTop:28}}>
+          <span style={{fontSize:12,color:T.faint}}>Payment link generated by Talkativ AI for Tony's Pizzeria</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   PAYMENT CONFIRMATION SCREEN
+═══════════════════════════════════════════ */
+function PaymentConfirmScreen({ onBack }) {
+  return (
+    <div style={{minHeight:"100vh",background:T.ivory,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:32,position:"relative",overflow:"hidden"}}>
+      <style>{G}</style>
+      {/* Background decoration */}
+      <div style={{position:"absolute",inset:0,backgroundImage:`radial-gradient(circle at 1px 1px, ${T.p200} 1px, transparent 0)`,backgroundSize:"28px 28px",opacity:.2,pointerEvents:"none"}}/>
+
+      <div style={{position:"relative",zIndex:1,textAlign:"center",maxWidth:480,animation:"fadeUp .6s ease both"}}>
+        {/* Success Icon */}
+        <div style={{width:100,height:100,borderRadius:"50%",background:`linear-gradient(135deg,${T.green},#16a34a)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:48,margin:"0 auto 28px",boxShadow:`0 12px 40px rgba(34,197,94,.3)`,animation:"countUp .6s cubic-bezier(.34,1.56,.64,1) both"}}>✓</div>
+
+        <h1 style={{fontFamily:"'Playfair Display',serif",fontSize:42,fontWeight:900,color:T.ink,marginBottom:10,letterSpacing:"-1px"}}>Payment confirmed!</h1>
+        <p style={{fontSize:16,color:T.mid,fontWeight:300,lineHeight:1.65,marginBottom:36}}>Your payment has been processed successfully. A confirmation has been sent to your phone and email.</p>
+
+        {/* Confirmation Details */}
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:14,marginBottom:36}}>
+          {[["🧾","ORD-2847","Order ID"],["💳","£29.45","Amount paid"],["🕐","25-30 min","Est. delivery"]].map(([ic,v,l])=>(
+            <div key={l} style={{background:T.white,border:`1.5px solid ${T.line}`,borderRadius:18,padding:"20px 16px",boxShadow:`0 4px 16px rgba(134,87,255,.05)`}}>
+              <div style={{fontSize:24,marginBottom:10}}>{ic}</div>
+              <div style={{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:900,color:T.p600,marginBottom:4}}>{v}</div>
+              <div style={{fontSize:11,color:T.soft,textTransform:"uppercase",letterSpacing:".6px",fontWeight:600}}>{l}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Order Summary */}
+        <div style={{background:T.white,border:`1.5px solid ${T.line}`,borderRadius:18,padding:24,textAlign:"left",marginBottom:32,boxShadow:`0 4px 16px rgba(134,87,255,.05)`}}>
+          <div style={{fontSize:11,fontWeight:700,color:T.soft,textTransform:"uppercase",letterSpacing:".8px",marginBottom:14}}>What you ordered</div>
+          {["Large Pepperoni Pizza ×1","Garlic Bread ×2","Coke 330ml ×2"].map(i=>(
+            <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:`1px solid ${T.paper}`}}>
+              <div style={{width:8,height:8,borderRadius:"50%",background:T.green,flexShrink:0}}/>
+              <span style={{fontSize:14,color:T.ink,fontWeight:500}}>{i}</span>
+            </div>
+          ))}
+          <div style={{marginTop:14,padding:"12px 14px",background:T.greenBg,border:`1px solid ${T.greenBd}`,borderRadius:10,fontSize:13,color:"#166534",fontWeight:600}}>
+            📍 Delivering to: 42 Oxford Road, Manchester M1 5QA
+          </div>
+        </div>
+
+        <div style={{display:"flex",gap:12,justifyContent:"center"}}>
+          <button onClick={onBack} className="btn-hero" style={{fontSize:14,padding:"14px 28px"}}>Back to home →</button>
+        </div>
+        <p style={{fontSize:12,color:T.faint,marginTop:20}}>Confirmation sent to +44 7811 234 567 · tony@email.com</p>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   LOGIN SCREEN
+═══════════════════════════════════════════ */
+function LoginScreen({ onBack, onDashboard }) {
+  const [mode, setMode] = useState("owner");
+  const [alert, setAlert] = useState(null);
+  return (
+    <div style={{minHeight:"100vh",background:T.paper,display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
+      <style>{G}</style>
+      <div style={{width:"100%",maxWidth:460,animation:"fadeUp .6s ease both"}}>
+        {/* Logo */}
+        <div style={{textAlign:"center",marginBottom:32}}>
+          <div style={{display:"inline-flex",alignItems:"center",gap:8,marginBottom:20}}>
+            <div style={{width:36,height:36,borderRadius:10,background:`linear-gradient(135deg,${T.p500},${T.p700})`,display:"flex",alignItems:"center",justifyContent:"center",color:"white",fontStyle:"italic",fontSize:16,fontFamily:"'Playfair Display',serif",fontWeight:700}}>t</div>
+            <span style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:700,color:T.ink}}>talkativ</span>
+          </div>
+          <h1 style={{fontFamily:"'Playfair Display',serif",fontSize:32,fontWeight:900,color:T.ink,marginBottom:8,letterSpacing:"-.5px"}}>Welcome back</h1>
+          <p style={{fontSize:14,color:T.mid,fontWeight:300}}>Sign in to your account to continue</p>
+        </div>
+
+        {/* Mode Toggle */}
+        <div style={{display:"flex",background:T.white,border:`1.5px solid ${T.line}`,borderRadius:14,padding:4,marginBottom:24}}>
+          {["owner","staff"].map(m=>(
+            <button key={m} onClick={()=>{setMode(m);setAlert(null);}} style={{flex:1,padding:"11px 0",borderRadius:10,border:"none",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif",transition:"all .2s",background:mode===m?T.ink:"transparent",color:mode===m?"white":T.mid}}>{m==="owner"?"Owner":"Staff"}</button>
+          ))}
+        </div>
+
+        {/* Alert */}
+        {alert && (
+          <div style={{background:alert.type==="error"?T.redBg:T.greenBg,border:`1.5px solid ${alert.type==="error"?"#fecaca":T.greenBd}`,borderRadius:12,padding:"12px 16px",marginBottom:20,display:"flex",alignItems:"center",gap:10}}>
+            <span style={{fontSize:18}}>{alert.type==="error"?"⚠️":"✅"}</span>
+            <div>
+              <div style={{fontSize:13,fontWeight:600,color:alert.type==="error"?T.red:T.green}}>{alert.message}</div>
+              {alert.action && <div style={{fontSize:12,color:T.p600,cursor:"pointer",marginTop:4,fontWeight:600}} onClick={alert.action.onClick}>{alert.action.label}</div>}
+            </div>
+          </div>
+        )}
+
+        {/* Owner Login */}
+        {mode==="owner" && (
+          <div style={{background:T.white,border:`1.5px solid ${T.line}`,borderRadius:20,padding:28,boxShadow:`0 8px 32px rgba(134,87,255,.06)`}}>
+            <div className="sso-row" style={{marginBottom:16}}>
+              <button className="sso-btn" style={{width:"100%"}}>🔵 Continue with Google</button>
+            </div>
+            <div className="divider-row"><div className="divider-line"/><span className="divider-text">or sign in with email</span><div className="divider-line"/></div>
+            <div style={{marginTop:16}}>
+              <div className="form-group"><label className="form-label">Email address</label><input className="form-input" placeholder="you@restaurant.com" type="email"/></div>
+              <div className="form-group"><label className="form-label">Password</label><input className="form-input" placeholder="Enter your password" type="password"/></div>
+              <div style={{display:"flex",justifyContent:"flex-end",marginBottom:18}}>
+                <span style={{fontSize:12.5,color:T.p600,cursor:"pointer",fontWeight:500}}>Forgot password?</span>
+              </div>
+              <button onClick={()=>setAlert({type:"error",message:"No account found with this email.",action:{label:"Create an account →",onClick:onBack}})} style={{width:"100%",padding:"14px",background:T.ink,color:"white",border:"none",borderRadius:12,fontSize:14.5,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif",boxShadow:`0 4px 20px rgba(19,13,46,.2)`,transition:"all .22s"}}>Sign in →</button>
+            </div>
+          </div>
+        )}
+
+        {/* Staff Login */}
+        {mode==="staff" && (
+          <div style={{background:T.white,border:`1.5px solid ${T.line}`,borderRadius:20,padding:28,boxShadow:`0 8px 32px rgba(134,87,255,.06)`}}>
+            <div className="form-group"><label className="form-label">Business name</label><input className="form-input" placeholder="e.g. Tony's Pizzeria"/></div>
+            <div className="form-group"><label className="form-label">Username</label><input className="form-input" placeholder="Your staff username"/></div>
+            <div className="form-group"><label className="form-label">Password</label><input className="form-input" placeholder="Enter your password" type="password"/></div>
+            <button onClick={()=>setAlert({type:"error",message:"No staff found with those credentials. Please check your details or contact the business owner."})} style={{width:"100%",padding:"14px",background:T.ink,color:"white",border:"none",borderRadius:12,fontSize:14.5,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif",boxShadow:`0 4px 20px rgba(19,13,46,.2)`,transition:"all .22s",marginTop:8}}>Sign in as staff →</button>
+          </div>
+        )}
+
+        <div style={{textAlign:"center",marginTop:24}}>
+          <span style={{fontSize:13,color:T.soft}}>Don't have an account? </span>
+          <span style={{fontSize:13,color:T.p600,cursor:"pointer",fontWeight:600}} onClick={onBack}>Create one free →</span>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -2802,7 +3250,7 @@ function DashboardApp({ onBack }) {
       <Sidebar active={active} onNav={(p) => { setActive(p); document.body.classList.remove('mob-nav-open'); window.scrollTo(0,0); }} />
       <main className="dash-main" key={active}>
         <div className="dash-overlay" onClick={() => document.body.classList.remove('mob-nav-open')} />
-        <PageComponent />
+        <PageComponent onNav={(p) => { setActive(p); document.body.classList.remove('mob-nav-open'); window.scrollTo(0,0); }} />
       </main>
     </div>
   );
@@ -2818,7 +3266,8 @@ export default function App() {
   const backOb = () => { if (step > 0) { setStep(step - 1); go(`ob${step - 1}`); } else go("landing"); };
 
   const renderScreen = () => {
-    if (screen === "landing")   return <Landing onCTA={() => { setStep(0); go("ob0"); }} />;
+    if (screen === "landing")   return <Landing onCTA={() => { setStep(0); go("ob0"); }} onLogin={() => go("login")} />;
+    if (screen === "login")     return <LoginScreen onBack={() => { setStep(0); go("ob0"); }} onDashboard={() => go("dashboard")} />;
     if (screen === "ob0")       return <Step0 onNext={nextOb} onBack={backOb} />;
     if (screen === "ob1")       return <Step1 onNext={nextOb} onBack={backOb} />;
     if (screen === "ob2")       return <Step2 onNext={nextOb} onBack={backOb} />;
@@ -2829,6 +3278,8 @@ export default function App() {
     if (screen === "ob7")       return <Step7 onNext={() => go("success")} onBack={backOb} />;
     if (screen === "success")   return <SuccessScreen onDashboard={() => go("dashboard")} />;
     if (screen === "dashboard") return <DashboardApp onBack={() => go("landing")} />;
+    if (screen === "payment")   return <PaymentLinkScreen onBack={() => go("landing")} />;
+    if (screen === "payment-confirm") return <PaymentConfirmScreen onBack={() => go("landing")} />;
   };
 
   return (
