@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { api, setAccessToken, getAccessToken, clearAccessToken } from "./api.js";
 
 /* ═══════════════════════════════════════════
    DESIGN TOKENS
@@ -1202,7 +1203,7 @@ function Landing({ onCTA, onLogin }) {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
             {[
               { icon: "⚡", label: "Live in 20 min", sub: "Self-serve setup" },
-              { icon: "🔌", label: "POS connected", sub: "Toast · Clover · Square" },
+              { icon: "🔌", label: "POS connected", sub: "Clover · Square · Olo" },
               { icon: "🌙", label: "24/7 coverage", sub: "Zero missed calls" },
               { icon: "📊", label: "Live dashboard", sub: "Every call tracked" },
             ].map(({ icon, label, sub }) => (
@@ -1249,7 +1250,7 @@ function Landing({ onCTA, onLogin }) {
               { span: 4, icon: "🎙️", title: "Sounds like you", body: "Custom voice, agent name, and brand tone. Your customers won't know it's AI." },
               { span: 4, icon: "📋", title: "Knows your menu", body: "Import via URL, PDF, or POS. Orders go directly to your kitchen system." },
               { span: 4, icon: "🌙", title: "Always on", body: "Every call answered — even at 2am, during peak rush, on bank holidays." },
-              { span: 6, icon: "🔌", title: "Deep POS integrations", body: "Toast, Clover, Square, OpenTable, Aloha and 8 more. One-click setup, real-time sync." },
+              { span: 6, icon: "🔌", title: "Deep POS integrations", body: "Clover, Square, OpenTable, Aloha, Olo and more. One-click setup, real-time sync." },
               { span: 3, icon: "⚡", title: "Live in 20 min", body: "No sales calls. No IT team. Self-serve and ready in under 20 minutes." },
               { span: 3, icon: "📊", title: "Live analytics", body: "Every call, order and transcript in one beautiful dashboard." },
             ].map(({ span, icon, title, body }) => (
@@ -1279,7 +1280,7 @@ function Landing({ onCTA, onLogin }) {
             {[
               ["★★★★★", "Maria C.", "Owner, La Cucina", "We were missing 30+ calls a week during lunch. Talkativ handles all of them now and average order value is up because the AI upsells naturally."],
               ["★★★★★", "James T.", "Manager, The Grill Co.", "Setup took 18 minutes. Genuinely. The voice quality is incredible — regular customers think it's a real member of staff."],
-              ["★★★★★", "Sarah K.", "Owner, Pho Garden", "The Toast integration is seamless. Orders appear on the POS instantly. We've saved 3 hours of admin every single day."],
+              ["★★★★★", "Sarah K.", "Owner, Pho Garden", "The Square integration is seamless. Orders appear on the POS instantly. We've saved 3 hours of admin every single day."],
             ].map(([stars, name, role, quote]) => (
               <div className="testi-card" key={name}>
                 <div className="testi-stars">{stars}</div>
@@ -1349,74 +1350,467 @@ function Step0({ onNext, onBack }) {
   );
 }
 
-function Step1({ onNext, onBack }) {
+function Step1({ onNext, onBack, onPhoneChange, onRegister }) {
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [googlePrefilled, setGooglePrefilled] = useState(false);
+
+  // Pre-fill from Google OAuth profile if it came back from the callback
+  useEffect(() => {
+    const stored = sessionStorage.getItem('talkativ_google_profile');
+    if (stored) {
+      try {
+        const data = JSON.parse(stored);
+        if (data.firstName) setFirstName(data.firstName);
+        if (data.lastName) setLastName(data.lastName);
+        if (data.email) setEmail(data.email);
+        setGooglePrefilled(true);
+        sessionStorage.removeItem('talkativ_google_profile');
+      } catch {}
+    }
+  }, []);
+
+  const handleRegister = async () => {
+    setError(null);
+    if (!firstName.trim() || !email.trim() || !password.trim() || !phone.trim()) {
+      setError("Please fill in your first name, email, password, and business phone number.");
+      return;
+    }
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
+    setLoading(true);
+    try {
+      await api.auth.register(email.trim(), password, firstName.trim(), lastName.trim(), phone.trim());
+      if (onPhoneChange) onPhoneChange(phone.trim());
+      if (onRegister) onRegister({ firstName: firstName.trim(), lastName: lastName.trim(), email: email.trim() });
+      onNext();
+    } catch (err) {
+      setError(err.message || "Registration failed. Please try again.");
+    }
+    setLoading(false);
+  };
+
+  const handleGoogleSignIn = () => {
+    window.location.href = api.auth.googleLoginUrl('register');
+  };
+
   return (
-    <ObShell step={1} onNext={onNext} onBack={onBack} nextLabel="Create account →">
+    <ObShell step={1} onNext={handleRegister} onBack={onBack} nextLabel={loading ? "Creating account…" : "Create account →"}>
       <div className="ob-step-label">Step 2 · Account</div>
       <h1 className="ob-heading">Create your<br /><em>account</em></h1>
       <p className="ob-subheading">No credit card required. 14-day free trial on all plans — cancel any time.</p>
-      <div className="sso-row">
-        <button className="sso-btn">🔵 Continue with Google</button>
-      </div>
-      <div className="divider-row"><div className="divider-line" /><span className="divider-text">or continue with email</span><div className="divider-line" /></div>
+
+      {/* Google pre-fill success banner */}
+      {googlePrefilled && (
+        <div style={{ background: T.greenBg, border: `1.5px solid ${T.greenBd}`, borderRadius: 12, padding: "12px 16px", marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: 16 }}>✅</span>
+          <div style={{ fontSize: 13, fontWeight: 600, color: T.green }}>Google account connected — just set a password to finish.</div>
+        </div>
+      )}
+
+      {/* Error banner */}
+      {error && (
+        <div style={{ background: T.redBg, border: `1.5px solid #fecaca`, borderRadius: 12, padding: "12px 16px", marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: 16 }}>⚠️</span>
+          <div style={{ fontSize: 13, fontWeight: 600, color: T.red }}>{error}</div>
+        </div>
+      )}
+
+      {/* Show Google button only if not already pre-filled from Google */}
+      {!googlePrefilled && (
+        <>
+          <div className="sso-row">
+            <button className="sso-btn" onClick={handleGoogleSignIn}>🔵 Continue with Google</button>
+          </div>
+          <div className="divider-row"><div className="divider-line" /><span className="divider-text">or continue with email</span><div className="divider-line" /></div>
+        </>
+      )}
+
       <div className="form-row">
-        <div className="form-group"><label className="form-label">First name</label><input className="form-input" placeholder="Maria" /></div>
-        <div className="form-group"><label className="form-label">Last name</label><input className="form-input" placeholder="Chen" /></div>
+        <div className="form-group"><label className="form-label">First name</label><input className="form-input" placeholder="Maria" value={firstName} onChange={e => setFirstName(e.target.value)} /></div>
+        <div className="form-group"><label className="form-label">Last name</label><input className="form-input" placeholder="Chen" value={lastName} onChange={e => setLastName(e.target.value)} /></div>
       </div>
-      <div className="form-group"><label className="form-label">Email address</label><input className="form-input" placeholder="maria@restaurant.com" type="email" /></div>
-      <div className="form-group"><label className="form-label">Password</label><input className="form-input" placeholder="At least 8 characters" type="password" /></div>
+      <div className="form-group">
+        <label className="form-label">Email address</label>
+        <input className="form-input" placeholder="maria@restaurant.com" type="email" value={email}
+          onChange={e => setEmail(e.target.value)}
+          readOnly={googlePrefilled}
+          style={googlePrefilled ? { background: T.paper, color: T.mid } : {}} />
+        {googlePrefilled && <div style={{ fontSize: 11.5, color: T.soft, marginTop: 4 }}>Email confirmed via Google</div>}
+      </div>
+      <div className="form-group"><label className="form-label">Password</label><input className="form-input" placeholder="At least 8 characters" type="password" value={password} onChange={e => setPassword(e.target.value)} /></div>
+      <div className="form-group">
+        <label className="form-label">Business phone number</label>
+        <input className="form-input" placeholder="+1 (555) 000-0000" type="tel" value={phone} onChange={e => setPhone(e.target.value)} onKeyDown={e => e.key === "Enter" && handleRegister()} />
+        <div style={{ fontSize: 11.5, color: T.soft, marginTop: 4 }}>This will be your managed business number for calls &amp; texts.</div>
+      </div>
       <p style={{ fontSize: 12.5, color: T.soft, marginTop: 6 }}>By continuing you agree to our <span style={{ color: T.p600, cursor: "pointer" }}>Terms of Service</span> and <span style={{ color: T.p600, cursor: "pointer" }}>Privacy Policy</span>.</p>
     </ObShell>
   );
 }
 
-function Step2({ onNext, onBack }) {
+function Step2({ onNext, onBack, onBizNameChange }) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searching, setSearching] = useState(false);
+  const [results, setResults] = useState([]);
+  const [showResults, setShowResults] = useState(false);
+  const [selected, setSelected] = useState(null);
+  const searchTimerRef = useRef(null);
+
+  // Editable fields (filled from search or manually)
+  const [bizName, setBizName] = useState("");
+  const [bizAddress, setBizAddress] = useState("");
+  const [bizHours, setBizHours] = useState("");
+  const [bizPhone, setBizPhone] = useState("");
+  const [bizCategory, setBizCategory] = useState("");
+  const [editing, setEditing] = useState(false);
+
+  const handleSearch = async (query) => {
+    const q = (query || searchQuery).trim();
+    if (!q || q.length < 2) return;
+    setSearching(true);
+    setShowResults(false);
+    setSelected(null);
+    try {
+      const data = await api.public.searchBusiness(q);
+      setResults(data.results || []);
+      setShowResults(true);
+    } catch {
+      setResults([]);
+      setShowResults(true);
+    }
+    setSearching(false);
+  };
+
+  const handleSearchQueryChange = (e) => {
+    const val = e.target.value;
+    setSearchQuery(val);
+    setSelected(null);
+    setShowResults(false);
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    if (val.trim().length >= 2) {
+      searchTimerRef.current = setTimeout(() => handleSearch(val), 600);
+    }
+  };
+
+  const handleSelect = (biz) => {
+    setSelected(biz);
+    setBizName(biz.name);
+    setBizAddress(biz.address);
+    setBizHours(biz.hours);
+    setBizPhone(biz.phone);
+    setBizCategory(biz.category);
+    setShowResults(false);
+    setEditing(false);
+  };
+
+  const emojiForCategory = (cat) => {
+    const c = (cat || "").toLowerCase();
+    if (c.includes("pizza")) return "🍕";
+    if (c.includes("sushi") || c.includes("japanese")) return "🍣";
+    if (c.includes("indian") || c.includes("curry")) return "🍛";
+    if (c.includes("chinese") || c.includes("thai") || c.includes("asian")) return "🥡";
+    if (c.includes("mexican") || c.includes("taco")) return "🌮";
+    if (c.includes("burger") || c.includes("fast food")) return "🍔";
+    if (c.includes("coffee") || c.includes("cafe") || c.includes("café")) return "☕";
+    if (c.includes("bakery") || c.includes("pastry")) return "🧁";
+    if (c.includes("bar") || c.includes("pub")) return "🍺";
+    if (c.includes("seafood") || c.includes("fish")) return "🐟";
+    return "🍽️";
+  };
+
+  // Summarize hours (e.g., "Mon–Sun · 11am – 11pm" or "Mon–Fri: 11–11, Sat–Sun: 12–10")
+  const shortHours = (h) => {
+    if (!h) return "";
+    // If it's already short, return as is
+    if (h.length < 40) return h;
+    // Otherwise truncate
+    const parts = h.split(",").map(s => s.trim());
+    if (parts.length <= 2) return parts.join(", ");
+    return parts[0] + " … " + parts[parts.length - 1];
+  };
+
   return (
-    <ObShell step={2} onNext={onNext} onBack={onBack} nextLabel="Looks good →">
+    <ObShell step={2} onNext={async () => {
+      if (!bizName.trim()) return;
+      try {
+        await api.settings.updateBusiness({ name: bizName, type: bizCategory, address: bizAddress, phone: bizPhone });
+      } catch {}
+      if (onBizNameChange) onBizNameChange(bizName);
+      onNext();
+    }} onBack={onBack} nextLabel="Looks good →">
       <div className="ob-step-label">Step 3 · Business profile</div>
       <h1 className="ob-heading">Tell us about<br /><em>your business</em></h1>
       <p className="ob-subheading">Search your business name and we'll pull your address, hours, and category from Google automatically.</p>
+
+      {/* Search Input */}
       <div className="form-group">
         <label className="form-label">Business name</label>
         <div style={{ position: "relative" }}>
-          <input className="form-input" defaultValue="Tony's Pizzeria" style={{ paddingRight: 120 }} />
-          <div style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: T.p600, color: "white", borderRadius: 8, padding: "5px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>🔍 Search</div>
+          <input
+            className="form-input"
+            placeholder="e.g. Tony's Pizzeria"
+            value={searchQuery}
+            onChange={handleSearchQueryChange}
+            style={{ paddingRight: searching ? 110 : undefined }}
+          />
+          {searching && (
+            <div style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", fontSize: 12, color: T.soft, fontWeight: 600, pointerEvents: "none" }}>
+              ⏳ Searching...
+            </div>
+          )}
         </div>
       </div>
-      <div className="info-block">
-        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
-          <div style={{ width: 46, height: 46, background: `linear-gradient(135deg,${T.p400},${T.p700})`, borderRadius: 13, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>🍕</div>
-          <div><div style={{ fontWeight: 600, fontSize: 14.5, color: T.ink }}>Tony's Pizzeria</div><div style={{ fontSize: 12, color: T.soft }}>Restaurant · Manchester, UK</div></div>
-          <div style={{ marginLeft: "auto", background: T.greenBg, border: `1px solid ${T.greenBd}`, borderRadius: 8, padding: "4px 11px", fontSize: 11, fontWeight: 700, color: T.green }}>✓ Found</div>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 11 }}>
-          {[["📍", "Address", "14 High Street, Manchester M1 1AE"], ["🕐", "Hours", "Mon–Sun · 11am – 11pm"], ["📞", "Phone", "0161 234 5678"], ["🌐", "Category", "Pizza Restaurant"]].map(([ic, l, v]) => (
-            <div key={l} style={{ background: T.white, border: `1.5px solid ${T.line}`, borderRadius: 11, padding: "10px 14px" }}>
-              <div style={{ fontSize: 11, color: T.soft, marginBottom: 3 }}>{ic} {l}</div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: T.ink }}>{v}</div>
+
+      {/* Search Results Dropdown */}
+      {showResults && results.length > 0 && !selected && (
+        <div style={{ background: T.white, border: `1.5px solid ${T.line}`, borderRadius: 14, overflow: "hidden", marginBottom: 20, boxShadow: `0 8px 24px rgba(134,87,255,.08)` }}>
+          <div style={{ padding: "10px 16px", borderBottom: `1px solid ${T.line}`, fontSize: 11, fontWeight: 600, color: T.soft, textTransform: "uppercase", letterSpacing: ".5px" }}>
+            {results.length} result{results.length > 1 ? "s" : ""} found
+          </div>
+          {results.map((biz, i) => (
+            <div
+              key={biz.placeId || i}
+              onClick={() => handleSelect(biz)}
+              style={{
+                padding: "14px 16px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer", borderBottom: i < results.length - 1 ? `1px solid ${T.line}` : "none",
+                transition: "background .15s",
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = T.paper}
+              onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+            >
+              <div style={{ width: 40, height: 40, background: `linear-gradient(135deg,${T.p400},${T.p700})`, borderRadius: 11, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
+                {emojiForCategory(biz.category)}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 600, fontSize: 14, color: T.ink, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{biz.name}</div>
+                <div style={{ fontSize: 12, color: T.soft, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{biz.category ? `${biz.category} · ` : ""}{biz.address}</div>
+              </div>
+              <div style={{ fontSize: 12, color: T.p600, fontWeight: 600, flexShrink: 0 }}>Select →</div>
             </div>
           ))}
         </div>
-      </div>
+      )}
+
+      {/* No Results Message */}
+      {showResults && results.length === 0 && !searching && (
+        <div style={{ background: T.paper, border: `1.5px solid ${T.line}`, borderRadius: 14, padding: "20px 24px", textAlign: "center", marginBottom: 20 }}>
+          <div style={{ fontSize: 24, marginBottom: 8 }}>🔍</div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: T.ink, marginBottom: 4 }}>No results found</div>
+          <div style={{ fontSize: 13, color: T.soft }}>Try a different search or fill in the details manually below.</div>
+          <button
+            onClick={() => { setSelected({ manual: true }); setBizName(searchQuery); setEditing(true); }}
+            style={{ marginTop: 12, background: T.p600, color: "white", border: "none", borderRadius: 10, padding: "8px 18px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'Outfit',sans-serif" }}
+          >
+            Fill in manually →
+          </button>
+        </div>
+      )}
+
+      {/* Selected Business — Display Card + Editable Fields */}
+      {selected && (
+        <div className="info-block" style={{ animation: "fadeUp .3s ease both" }}>
+          {/* Header */}
+          <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
+            <div style={{ width: 46, height: 46, background: `linear-gradient(135deg,${T.p400},${T.p700})`, borderRadius: 13, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>
+              {emojiForCategory(bizCategory)}
+            </div>
+            <div style={{ flex: 1 }}>
+              {!editing ? (
+                <>
+                  <div style={{ fontWeight: 600, fontSize: 14.5, color: T.ink }}>{bizName}</div>
+                  <div style={{ fontSize: 12, color: T.soft }}>{bizCategory ? `${bizCategory} · ` : ""}{bizAddress ? bizAddress.split(",").slice(-2).join(",").trim() : ""}</div>
+                </>
+              ) : (
+                <div style={{ fontWeight: 600, fontSize: 14.5, color: T.ink }}>Edit your details</div>
+              )}
+            </div>
+            {!editing ? (
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <div style={{ background: T.greenBg, border: `1px solid ${T.greenBd}`, borderRadius: 8, padding: "4px 11px", fontSize: 11, fontWeight: 700, color: T.green }}>✓ Found</div>
+                <div onClick={() => setEditing(true)} style={{ fontSize: 12, color: T.p600, cursor: "pointer", fontWeight: 600 }}>Edit ✏️</div>
+              </div>
+            ) : (
+              <div onClick={() => setEditing(false)} style={{ fontSize: 12, color: T.green, cursor: "pointer", fontWeight: 600 }}>Done ✓</div>
+            )}
+          </div>
+
+          {/* Fields — editable or read-only */}
+          {!editing ? (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 11 }}>
+              {[["📍", "Address", bizAddress], ["🕐", "Hours", shortHours(bizHours)], ["📞", "Phone", bizPhone || "Not found"], ["🌐", "Category", bizCategory || "Not found"]].map(([ic, l, v]) => (
+                <div key={l} style={{ background: T.white, border: `1.5px solid ${T.line}`, borderRadius: 11, padding: "10px 14px" }}>
+                  <div style={{ fontSize: 11, color: T.soft, marginBottom: 3 }}>{ic} {l}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: T.ink }}>{v || "—"}</div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div>
+              <div className="form-group"><label className="form-label">Business name</label><input className="form-input" value={bizName} onChange={e => setBizName(e.target.value)} /></div>
+              <div className="form-group"><label className="form-label">Address</label><input className="form-input" value={bizAddress} onChange={e => setBizAddress(e.target.value)} /></div>
+              <div className="form-group"><label className="form-label">Category</label><input className="form-input" value={bizCategory} onChange={e => setBizCategory(e.target.value)} placeholder="e.g. Pizza Restaurant" /></div>
+            </div>
+          )}
+        </div>
+      )}
     </ObShell>
   );
 }
 
+const POS_SYSTEMS = [
+  { name: "Clover",      icon: "🍀", fields: [{ key: "accessToken", label: "Access Token", ph: "..." }, { key: "merchantId", label: "Merchant ID", ph: "XXXXXXXXXXXXXXXX" }] },
+  { name: "Square",      icon: "🟦", fields: [{ key: "accessToken", label: "Access Token", ph: "EAAAl..." }, { key: "locationId", label: "Location ID", ph: "LXXXXXXXXXXXXXXXX" }] },
+  { name: "OpenTable",   icon: "🪑", fields: [{ key: "restaurantId", label: "Restaurant ID", ph: "12345" }, { key: "apiKey", label: "API Key", ph: "..." }] },
+  { name: "Aloha",       icon: "🌺", fields: [{ key: "apiKey", label: "API Key", ph: "..." }, { key: "siteId", label: "Site ID", ph: "..." }] },
+  { name: "Olo",         icon: "📲", fields: [{ key: "apiKey", label: "API Key", ph: "..." }, { key: "restaurantId", label: "Restaurant ID", ph: "..." }] },
+  { name: "Lightspeed",  icon: "⚡", fields: [{ key: "apiKey", label: "API Key", ph: "..." }, { key: "accountId", label: "Account ID", ph: "..." }] },
+  { name: "TouchBistro", icon: "👆", fields: [{ key: "apiKey", label: "API Key", ph: "..." }, { key: "locationId", label: "Location ID", ph: "..." }] },
+  { name: "Revel",       icon: "🎰", fields: [{ key: "apiKey", label: "API Key", ph: "..." }, { key: "establishmentId", label: "Establishment ID", ph: "..." }] },
+  { name: "Micros",      icon: "🖥️", fields: [{ key: "apiKey", label: "API Key", ph: "..." }, { key: "locationId", label: "Location ID", ph: "..." }] },
+];
+
 function Step3({ onNext, onBack }) {
   const [sel, setSel] = useState(0);
+  const [url, setUrl] = useState("");
+  const [file, setFile] = useState(null);
+  const [dragging, setDragging] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [result, setResult] = useState(null);
+  const [posSelected, setPosSelected] = useState(null); // name string
+  const [posFields, setPosFields] = useState({});
+  const fileInputRef = useRef(null);
+
   const opts = [
     { icon: "🌐", title: "Import from URL", desc: "Paste your website or online menu link", badge: "Fastest" },
-    { icon: "📄", title: "Upload a PDF", desc: "Drag and drop your printed menu" },
-    { icon: "🔌", title: "Connect your POS", desc: "Toast, Clover, Square and 8 more", badge: "Recommended" },
+    { icon: "📁", title: "Upload your file", desc: "PDF, DOCX, or PNG accepted" },
+    { icon: "🔌", title: "Connect your POS", desc: "Clover, Square, Olo and more", badge: "Recommended" },
   ];
+
+  const resetResult = () => { setResult(null); setError(null); };
+
+  const handleSelChange = (i) => { setSel(i); resetResult(); setPosSelected(null); setPosFields({}); };
+
+  const handlePosSelect = (name) => {
+    setPosSelected(name);
+    setPosFields({});
+    resetResult();
+  };
+
+  const handleFileSelect = (f) => {
+    if (!f) return;
+    const allowed = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/png', 'image/jpeg'];
+    if (!allowed.includes(f.type)) { setError("Only PDF, DOCX, or PNG files are supported."); return; }
+    setFile(f);
+    resetResult();
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setDragging(false);
+    handleFileSelect(e.dataTransfer.files[0]);
+  };
+
+  const handleImport = async () => {
+    setError(null);
+    if (sel === 0) {
+      if (!url.trim()) { setError("Please enter a URL."); return; }
+    } else if (sel === 1) {
+      if (!file) { setError("Please select a file."); return; }
+    } else {
+      // POS
+      if (!posSelected) { setError("Please select a POS system."); return; }
+      const pos = POS_SYSTEMS.find(p => p.name === posSelected);
+      const missing = pos?.fields.find(f => !posFields[f.key]?.trim());
+      if (missing) { setError(`${missing.label} is required.`); return; }
+      setLoading(true);
+      try {
+        const data = await api.menu.importFromPos(posSelected, posFields);
+        setResult({ pos: data });
+      } catch (err) { setError(err.message || "POS import failed. Please check your credentials."); }
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    try {
+      let importUrl = url.trim();
+      if (importUrl && !/^https?:\/\//i.test(importUrl)) importUrl = `https://${importUrl}`;
+      const data = sel === 0
+        ? await api.menu.importFromUrl(importUrl)
+        : await api.menu.importFromFile(file);
+      setResult(data.categorized ? data.categorized : data);
+    } catch (err) {
+      setError(err.message || "Import failed. Please try again.");
+    }
+    setLoading(false);
+  };
+
+  const CategoryRow = ({ icon, label, found, detail }) => (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: `1px solid ${T.line}` }}>
+      <span style={{ fontSize: 16 }}>{found ? "✅" : "⚠️"}</span>
+      <div style={{ flex: 1 }}>
+        <span style={{ fontSize: 13, fontWeight: 600, color: found ? T.ink : T.soft }}>{label}</span>
+        {detail && <span style={{ fontSize: 12, color: T.soft, marginLeft: 8 }}>{detail}</span>}
+      </div>
+      <span style={{ fontSize: 12, color: found ? T.green : T.soft, fontWeight: 600 }}>{found ? "Found" : "Not found"}</span>
+    </div>
+  );
+
+  const ResultsPanel = ({ r }) => {
+    if (r.pos) {
+      const p = r.pos;
+      return (
+        <div style={{ marginTop: 18, background: T.greenBg, border: `1.5px solid ${T.greenBd}`, borderRadius: 14, padding: "16px 18px" }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.green, marginBottom: 8 }}>✅ {p.posSystem} connected</div>
+          <div style={{ fontSize: 13, color: T.mid, marginBottom: p.categories?.length > 0 ? 10 : 0 }}>{p.message}</div>
+          {p.categories?.length > 0 && p.categories.map(c => (
+            <div key={c.name} style={{ fontSize: 12, color: T.mid, paddingTop: 3 }}>· {c.name}: {c.itemCount} item{c.itemCount !== 1 ? 's' : ''}</div>
+          ))}
+        </div>
+      );
+    }
+    return (
+      <div style={{ marginTop: 18, background: T.greenBg, border: `1.5px solid ${T.greenBd}`, borderRadius: 14, padding: "16px 18px" }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: T.green, marginBottom: 12 }}>✅ Import complete — here's what we found:</div>
+        <CategoryRow icon="🍽️" label="Menu items"
+          found={r.menu?.found}
+          detail={r.menu?.found ? `${r.menu.savedItems} new items saved across ${r.menu.categories?.length} categories${r.menu.duplicatesSkipped > 0 ? ` · ${r.menu.duplicatesSkipped} duplicates skipped` : ''}` : "No menu items detected"} />
+        {r.menu?.found && r.menu.categories?.length > 0 && (
+          <div style={{ paddingLeft: 26, paddingBottom: 6 }}>
+            {r.menu.categories.map(c => (
+              <div key={c.name} style={{ fontSize: 12, color: T.mid, paddingTop: 4 }}>
+                · {c.name}: {c.itemCount} item{c.itemCount !== 1 ? 's' : ''}
+              </div>
+            ))}
+          </div>
+        )}
+        <CategoryRow icon="🕐" label="Opening hours" found={r.hours?.found} />
+        <CategoryRow icon="❓" label="FAQs" found={r.faq?.found} detail={r.faq?.found ? `${r.faq.count} entries` : null} />
+        <CategoryRow icon="📋" label="Business details" found={r.contact?.found} />
+        <CategoryRow icon="📝" label="Business summary" found={r.summary?.found} />
+        {r.other?.found && <CategoryRow icon="ℹ️" label="Other info" found={true} />}
+      </div>
+    );
+  };
+
   return (
-    <ObShell step={3} onNext={onNext} onBack={onBack} nextLabel="Import menu →">
+    <ObShell step={3} onNext={result ? onNext : handleImport} onBack={onBack}
+      nextLabel={loading ? (sel === 2 ? "Connecting…" : "Importing…") : result ? "Continue →" : sel === 2 ? (posSelected ? "Connect POS →" : "Skip for now →") : "Import menu →"}>
       <div className="ob-step-label">Step 4 · Menu</div>
       <h1 className="ob-heading">Import your<br /><em>menu</em></h1>
       <p className="ob-subheading">We parse it automatically — no manual entry. Your AI uses this to answer customer questions and take orders.</p>
+
       <div className="import-list">
         {opts.map((o, i) => (
-          <div key={o.title} className={`import-item ${sel === i ? "selected" : ""}`} onClick={() => setSel(i)}>
+          <div key={o.title} className={`import-item ${sel === i ? "selected" : ""}`} onClick={() => handleSelChange(i)}>
             <div className="import-item-icon">{o.icon}</div>
             <div className="import-item-info"><h4>{o.title}</h4><p>{o.desc}</p></div>
             {o.badge && <div className="import-badge">{o.badge}</div>}
@@ -1426,40 +1820,147 @@ function Step3({ onNext, onBack }) {
           </div>
         ))}
       </div>
-      {sel === 0 && <div style={{ marginTop: 18 }}><label className="form-label">Menu URL</label><input className="form-input" placeholder="https://tonys-pizzeria.com/menu" style={{ marginTop: 6 }} /></div>}
+
+      {/* URL panel */}
+      {sel === 0 && (
+        <div style={{ marginTop: 18 }}>
+          <label className="form-label">Menu URL</label>
+          <input className="form-input" placeholder="e.g. tonys-pizzeria.com/menu" style={{ marginTop: 6 }}
+            value={url} onChange={e => { setUrl(e.target.value); resetResult(); }} />
+        </div>
+      )}
+
+      {/* File upload panel */}
       {sel === 1 && (
-        <div style={{ marginTop: 18, border: `2px dashed ${T.borderM || T.faint}`, borderRadius: 16, padding: 36, textAlign: "center", cursor: "pointer", background: T.paper }}>
-          <div style={{ fontSize: 32, marginBottom: 10 }}>📄</div>
-          <div style={{ fontWeight: 600, color: T.ink, fontSize: 14 }}>Drop your PDF here</div>
-          <div style={{ fontSize: 13, color: T.soft, marginTop: 5 }}>or click to browse files</div>
+        <div style={{ marginTop: 18 }}>
+          <input ref={fileInputRef} type="file" accept=".pdf,.docx,.png,.jpg" style={{ display: "none" }}
+            onChange={e => handleFileSelect(e.target.files[0])} />
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={e => { e.preventDefault(); setDragging(true); }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={handleDrop}
+            style={{ border: `2px dashed ${dragging ? T.p400 : file ? T.green : T.faint}`, borderRadius: 16, padding: "28px 24px", textAlign: "center", cursor: "pointer", background: dragging ? T.p50 : T.paper, transition: "all .18s" }}>
+            <div style={{ fontSize: 32, marginBottom: 8 }}>{file ? "📄" : "📁"}</div>
+            {file ? (
+              <>
+                <div style={{ fontWeight: 600, color: T.ink, fontSize: 14 }}>{file.name}</div>
+                <div style={{ fontSize: 12, color: T.soft, marginTop: 4 }}>Click to change file</div>
+              </>
+            ) : (
+              <>
+                <div style={{ fontWeight: 600, color: T.ink, fontSize: 14 }}>Drop your file here</div>
+                <div style={{ fontSize: 12.5, color: T.soft, marginTop: 4 }}>PDF, DOCX, or PNG · or <span style={{ color: T.p600, fontWeight: 600 }}>click to browse</span></div>
+              </>
+            )}
+          </div>
         </div>
       )}
+
+      {/* POS panel */}
       {sel === 2 && (
-        <div style={{ marginTop: 18, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
-          {["Toast", "Clover", "Square", "OpenTable", "Aloha", "Olo"].map(p => (
-            <div key={p} style={{ border: `1.5px solid ${T.line}`, borderRadius: 12, padding: "12px 14px", textAlign: "center", cursor: "pointer", background: T.white, fontSize: 13.5, fontWeight: 500, color: T.mid, transition: "all .18s" }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = T.p300; e.currentTarget.style.color = T.p600; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = T.line; e.currentTarget.style.color = T.mid; }}>
-              {p}
-            </div>
-          ))}
+        <div style={{ marginTop: 18 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: posSelected ? 16 : 0 }}>
+            {POS_SYSTEMS.map(p => {
+              const active = posSelected === p.name;
+              return (
+                <div key={p.name} onClick={() => handlePosSelect(p.name)}
+                  style={{ border: `1.5px solid ${active ? T.p500 : T.line}`, borderRadius: 12, padding: "10px 8px", textAlign: "center", cursor: "pointer", background: active ? T.p50 : T.white, fontSize: 13, fontWeight: active ? 700 : 500, color: active ? T.p700 : T.mid, transition: "all .18s", display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}
+                  onMouseEnter={e => { if (!active) { e.currentTarget.style.borderColor = T.p300; e.currentTarget.style.color = T.p600; }}}
+                  onMouseLeave={e => { if (!active) { e.currentTarget.style.borderColor = T.line; e.currentTarget.style.color = T.mid; }}}>
+                  <span style={{ fontSize: 18 }}>{p.icon}</span>
+                  <span>{p.name}</span>
+                </div>
+              );
+            })}
+          </div>
+          {posSelected && (() => {
+            const pos = POS_SYSTEMS.find(p => p.name === posSelected);
+            return (
+              <div style={{ background: T.paper, borderRadius: 14, padding: "16px 18px", border: `1.5px solid ${T.line}` }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: T.ink, marginBottom: 12 }}>
+                  {pos.icon} {pos.name} credentials
+                </div>
+                {pos.fields.map(f => (
+                  <div key={f.key} style={{ marginBottom: 10 }}>
+                    <label style={{ display: "block", fontSize: 11.5, fontWeight: 700, color: T.soft, marginBottom: 4, textTransform: "uppercase", letterSpacing: ".3px" }}>{f.label}</label>
+                    <input
+                      value={posFields[f.key] || ""}
+                      onChange={e => { setPosFields(v => ({ ...v, [f.key]: e.target.value })); setError(null); }}
+                      placeholder={f.ph}
+                      className="form-input"
+                      style={{ marginTop: 0 }}
+                    />
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
         </div>
       )}
+
+      {/* Error */}
+      {error && (
+        <div style={{ marginTop: 14, background: T.redBg, border: `1.5px solid #fecaca`, borderRadius: 12, padding: "11px 14px", display: "flex", gap: 8, alignItems: "center" }}>
+          <span>⚠️</span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: T.red }}>{error}</span>
+        </div>
+      )}
+
+      {/* Loading */}
+      {loading && (
+        <div style={{ marginTop: 18, background: T.p50, border: `1.5px solid ${T.p100}`, borderRadius: 14, padding: "16px 18px", textAlign: "center" }}>
+          <div style={{ fontSize: 13, color: T.p600, fontWeight: 600 }}>⏳ Extracting and categorising your data with AI…</div>
+          <div style={{ fontSize: 12, color: T.soft, marginTop: 4 }}>This may take 10–20 seconds</div>
+        </div>
+      )}
+
+      {/* Results */}
+      {result && !loading && <ResultsPanel r={result} />}
     </ObShell>
   );
 }
 
-function Step4({ onNext, onBack }) {
+function Step4({ onNext, onBack, bizName, bizPhone, onAgentNameChange }) {
   const [vc, setVc] = useState(0);
-  const [greeting, setGreeting] = useState("Thanks for calling Tony's Pizzeria! I'm Aria, your AI assistant. Would you like to place an order, check our hours, or something else?");
+  const voices = [{ n: "Aria", d: "Warm & professional" }, { n: "Leo", d: "Friendly & upbeat" }, { n: "Nova", d: "Calm & precise" }, { n: "Finn", d: "Casual & relaxed" }];
+  const [agentName, setAgentName] = useState("Aria");
+  const [greetingEdited, setGreetingEdited] = useState(false);
+  const displayBiz = bizName || "your restaurant";
+  const autoGreeting = `Hi, thanks for calling us at ${displayBiz}! I'm ${agentName}, your AI assistant. Would you like to place an order, check our hours, or something else?`;
+  const [greeting, setGreeting] = useState(autoGreeting);
+  const [fallbackAction, setFallbackAction] = useState("transfer");
+
+  const handleAgentNameChange = (val) => {
+    setAgentName(val);
+    if (!greetingEdited) {
+      setGreeting(`Hi, thanks for calling us at ${displayBiz}! I'm ${val}, your AI assistant. Would you like to place an order, check our hours, or something else?`);
+    }
+  };
+
+  const handleNext = async () => {
+    if (onAgentNameChange) onAgentNameChange(agentName);
+    try {
+      await api.agent.update({
+        name: agentName,
+        openingGreeting: greeting,
+        voiceName: voices[vc].n,
+        voiceDescription: voices[vc].d,
+        fallbackAction,
+        transferNumber: fallbackAction === "transfer" ? (bizPhone || null) : null,
+      });
+    } catch {}
+    onNext();
+  };
+
   return (
-    <ObShell step={4} onNext={onNext} onBack={onBack} nextLabel="Save & continue →">
+    <ObShell step={4} onNext={handleNext} onBack={onBack} nextLabel="Save & continue →">
       <div className="ob-step-label">Step 5 · Voice & script</div>
       <h1 className="ob-heading">Customise your<br /><em>AI agent</em></h1>
       <p className="ob-subheading">Pick a voice and personalise your greeting. All fields are pre-filled — just change what you want.</p>
       <label className="form-label" style={{ marginBottom: 12 }}>Choose a voice</label>
       <div className="voice-grid">
-        {[{ n: "Aria", d: "Warm & professional" }, { n: "Leo", d: "Friendly & upbeat" }, { n: "Nova", d: "Calm & precise" }, { n: "Finn", d: "Casual & relaxed" }].map((v, i) => (
+        {voices.map((v, i) => (
           <div key={v.n} className={`voice-card ${vc === i ? "selected" : ""}`} onClick={() => setVc(i)}>
             <div className="voice-name">{v.n}</div>
             <div className="voice-desc">{v.d}</div>
@@ -1475,15 +1976,19 @@ function Step4({ onNext, onBack }) {
           </div>
         ))}
       </div>
-      <div className="form-group"><label className="form-label">Agent name</label><input className="form-input" defaultValue="Aria" /></div>
+      <div className="form-group"><label className="form-label">Agent name</label><input className="form-input" value={agentName} onChange={e => handleAgentNameChange(e.target.value)} /></div>
       <div className="form-group">
         <label className="form-label">Greeting message</label>
-        <textarea className="form-input" rows={3} value={greeting} onChange={e => setGreeting(e.target.value)} />
+        <textarea className="form-input" rows={3} value={greeting} onChange={e => { setGreetingEdited(true); setGreeting(e.target.value); }} />
         <div style={{ fontSize: 11.5, color: T.soft, marginTop: 6 }}>Keep under 20 seconds of speech for the best experience</div>
       </div>
       <div className="form-group">
         <label className="form-label">When agent can't help, it should…</label>
-        <select className="form-input"><option>Transfer to your phone number</option><option>Take a voicemail</option><option>Ask caller to call back later</option></select>
+        <select className="form-input" value={fallbackAction} onChange={e => setFallbackAction(e.target.value)}>
+          <option value="transfer">Transfer to your phone number</option>
+          <option value="voicemail">Take a voicemail</option>
+          <option value="callback">Ask caller to call back later</option>
+        </select>
       </div>
     </ObShell>
   );
@@ -1541,8 +2046,9 @@ function Step5({ onNext, onBack }) {
   );
 }
 
-function Step6({ onNext, onBack }) {
+function Step6({ onNext, onBack, agentName }) {
   const [called, setCalled] = useState(false);
+  const displayAgent = agentName || "Your agent";
   return (
     <ObShell step={6} onNext={onNext} onBack={onBack} nextLabel={called ? "Choose a plan →" : "Skip for now →"}>
       <div className="ob-step-label">Step 7 · Test call</div>
@@ -1551,7 +2057,7 @@ function Step6({ onNext, onBack }) {
       <div className="test-call-card">
         <div className="test-call-icon">{called ? "✅" : "📞"}</div>
         <h3>{called ? "Your agent sounds perfect!" : "Ready to make a test call?"}</h3>
-        <p>{called ? "Everything is working beautifully. Aria is ready to go live to your customers." : "Call your Talkativ number and hear your fully configured AI agent answering as your business."}</p>
+        <p>{called ? `Everything is working beautifully. ${displayAgent} is ready to go live to your customers.` : "Call your Talkativ number and hear your fully configured AI agent answering as your business."}</p>
         {!called && (
           <button onClick={() => setCalled(true)} style={{ background: T.ink, color: "white", border: "none", borderRadius: 50, padding: "14px 32px", fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "'Outfit', sans-serif", boxShadow: "0 4px 20px rgba(19,13,46,.2)", transition: "all .22s", position: "relative", zIndex: 1 }}>
             📞 Call my number now
@@ -1622,14 +2128,16 @@ function Step7({ onNext, onBack }) {
 /* ═══════════════════════════════════════════
    SUCCESS SCREEN
 ═══════════════════════════════════════════ */
-function SuccessScreen({ onDashboard }) {
+function SuccessScreen({ onDashboard, agentName, bizName }) {
+  const displayAgent = agentName || "Aria";
+  const displayBiz = bizName || "your business";
   return (
     <div className="success-screen">
       <style>{G}</style>
       <div className="success-bg" />
       <div className="success-icon">🎉</div>
       <h1 className="success-h1">You're live!</h1>
-      <p className="success-sub">Aria is now answering calls for Tony's Pizzeria. Your first real customer call could come in any moment.</p>
+      <p className="success-sub">{displayAgent} is now answering calls for {displayBiz}. Your first real customer call could come in any moment.</p>
       <div className="success-stats">
         {[["📞", "Live", "Agent status"], ["⏱️", "24/7", "Coverage"], ["🛒", "Ready", "For orders"]].map(([ic, v, l]) => (
           <div className="ss-card" key={l}>
@@ -1658,7 +2166,8 @@ const NAV = [
   { section:"Account", items:[["🔌","Integrations"],["💳","Billing"],["⚙️","Settings"]] },
 ];
 
-function Sidebar({ active, onNav }) {
+function Sidebar({ active, onNav, user, bizName }) {
+  const initials = `${(user?.firstName?.[0] || '').toUpperCase()}${(user?.lastName?.[0] || '').toUpperCase()}` || '?';
   return (
     <aside className="dash-sidebar">
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
@@ -1685,33 +2194,35 @@ function Sidebar({ active, onNav }) {
       ))}
       <div style={{ marginTop:"auto", paddingTop:18, borderTop:`1.5px solid ${T.line}` }}>
         <div className="dash-nav-item">
-          <div style={{ width:28,height:28,borderRadius:"50%",background:`linear-gradient(135deg,${T.p400},${T.p700})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"white" }}>TC</div>
-          Tony's Pizzeria
+          <div style={{ width:28,height:28,borderRadius:"50%",background:`linear-gradient(135deg,${T.p400},${T.p700})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"white" }}>{initials}</div>
+          {bizName || user?.firstName || 'My Business'}
         </div>
       </div>
     </aside>
   );
 }
 
-function TopBar({ title, subtitle, children }) {
+function TopBar({ title, subtitle, children, user, agentName }) {
+  const initials = `${(user?.firstName?.[0] || '').toUpperCase()}${(user?.lastName?.[0] || '').toUpperCase()}` || '?';
+  const today = new Date();
+  const dateStr = today.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).replace(',', ' ·');
   return (
     <div className="dash-topbar">
       <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
         <button className="resp-show-mobile" onClick={() => document.body.classList.add('mob-nav-open')} style={{ background: "transparent", border: "none", fontSize: 26, cursor: "pointer", padding: 0, color: T.ink, marginTop: -2 }}>☰</button>
         <div>
-        <div className="dash-date">Wednesday · 18 March 2026</div>
-        <div className="page-title">{title}</div>
-        {subtitle && <div className="page-sub">{subtitle}</div>}
-      </div>
-
+          <div className="dash-date">{dateStr}</div>
+          <div className="page-title">{title}</div>
+          {subtitle && <div className="page-sub">{subtitle}</div>}
+        </div>
       </div>
       <div className="dash-topbar-right">
         <div className="dash-live-badge">
           <div style={{ width:7,height:7,borderRadius:"50%",background:T.green,animation:"pulse 2s infinite" }} />
-          Agent live
+          {agentName || 'Agent'} live
         </div>
         {children}
-        <div className="dash-avatar">TC</div>
+        <div className="dash-avatar">{initials}</div>
       </div>
     </div>
   );
@@ -1720,43 +2231,38 @@ function TopBar({ title, subtitle, children }) {
 /* ═══════════════════════════════════════════
    PAGE 1 — DASHBOARD (HOME)
 ═══════════════════════════════════════════ */
-function PageDashboard({ onNav }) {
-  const calls = [
-    { s:"live", n:"Incoming call",  d:"Live now · +44 7811 234 567", o:"Taking order",    b:"order" },
-    { s:"done", n:"Sarah Williams", d:"Today 2:14pm · 1:42",          o:"Order — £34.50", b:"order" },
-    { s:"done", n:"James Patel",    d:"Today 1:58pm · 0:38",          o:"Menu enquiry",   b:"info"  },
-    { s:"done", n:"Unknown caller", d:"Today 1:22pm · 0:12",          o:"Hours check",    b:"info"  },
-    { s:"miss", n:"Missed call",    d:"Today 12:45pm",                 o:"Missed",         b:"missed"},
-    { s:"done", n:"Lucy Chen",      d:"Today 11:30am · 2:05",          o:"Order — £52.00", b:"order" },
-  ];
+function PageDashboard({ onNav, user, agentName, bizName, agentData }) {
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const today = new Date();
+  const dateStr = today.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).replace(',', ' ·');
+  const initials = `${(user?.firstName?.[0] || '').toUpperCase()}${(user?.lastName?.[0] || '').toUpperCase()}` || '?';
+  const displayAgent = agentName || 'Aria';
+  const displayBiz = bizName || 'your business';
+  const voiceDesc = agentData?.voiceDescription || 'Warm & professional';
+  const fallbackLabels = { transfer: "Transfer", voicemail: "Voicemail", callback: "Call back" };
+  const callRulesLabel = fallbackLabels[agentData?.fallbackAction] || "Transfer";
+
   const bars = [42,67,58,82,74,91,100,79,88,96,62,50];
   const days = ["M","T","W","T","F","S","S","M","T","W","T","F"];
   return (
     <>
       <div className="dash-topbar">
         <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
-        <button className="resp-show-mobile" onClick={() => document.body.classList.add('mob-nav-open')} style={{ background: "transparent", border: "none", fontSize: 26, cursor: "pointer", padding: 0, color: T.ink, marginTop: -2 }}>☰</button>
-        <div>
-          <div className="dash-date">Wednesday · 18 March 2026</div>
-          <div className="dash-greeting">Good afternoon, <strong>Tony</strong> 👋</div>
-        </div>
-
+          <button className="resp-show-mobile" onClick={() => document.body.classList.add('mob-nav-open')} style={{ background: "transparent", border: "none", fontSize: 26, cursor: "pointer", padding: 0, color: T.ink, marginTop: -2 }}>☰</button>
+          <div>
+            <div className="dash-date">{dateStr}</div>
+            <div className="dash-greeting">{greeting}, <strong>{user?.firstName || 'there'}</strong> 👋</div>
+          </div>
         </div>
         <div className="dash-topbar-right">
-          <div className="dash-live-badge"><div style={{ width:7,height:7,borderRadius:"50%",background:T.green,animation:"pulse 2s infinite" }} />Agent live</div>
-          <div className="dash-avatar">TC</div>
+          <div className="dash-live-badge"><div style={{ width:7,height:7,borderRadius:"50%",background:T.green,animation:"pulse 2s infinite" }} />{displayAgent} live</div>
+          <div className="dash-avatar">{initials}</div>
         </div>
-      </div>
-
-      <div className="live-banner">
-        <div className="lb-icon">📞</div>
-        <div className="lb-content"><h4>Live call in progress</h4><p>Aria is taking an order · +44 7811 234 567 · 0:34</p></div>
-        <div className="lb-wave">{Array.from({length:9},(_,i)=><div key={i} className="lb-wave-bar" style={{height:6+Math.random()*16,animationDelay:`${i*.09}s`}}/>)}</div>
-        <button className="lb-btn">Listen in →</button>
       </div>
 
       <div className="kpi-row">
-        {[{l:"Calls today",v:"14",d:"↑ 3 vs yesterday"},{l:"Revenue today",v:"£486",d:"↑ 12% vs last Wed"},{l:"Avg. call time",v:"1:18",d:"↓ 8s this week"},{l:"Answer rate",v:"100%",d:"0 missed today"}].map(k=>(
+        {[{l:"Calls today",v:"0",d:"No calls yet today"},{l:"Revenue today",v:"£0",d:"No orders yet"},{l:"Avg. call time",v:"0:00",d:"—"},{l:"Answer rate",v:"0%",d:"Connect a number to start"}].map(k=>(
           <div className="kpi-card" key={k.l}><div className="kpi-label">{k.l}</div><div className="kpi-value">{k.v}</div><div className="kpi-delta">{k.d}</div></div>
         ))}
       </div>
@@ -1765,26 +2271,23 @@ function PageDashboard({ onNav }) {
         <div>
           <div className="card" style={{marginBottom:16}}>
             <div className="card-head">Recent calls <span className="card-link" onClick={()=>onNav&&onNav("Calls")} style={{cursor:"pointer"}}>View all →</span></div>
-            {calls.map((c,i)=>(
-              <div className="call-log-item" key={i}>
-                <div className={`call-dot ${c.s==="live"?"live":c.s==="done"?"done":"miss"}`}/>
-                <div style={{flex:1}}><div className="call-name">{c.n}</div><div className="call-detail">{c.d}</div></div>
-                <span className={`call-badge ${c.b==="order"?"order":c.b==="info"?"info":"missed"}`}>{c.o}</span>
-              </div>
-            ))}
+            <div style={{ textAlign:"center", padding:"32px 16px", color:T.soft }}>
+              <div style={{ fontSize:32, marginBottom:10 }}>📵</div>
+              <div style={{ fontSize:14, fontWeight:600, color:T.mid, marginBottom:6 }}>No recent calls yet</div>
+              <div style={{ fontSize:12.5 }}>Calls will appear here once your number is connected.</div>
+            </div>
           </div>
-
         </div>
         <div>
           <div className="card" style={{marginBottom:16}}>
             <div className="card-head">Your agent</div>
             <div className="agent-card">
               <div className="agent-avatar">🤖</div>
-              <div><div className="agent-name">Aria</div><div className="agent-status"><div className="agent-status-dot"/>Active · Tony's Pizzeria</div></div>
+              <div><div className="agent-name">{displayAgent}</div><div className="agent-status"><div className="agent-status-dot"/>Active · {displayBiz}</div></div>
               <button className="agent-edit-btn" onClick={()=>onNav&&onNav("My Agent")}>Edit</button>
             </div>
             <div className="agent-meta">
-              {[["Voice","Aria · Warm"],["Language","English"],["Call rules","Transfer"],["POS","Toast ✓"]].map(([l,v])=>(
+              {[["Voice",`${displayAgent} · ${voiceDesc}`],["Language","English"],["Call rules",callRulesLabel],["POS","Clover / Square"]].map(([l,v])=>(
                 <div key={l} className="agent-meta-item"><div className="agent-meta-label">{l}</div><div className="agent-meta-value">{v}</div></div>
               ))}
             </div>
@@ -1806,24 +2309,13 @@ function PageDashboard({ onNav }) {
 /* ═══════════════════════════════════════════
    PAGE 2 — CALLS
 ═══════════════════════════════════════════ */
-function PageCalls() {
+function PageCalls({ user, agentName, bizName }) {
   const [filter, setFilter] = useState("All");
   const [timeFilter, setTimeFilter] = useState("Today");
   const [page, setPage] = useState(1);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   useEffect(()=>{ const h=()=>setIsMobile(window.innerWidth<=768); window.addEventListener('resize',h); return ()=>window.removeEventListener('resize',h); },[]);
-  const calls = [
-    { s:"live", n:"Incoming call",  phone:"+44 7811 234 567", time:"Live now",    dur:"0:34",  outcome:"Taking order",    amount:"",      b:"order" },
-    { s:"done", n:"Sarah Williams", phone:"+44 7922 111 222", time:"Today 2:14pm",dur:"1:42",  outcome:"Order placed",    amount:"£34.50",b:"order" },
-    { s:"done", n:"James Patel",    phone:"+44 7933 444 555", time:"Today 1:58pm",dur:"0:38",  outcome:"Menu enquiry",    amount:"",      b:"info"  },
-    { s:"done", n:"Unknown caller", phone:"+44 7944 666 777", time:"Today 1:22pm",dur:"0:12",  outcome:"Hours check",     amount:"",      b:"info"  },
-    { s:"miss", n:"Missed call",    phone:"+44 7800 123 456", time:"Today 12:45pm",dur:"\u2014",    outcome:"Missed",          amount:"",      b:"missed"},
-    { s:"done", n:"Lucy Chen",      phone:"+44 7711 999 888", time:"Today 11:30am",dur:"2:05", outcome:"Order placed",    amount:"\u00a352.00",b:"order" },
-    { s:"done", n:"David Park",     phone:"+44 7622 777 333", time:"Yesterday 7pm",dur:"1:18", outcome:"Reservation",     amount:"",      b:"info"  },
-    { s:"done", n:"Emma Thompson",  phone:"+44 7533 222 111", time:"Yesterday 6pm",dur:"0:55", outcome:"Order placed",    amount:"\u00a328.75",b:"order" },
-    { s:"miss", n:"Unknown",        phone:"+44 7444 555 666", time:"Yesterday 5pm",dur:"\u2014",    outcome:"Missed",          amount:"",      b:"missed"},
-    { s:"done", n:"Ravi Sharma",    phone:"+44 7355 888 444", time:"Yesterday 3pm",dur:"2:22", outcome:"Order placed",    amount:"\u00a367.00",b:"order" },
-  ];
+  const calls = [];
   const tabs = ["All","Orders","Enquiries","Missed"];
   const timeFiltered = timeFilter==="Today"?calls.filter(c=>c.time.includes("Today")||c.time==="Live now"):timeFilter==="Yesterday"?calls.filter(c=>c.time.includes("Yesterday")):calls;
   const filtered = filter==="All"?timeFiltered:filter==="Orders"?timeFiltered.filter(c=>c.b==="order"):filter==="Missed"?timeFiltered.filter(c=>c.b==="missed"):timeFiltered.filter(c=>c.b==="info");
@@ -1832,12 +2324,12 @@ function PageCalls() {
   const paginated = filtered.slice((page-1)*perPage, page*perPage);
   return (
     <>
-      <TopBar title={<>All <strong>Calls</strong></>} subtitle="Every call routed through Talkativ with full transcripts">
+      <TopBar title={<>All <strong>Calls</strong></>} subtitle="Every call routed through Talkativ with full transcripts" user={user} agentName={agentName}>
         <button className="btn-secondary" style={{fontSize:13,padding:"8px 18px"}}>Export CSV</button>
       </TopBar>
 
       <div className="kpi-row">
-        {[{l:"Total today",v:"14",d:"\u2191 3 vs yesterday"},{l:"Answered",v:"13",d:"92.8% answer rate"},{l:"Avg. duration",v:"1:18",d:"\u2193 8s vs last week"},{l:"Orders taken",v:"8",d:"\u2191 \u00a3486 revenue"}].map(k=>(
+        {[{l:"Total today",v:"0",d:"No calls yet"},{l:"Answered",v:"0",d:"—"},{l:"Avg. duration",v:"0:00",d:"—"},{l:"Orders taken",v:"0",d:"Connect a number to start"}].map(k=>(
           <div className="kpi-card" key={k.l}><div className="kpi-label">{k.l}</div><div className="kpi-value">{k.v}</div><div className="kpi-delta">{k.d}</div></div>
         ))}
       </div>
@@ -1858,7 +2350,13 @@ function PageCalls() {
           </div>
         </div>
 
-        {isMobile ? (
+        {paginated.length === 0 ? (
+          <div style={{textAlign:"center",padding:"48px 20px"}}>
+            <div style={{fontSize:36,marginBottom:12}}>📞</div>
+            <div style={{fontSize:15,fontWeight:600,color:T.ink,marginBottom:6}}>No calls yet</div>
+            <div style={{fontSize:13,color:T.soft}}>Calls handled by {agentName || 'your agent'} will appear here</div>
+          </div>
+        ) : isMobile ? (
           /* Mobile card layout */
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
             {paginated.map((c,i)=>(
@@ -1921,21 +2419,14 @@ function PageCalls() {
 /* ═══════════════════════════════════════════
    PAGE 3 — ORDERS
 ═══════════════════════════════════════════ */
-function PageOrders() {
+function PageOrders({ user, agentName, bizName }) {
   const [tab, setTab] = useState("Today");
   const [typeFilter, setTypeFilter] = useState("All types");
   const [statusFilter, setStatusFilter] = useState("All statuses");
   const [page, setPage] = useState(1);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   useEffect(()=>{ const h=()=>setIsMobile(window.innerWidth<=768); window.addEventListener('resize',h); return ()=>window.removeEventListener('resize',h); },[]);
-  const orders = [
-    { id:"ORD-0091", name:"Sarah Williams", items:"Large pepperoni, garlic bread", type:"Delivery", status:"completed", amount:"£34.50", time:"2:14pm" },
-    { id:"ORD-0090", name:"Lucy Chen",       items:"2x Margherita, tiramisu \u00d72",  type:"Collection",status:"completed", amount:"£52.00", time:"11:30am" },
-    { id:"ORD-0089", name:"Incoming call",   items:"Ordering in progress\u2026",       type:"Delivery",  status:"live",      amount:"\u2014",      time:"Now" },
-    { id:"ORD-0088", name:"Emma Thompson",  items:"Calzone, 2x Coke, dessert",    type:"Delivery",  status:"completed", amount:"£28.75", time:"Yesterday" },
-    { id:"ORD-0087", name:"Ravi Sharma",    items:"Family feast + 4 garlic breads",type:"Collection",status:"completed",amount:"£67.00", time:"Yesterday" },
-    { id:"ORD-0086", name:"David Park",     items:"3x Quattro formaggi",          type:"Delivery",  status:"completed", amount:"£41.50", time:"Yesterday" },
-  ];
+  const orders = [];
   const timeFiltered = tab==="Today"?orders.filter(o=>o.time.includes("pm")||o.time.includes("am")||o.time==="Now"):tab==="Yesterday"?orders.filter(o=>o.time==="Yesterday"):orders;
   const typeFilteredOrders = typeFilter==="All types"?timeFiltered:timeFiltered.filter(o=>o.type===typeFilter);
   const statusFilteredOrders = statusFilter==="All statuses"?typeFilteredOrders:statusFilter==="Completed"?typeFilteredOrders.filter(o=>o.status==="completed"):typeFilteredOrders.filter(o=>o.status==="live");
@@ -1945,12 +2436,12 @@ function PageOrders() {
   const statusColor = { completed:"order", live:"purple" };
   return (
     <>
-      <TopBar title={<>All <strong>Orders</strong></>} subtitle="Orders taken by Aria across all calls">
+      <TopBar title={<>All <strong>Orders</strong></>} subtitle={`Orders taken by ${agentName || 'your agent'} across all calls`} user={user} agentName={agentName}>
         <button className="btn-secondary" style={{fontSize:13,padding:"8px 18px"}}>Export</button>
       </TopBar>
 
       <div className="kpi-row">
-        {[{l:"Orders today",v:"9",d:"\u2191 2 vs yesterday"},{l:"Revenue today",v:"£486",d:"\u2191 12% vs last Wed"},{l:"Avg. order value",v:"£54",d:"\u2191 £6 this week"},{l:"Delivery rate",v:"62%",d:"vs 38% collection"}].map(k=>(
+        {[{l:"Orders today",v:"0",d:"No orders yet"},{l:"Revenue today",v:"£0",d:"—"},{l:"Avg. order value",v:"£0",d:"—"},{l:"Delivery rate",v:"—",d:"Connect a number to start"}].map(k=>(
           <div className="kpi-card" key={k.l}><div className="kpi-label">{k.l}</div><div className="kpi-value">{k.v}</div><div className="kpi-delta">{k.d}</div></div>
         ))}
       </div>
@@ -1972,7 +2463,13 @@ function PageOrders() {
           </div>
         </div>
 
-        {isMobile ? (
+        {paginated.length === 0 ? (
+          <div style={{textAlign:"center",padding:"48px 20px"}}>
+            <div style={{fontSize:36,marginBottom:12}}>🛍️</div>
+            <div style={{fontSize:15,fontWeight:600,color:T.ink,marginBottom:6}}>No orders yet</div>
+            <div style={{fontSize:13,color:T.soft}}>Orders taken by {agentName || 'your agent'} will appear here</div>
+          </div>
+        ) : isMobile ? (
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
             {paginated.map((o,i)=>(
               <div key={i} style={{background:T.paper,border:`1.5px solid ${T.line}`,borderRadius:14,padding:"14px 16px"}}>
@@ -2030,29 +2527,22 @@ function PageOrders() {
 /* ═══════════════════════════════════════════
    PAGE 4 — RESERVATIONS
 ═══════════════════════════════════════════ */
-function PageReservations() {
+function PageReservations({ user, agentName, bizName }) {
   const [page, setPage] = useState(1);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   useEffect(()=>{ const h=()=>setIsMobile(window.innerWidth<=768); window.addEventListener('resize',h); return ()=>window.removeEventListener('resize',h); },[]);
-  const reservations = [
-    { name:"Emily Watson",     guests:4, date:"Today 7:30pm",   status:"confirmed", note:"Window table requested", phone:"+44 7811 234 567" },
-    { name:"The Johnson Group",guests:8, date:"Today 8:00pm",   status:"confirmed", note:"Birthday dinner",         phone:"+44 7922 111 222" },
-    { name:"Amir Hassan",      guests:2, date:"Today 9:00pm",   status:"pending",   note:"",                        phone:"+44 7933 444 555" },
-    { name:"Sophie Clarke",    guests:6, date:"Tomorrow 1:00pm",status:"confirmed", note:"Vegetarian menu",        phone:"+44 7944 666 777" },
-    { name:"Mark & Laura",     guests:2, date:"Tomorrow 7:30pm",status:"confirmed", note:"Anniversary",            phone:"+44 7800 123 456" },
-    { name:"Office Lunch",     guests:12,date:"Fri 12:30pm",    status:"pending",   note:"Needs large table",      phone:"+44 7711 999 888" },
-  ];
+  const reservations = [];
   const perPage = 5;
   const totalPages = Math.ceil(reservations.length / perPage);
   const paginated = reservations.slice((page-1)*perPage, page*perPage);
   return (
     <>
-      <TopBar title={<>Reservations</>} subtitle="Bookings taken by Aria via phone">
+      <TopBar title={<>Reservations</>} subtitle={`Bookings taken by ${agentName || 'your agent'} via phone`} user={user} agentName={agentName}>
         <button className="btn-primary" style={{fontSize:13,padding:"9px 20px"}}>+ Add booking</button>
       </TopBar>
 
       <div className="kpi-row">
-        {[{l:"Today's covers",v:"22",d:"2 tables remaining"},{l:"This week",v:"87",d:"\u2191 14 vs last week"},{l:"Avg. party size",v:"4.2",d:"Stable"},{l:"No-show rate",v:"4%",d:"\u2193 2% this month"}].map(k=>(
+        {[{l:"Today's covers",v:"0",d:"No bookings yet"},{l:"This week",v:"0",d:"—"},{l:"Avg. party size",v:"—",d:"—"},{l:"No-show rate",v:"—",d:"Connect a number to start"}].map(k=>(
           <div className="kpi-card" key={k.l}><div className="kpi-label">{k.l}</div><div className="kpi-value">{k.v}</div><div className="kpi-delta">{k.d}</div></div>
         ))}
       </div>
@@ -2062,7 +2552,13 @@ function PageReservations() {
           <div className="card-head" style={{marginBottom:0}}>Upcoming bookings</div>
         </div>
 
-        {isMobile ? (
+        {paginated.length === 0 ? (
+          <div style={{textAlign:"center",padding:"48px 20px"}}>
+            <div style={{fontSize:36,marginBottom:12}}>📅</div>
+            <div style={{fontSize:15,fontWeight:600,color:T.ink,marginBottom:6}}>No reservations yet</div>
+            <div style={{fontSize:13,color:T.soft}}>Bookings taken by {agentName || 'your agent'} will appear here</div>
+          </div>
+        ) : isMobile ? (
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
             {paginated.map((r,i)=>(
               <div key={i} style={{background:T.paper,border:`1.5px solid ${T.line}`,borderRadius:14,padding:"14px 16px"}}>
@@ -2129,51 +2625,44 @@ function PageReservations() {
 /* ═══════════════════════════════════════════
    PAGE 5 — MY AGENT
 ═══════════════════════════════════════════ */
-function PageMyAgent() {
+function PageMyAgent({ user, agentName, bizName, agentData, bizData, menuSynced }) {
+  const displayAgent = agentName || "Aria";
+  const displayBiz = bizName || "your restaurant";
+  const greeting = agentData?.openingGreeting || `Hi, thanks for calling us at ${displayBiz}! I'm ${displayAgent}, your AI assistant. Would you like to place an order, check our hours, or something else?`;
+  const voiceDisplay = agentData ? `${agentData.voiceName} · ${agentData.voiceDescription}` : `${displayAgent} · Warm`;
+  const hoursDisplay = bizData?.openingHours ? "Configured" : "Not set";
+  const menuDisplay = menuSynced ? "Synced" : "Not synced";
+
   const [tab, setTab] = useState("Overview");
-  const [selectedTranscript, setSelectedTranscript] = useState(null);
-  const transcripts = [
-    {time:"2:14pm",dur:"1:42",outcome:"Order placed",caller:"Sarah Williams",phone:"+44 7922 111 222",conversation:[
-      {role:"agent",text:"Thanks for calling Tony's Pizzeria! I'm Aria, your AI assistant. Would you like to place an order, check our hours, or something else?"},
-      {role:"caller",text:"Hi, I'd like to place an order for delivery please."},
-      {role:"agent",text:"Of course! I'd be happy to help you with a delivery order. Could I start with your name please?"},
-      {role:"caller",text:"It's Sarah Williams."},
-      {role:"agent",text:"Lovely, Sarah! What would you like to order today?"},
-      {role:"caller",text:"Can I get a large pepperoni pizza and a garlic bread please?"},
-      {role:"agent",text:"Great choices! That's one large pepperoni pizza and one garlic bread. Before I finalise your order, do you have any food allergies or dietary requirements I should be aware of?"},
-      {role:"caller",text:"No, no allergies. Thanks for asking!"},
-      {role:"agent",text:"Perfect! Your total comes to \u00a334.50. Could I get your delivery address please?"},
-      {role:"caller",text:"22 Oak Lane, Manchester M4 5FG."},
-      {role:"agent",text:"Wonderful! Your order has been placed \u2014 one large pepperoni and garlic bread for delivery to 22 Oak Lane. It should be with you in about 35 minutes. Thanks for calling Tony's, Sarah! Have a great evening!"},
-    ]},
-    {time:"1:58pm",dur:"0:38",outcome:"Menu enquiry",caller:"James Patel",phone:"+44 7933 444 555",conversation:[
-      {role:"agent",text:"Thanks for calling Tony's Pizzeria! I'm Aria, your AI assistant. How can I help?"},
-      {role:"caller",text:"Hi, do you have any vegan options on the menu?"},
-      {role:"agent",text:"Yes we do! We have a Vegan Margherita with plant-based cheese, a Roasted Vegetable Pizza, and our Garden Salad. Would you like to place an order?"},
-      {role:"caller",text:"Not right now, just checking. Thanks!"},
-      {role:"agent",text:"No problem at all! Feel free to call back when you're ready to order. Have a lovely day!"},
-    ]},
-    {time:"11:30am",dur:"2:05",outcome:"Order placed",caller:"Lucy Chen",phone:"+44 7711 999 888",conversation:[
-      {role:"agent",text:"Thanks for calling Tony's Pizzeria! I'm Aria. Would you like to place an order, make a reservation, or something else?"},
-      {role:"caller",text:"Hi, I'd like to order for collection please."},
-      {role:"agent",text:"Sure! Collection it is. What can I get for you today?"},
-      {role:"caller",text:"Two margherita pizzas and two tiramisus please."},
-      {role:"agent",text:"Perfect! Before I confirm, do you have any food allergies or dietary requirements?"},
-      {role:"caller",text:"I'm lactose intolerant \u2014 can you use dairy-free cheese on the pizzas?"},
-      {role:"agent",text:"Absolutely! I'll note dairy-free cheese on both margheritas. Your total is \u00a352.00. What name shall I put the order under?"},
-      {role:"caller",text:"Lucy Chen."},
-      {role:"agent",text:"All set, Lucy! Your order will be ready for collection in about 25 minutes. Thanks for calling Tony's!"},
-    ]},
-  ];
+  const [acceptOrders, setAcceptOrders] = useState(true);
+  const [takeReservations, setTakeReservations] = useState(true);
+  const [answerAfterHours, setAnswerAfterHours] = useState(true);
+
+  useEffect(() => {
+    if (agentData) {
+      setAcceptOrders(agentData.acceptOrders ?? true);
+      setTakeReservations(agentData.takeReservations ?? true);
+      setAnswerAfterHours(agentData.answerAfterHours ?? true);
+    }
+  }, [agentData]);
+
+  const updateSetting = async (field, val) => {
+    try { await api.agent.update({ [field]: val }); } catch {}
+  };
+
   return (
     <>
-      <TopBar title={<>My <strong>Agent</strong></>} subtitle="Configure and monitor Aria, your AI phone agent" />
+      <TopBar title={<>My <strong>Agent</strong></>} subtitle={`Configure and monitor ${displayAgent}, your AI phone agent`} user={user} agentName={agentName} />
 
       <div className="resp-grid-3">
-        {[{ic:"📞",l:"Calls answered today",v:"13"},{ic:"⏱️",l:"Avg. handle time",v:"1:18"},{ic:"✅",l:"Successful outcomes",v:"92%"}].map(k=>(
+        {[{ic:"📞",l:"Calls answered today",v:"0",d:"No calls yet"},{ic:"⏱️",l:"Avg. handle time",v:"0:00",d:"—"},{ic:"✅",l:"Successful outcomes",v:"0%",d:"—"}].map(k=>(
           <div className="kpi-card" key={k.l} style={{display:"flex",alignItems:"center",gap:14}}>
             <div style={{width:44,height:44,borderRadius:12,background:T.p50,border:`1.5px solid ${T.p100}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{k.ic}</div>
-            <div><div className="kpi-label" style={{marginBottom:4}}>{k.l}</div><div className="kpi-value" style={{fontSize:26}}>{k.v}</div></div>
+            <div>
+              <div className="kpi-label" style={{marginBottom:4}}>{k.l}</div>
+              <div className="kpi-value" style={{fontSize:26}}>{k.v}</div>
+              <div className="kpi-delta" style={{marginTop:2}}>{k.d}</div>
+            </div>
           </div>
         ))}
       </div>
@@ -2191,14 +2680,24 @@ function PageMyAgent() {
               <>
                 <div className="agent-card">
                   <div className="agent-avatar">🤖</div>
-                  <div><div className="agent-name" style={{fontSize:16}}>Aria</div><div className="agent-status"><div className="agent-status-dot"/>Active · answering calls right now</div></div>
+                  <div>
+                    <div className="agent-name" style={{fontSize:16}}>{displayAgent}</div>
+                    <div className="agent-status"><div className="agent-status-dot"/>Ready · waiting for first call</div>
+                  </div>
                   <button className="agent-edit-btn">Edit agent</button>
                 </div>
                 <div style={{marginTop:20,display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
-                  {[["🎙️","Voice","Aria · Warm"],["🌍","Language","English"],["🔀","Call rules","Transfer"],["🔌","POS","Toast"],["⏰","Hours","11am–11pm"],["📋","Menu","Synced today"]].map(([ic,l,v])=>(
+                  {[
+                    ["🎙️","Voice", voiceDisplay],
+                    ["🌍","Language","English"],
+                    ["🔀","Call rules", agentData?.transferEnabled !== false ? "Transfer" : "End call"],
+                    ["🔌","POS","Not connected"],
+                    ["⏰","Hours", hoursDisplay],
+                    ["📋","Menu", menuDisplay],
+                  ].map(([ic,l,v])=>(
                     <div key={l} style={{background:T.paper,border:`1.5px solid ${T.line}`,borderRadius:12,padding:"12px 14px"}}>
                       <div style={{fontSize:11,color:T.soft,marginBottom:4,textTransform:"uppercase",letterSpacing:".5px",fontWeight:700}}>{ic} {l}</div>
-                      <div style={{fontSize:13.5,fontWeight:600,color:T.ink}}>{v}</div>
+                      <div style={{fontSize:13.5,fontWeight:600,color:menuDisplay==="Not synced"&&l==="Menu"?T.amber:hoursDisplay==="Not set"&&l==="Hours"?T.amber:T.ink}}>{v}</div>
                     </div>
                   ))}
                 </div>
@@ -2207,11 +2706,16 @@ function PageMyAgent() {
 
             {tab==="Performance" && (
               <div>
-                {[["Answer rate","98%",98],["Orders completed","84%",84],["Customer satisfaction","4.8/5",96],["Avg. call resolution","92%",92]].map(([l,v,pct])=>(
+                <div style={{textAlign:"center",padding:"32px 20px"}}>
+                  <div style={{fontSize:30,marginBottom:10}}>📊</div>
+                  <div style={{fontSize:14,fontWeight:600,color:T.ink,marginBottom:6}}>No performance data yet</div>
+                  <div style={{fontSize:13,color:T.soft}}>Stats will appear here once {displayAgent} starts taking calls</div>
+                </div>
+                {[["Answer rate","0%",0],["Orders completed","0%",0],["Customer satisfaction","—",0],["Avg. call resolution","0%",0]].map(([l,v,pct])=>(
                   <div key={l} style={{marginBottom:20}}>
                     <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
                       <span style={{fontSize:13.5,fontWeight:600,color:T.ink}}>{l}</span>
-                      <span style={{fontSize:13.5,fontWeight:700,color:T.p600}}>{v}</span>
+                      <span style={{fontSize:13.5,fontWeight:700,color:T.faint}}>{v}</span>
                     </div>
                     <div className="prog-track"><div className="prog-fill" style={{width:`${pct}%`}}/></div>
                   </div>
@@ -2220,52 +2724,10 @@ function PageMyAgent() {
             )}
 
             {tab==="Transcripts" && (
-              <div>
-                {transcripts.map((t,i)=>(
-                  <div key={i} style={{padding:"14px 0",borderBottom:`1px solid ${T.paper}`,cursor:"pointer"}}>
-                    <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
-                      <div>
-                        <span style={{fontSize:13,fontWeight:600,color:T.ink}}>Call at {t.time}</span>
-                        <span style={{fontSize:12,color:T.soft,marginLeft:8}}>{t.caller}</span>
-                      </div>
-                      <span className="badge badge-purple">{t.outcome}</span>
-                    </div>
-                    <div style={{fontSize:12,color:T.soft,background:T.paper,borderRadius:10,padding:"10px 12px",fontWeight:"700"}}>
-                      "{t.conversation[0].text.substring(0,90)}…"
-                    </div>
-                    <div style={{fontSize:11.5,color:T.soft,marginTop:6}}>Duration: {t.dur} · <span style={{color:T.p500,cursor:"pointer"}} onClick={()=>setSelectedTranscript(t)}>View full transcript →</span></div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Transcript Popup */}
-            {selectedTranscript && (
-              <div style={{position:"fixed",inset:0,zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:24}} onClick={()=>setSelectedTranscript(null)}>
-                <div style={{position:"absolute",inset:0,background:"rgba(19,13,46,.45)",backdropFilter:"blur(6px)"}}/>
-                <div onClick={e=>e.stopPropagation()} style={{position:"relative",width:"100%",maxWidth:560,maxHeight:"80vh",background:T.white,border:`1.5px solid ${T.line}`,borderRadius:22,boxShadow:`0 24px 80px rgba(134,87,255,.18)`,animation:"fadeUp .3s ease both",display:"flex",flexDirection:"column"}}>
-                  <div style={{padding:"24px 28px 16px",borderBottom:`1px solid ${T.line}`}}>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                      <div>
-                        <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:900,color:T.ink,margin:0}}>Call transcript</h3>
-                        <p style={{fontSize:13,color:T.soft,margin:"4px 0 0",fontWeight:300}}>{selectedTranscript.caller} · {selectedTranscript.time} · {selectedTranscript.dur}</p>
-                      </div>
-                      <button onClick={()=>setSelectedTranscript(null)} style={{width:32,height:32,borderRadius:"50%",border:`1.5px solid ${T.line}`,background:T.paper,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:T.mid}}>✕</button>
-                    </div>
-                    <div style={{display:"flex",gap:8,marginTop:12}}>
-                      <span className="badge badge-purple">{selectedTranscript.outcome}</span>
-                      <span className="badge badge-green" style={{padding:"4px 8px"}}>{selectedTranscript.phone}</span>
-                    </div>
-                  </div>
-                  <div style={{padding:"20px 28px",overflowY:"auto",flex:1}}>
-                    {selectedTranscript.conversation.map((msg,i)=>(
-                      <div key={i} style={{marginBottom:16,display:"flex",flexDirection:"column",alignItems:msg.role==="agent"?"flex-start":"flex-end"}}>
-                        <div style={{fontSize:10,fontWeight:700,color:msg.role==="agent"?T.p500:T.mid,textTransform:"uppercase",letterSpacing:".5px",marginBottom:4}}>{msg.role==="agent"?"🤖 Aria":"📞 Caller"}</div>
-                        <div style={{maxWidth:"85%",padding:"10px 14px",borderRadius:msg.role==="agent"?"2px 14px 14px 14px":"14px 2px 14px 14px",background:msg.role==="agent"?T.p50:T.paper,border:`1px solid ${msg.role==="agent"?T.p100:T.line}`,fontSize:13,color:T.ink,lineHeight:1.55}}>{msg.text}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+              <div style={{textAlign:"center",padding:"48px 20px"}}>
+                <div style={{fontSize:36,marginBottom:12}}>🎙️</div>
+                <div style={{fontSize:15,fontWeight:600,color:T.ink,marginBottom:6}}>No transcripts yet</div>
+                <div style={{fontSize:13,color:T.soft}}>Call transcripts will appear here once {displayAgent} handles a call</div>
               </div>
             )}
           </div>
@@ -2277,12 +2739,12 @@ function PageMyAgent() {
             <div style={{background:T.paper,borderRadius:14,padding:16}}>
               <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
                 <div style={{width:36,height:36,borderRadius:10,background:`linear-gradient(135deg,${T.p400},${T.p700})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>🤖</div>
-                <div><div style={{fontSize:13,fontWeight:600,color:T.ink}}>Aria</div><div style={{fontSize:11,color:T.soft}}>AI agent preview</div></div>
+                <div><div style={{fontSize:13,fontWeight:600,color:T.ink}}>{displayAgent}</div><div style={{fontSize:11,color:T.soft}}>AI agent preview</div></div>
                 <div className="live-badge" style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:4,background:T.greenBg,border:`1px solid ${T.greenBd}`,borderRadius:50,padding:"3px 9px",fontSize:10,fontWeight:700,color:T.green}}><div style={{width:5,height:5,borderRadius:"50%",background:T.green,animation:"pulse 2s infinite"}}/>LIVE</div>
               </div>
               <div style={{background:T.p50,border:`1px solid ${T.p100}`,borderRadius:12,padding:"10px 13px",fontSize:12.5,color:T.ink2,lineHeight:1.55}}>
-                <span style={{fontSize:10,fontWeight:700,display:"block",marginBottom:4,color:T.p500}}>ARIA</span>
-                "Thanks for calling Tony's Pizzeria! I'm Aria, your AI assistant. Would you like to place an order, check our hours, or something else?"
+                <span style={{fontSize:10,fontWeight:700,display:"block",marginBottom:4,color:T.p500}}>{displayAgent.toUpperCase()}</span>
+                "{greeting}"
               </div>
               <div className="waveform" style={{justifyContent:"center",marginTop:8}}>
                 {Array.from({length:14},(_,i)=><div key={i} className="wave-bar" style={{animationDelay:`${i*.07}s`}}/>)}
@@ -2292,15 +2754,27 @@ function PageMyAgent() {
           <div className="card">
             <div className="card-head">Quick settings</div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(180px, 1fr))",gap:14}}>
-              {[["Accept orders","Allow Aria to take phone orders",true],["Take reservations","Allow booking via phone",true],["Answer after hours","Handle calls outside business hours",true]].map(([title,desc,on])=>(
-                <div key={title} style={{background:T.paper,borderRadius:12,padding:"16px 14px",display:"flex",flexDirection:"column",gap:10}}>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                    <h4 style={{margin:0,fontSize:13,fontWeight:700,color:T.ink}}>{title}</h4>
-                    <label className="toggle"><input type="checkbox" defaultChecked={on}/><div className="toggle-track"/><div className="toggle-thumb"/></label>
-                  </div>
-                  <p style={{margin:0,fontSize:12,color:T.soft,lineHeight:1.4}}>{desc}</p>
+              <div style={{background:T.paper,borderRadius:12,padding:"16px 14px",display:"flex",flexDirection:"column",gap:10}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <h4 style={{margin:0,fontSize:13,fontWeight:700,color:T.ink}}>Accept orders</h4>
+                  <label className="toggle"><input type="checkbox" checked={acceptOrders} onChange={e=>{setAcceptOrders(e.target.checked);updateSetting('acceptOrders',e.target.checked);}}/><div className="toggle-track"/><div className="toggle-thumb"/></label>
                 </div>
-              ))}
+                <p style={{margin:0,fontSize:12,color:T.soft,lineHeight:1.4}}>{acceptOrders?`Allow ${displayAgent} to take phone orders`:`${displayAgent} will not take orders right now`}</p>
+              </div>
+              <div style={{background:T.paper,borderRadius:12,padding:"16px 14px",display:"flex",flexDirection:"column",gap:10}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <h4 style={{margin:0,fontSize:13,fontWeight:700,color:T.ink}}>Take reservations</h4>
+                  <label className="toggle"><input type="checkbox" checked={takeReservations} onChange={e=>{setTakeReservations(e.target.checked);updateSetting('takeReservations',e.target.checked);}}/><div className="toggle-track"/><div className="toggle-thumb"/></label>
+                </div>
+                <p style={{margin:0,fontSize:12,color:T.soft,lineHeight:1.4}}>{takeReservations?"Allow booking via phone":`${displayAgent} will decline booking requests`}</p>
+              </div>
+              <div style={{background:T.paper,borderRadius:12,padding:"16px 14px",display:"flex",flexDirection:"column",gap:10}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <h4 style={{margin:0,fontSize:13,fontWeight:700,color:T.ink}}>Answer after hours</h4>
+                  <label className="toggle"><input type="checkbox" checked={answerAfterHours} onChange={e=>{setAnswerAfterHours(e.target.checked);updateSetting('answerAfterHours',e.target.checked);}}/><div className="toggle-track"/><div className="toggle-thumb"/></label>
+                </div>
+                <p style={{margin:0,fontSize:12,color:T.soft,lineHeight:1.4}}>Handle calls outside business hours</p>
+              </div>
             </div>
           </div>
         </div>
@@ -2312,15 +2786,97 @@ function PageMyAgent() {
 /* ═══════════════════════════════════════════
    PAGE 6 — VOICE & SCRIPT
 ═══════════════════════════════════════════ */
-function PageVoiceScript() {
-  const [voice, setVoice] = useState(0);
-  const [greeting, setGreeting] = useState("Thanks for calling Tony's Pizzeria! I'm Aria, your AI assistant. Would you like to place an order, check our hours, or something else?");
-  const [closing, setClosing] = useState("Thanks so much for calling Tony's! Your order will be with you shortly. Have a wonderful evening!");
+function PageVoiceScript({ user, agentName, bizName, agentData, bizData, onAgentNameChange }) {
   const voices = [{n:"Aria",d:"Warm & professional",lang:"EN-GB"},{n:"Leo",d:"Friendly & upbeat",lang:"EN-GB"},{n:"Nova",d:"Calm & precise",lang:"EN-US"},{n:"Finn",d:"Casual & relaxed",lang:"EN-AU"}];
+  const initName = agentName || "Aria";
+  const initBiz  = bizName  || "your restaurant";
+  const autoGreet = (name, biz) => `Hi, thanks for calling us at ${biz}! I'm ${name}, your AI assistant. Would you like to place an order, check our hours, or something else?`;
+
+  const [voice, setVoice] = useState(0);
+  const [localName, setLocalName] = useState(initName);
+  const [greetingEdited, setGreetingEdited] = useState(false);
+  const [greeting, setGreeting] = useState(autoGreet(initName, initBiz));
+  const [fallbackAction, setFallbackAction] = useState("transfer");
+  const [transferNumber, setTransferNumber] = useState('');
+  const [takeMessages, setTakeMessages] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [identityDirty, setIdentityDirty] = useState(false);
+  const [savingIdentity, setSavingIdentity] = useState(false);
+  const [identitySaved, setIdentitySaved] = useState(false);
+  const [demoActive, setDemoActive] = useState(false);
+  const [demoEnded, setDemoEnded] = useState(false);
+
+  useEffect(() => {
+    if (agentData) {
+      if (agentData.name) setLocalName(agentData.name);
+      if (agentData.openingGreeting && !greetingEdited) setGreeting(agentData.openingGreeting);
+      if (agentData.fallbackAction) setFallbackAction(agentData.fallbackAction);
+      if (agentData.transferNumber) {
+        setTransferNumber(agentData.transferNumber);
+      } else if (bizData?.phone) {
+        setTransferNumber(bizData.phone);
+      }
+      if (agentData.takeMessages !== undefined) setTakeMessages(agentData.takeMessages);
+      const vIdx = voices.findIndex(v => v.n.toLowerCase() === (agentData.voiceName||'').toLowerCase());
+      if (vIdx >= 0) setVoice(vIdx);
+    }
+  }, [agentData, bizData]);
+
+  const handleNameChange = (val) => {
+    setLocalName(val);
+    if (!greetingEdited) {
+      setGreeting(autoGreet(val, bizName || 'your restaurant'));
+    }
+    setIdentityDirty(true);
+    setIdentitySaved(false);
+  };
+
+  const handleGreetingChange = (val) => {
+    setGreetingEdited(true);
+    setGreeting(val);
+    setIdentityDirty(true);
+    setIdentitySaved(false);
+  };
+
+  const handleSaveIdentity = async () => {
+    setSavingIdentity(true);
+    try {
+      await api.agent.update({ name: localName, openingGreeting: greeting });
+      if (onAgentNameChange) onAgentNameChange(localName);
+      setIdentityDirty(false);
+      setIdentitySaved(true);
+      setTimeout(() => setIdentitySaved(false), 2500);
+    } catch {}
+    setSavingIdentity(false);
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await api.agent.update({
+        name: localName,
+        openingGreeting: greeting,
+        voiceName: voices[voice].n,
+        voiceDescription: voices[voice].d,
+        fallbackAction,
+        transferNumber: transferNumber || null,
+        takeMessages,
+      });
+      if (onAgentNameChange) onAgentNameChange(localName);
+    } catch {}
+    setSaving(false);
+  };
+
+  const startDemo = async () => {
+    setDemoEnded(false);
+    setDemoActive(true);
+    try { await api.agent.testCall(); } catch {}
+  };
+
   return (
     <>
-      <TopBar title={<>Voice <strong>&</strong> Script</>} subtitle="Customise how Aria sounds and what she says">
-        <button className="btn-primary" style={{fontSize:13,padding:"9px 20px"}}>Save changes</button>
+      <TopBar title={<>Voice <strong>&</strong> Script</>} subtitle={`Customise how ${localName} sounds and what ${localName} says`} user={user} agentName={agentName}>
+        <button className="btn-primary" style={{fontSize:13,padding:"9px 20px"}} onClick={handleSave}>{saving?"Saving…":"Save changes"}</button>
       </TopBar>
 
       <div className="resp-grid-dashboard-hub">
@@ -2341,66 +2897,139 @@ function PageVoiceScript() {
           </div>
 
           <div className="card" style={{marginBottom:16}}>
-            <div className="card-head">Agent identity & script</div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
-              {/* Name your agent */}
-              <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`}}>
-                <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:4,letterSpacing:".3px",textTransform:"uppercase"}}>Name your agent</label>
-                <p style={{fontSize:12,color:T.soft,lineHeight:1.4,margin:"0 0 10px 0"}}>This is the name customers will hear when Aria introduces herself.</p>
-                <input defaultValue="Aria" style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",transition:"border-color .2s, box-shadow .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)"}}/>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:18}}>
+              <div className="card-head" style={{margin:0}}>Agent identity & script</div>
+              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                {identitySaved && !identityDirty && (
+                  <span style={{fontSize:12,color:T.green,fontWeight:600}}>✓ Updated</span>
+                )}
+                {identityDirty && (
+                  <button
+                    onClick={handleSaveIdentity}
+                    disabled={savingIdentity}
+                    style={{padding:"7px 16px",borderRadius:10,border:"none",background:T.p600,color:"white",fontSize:12.5,fontWeight:700,cursor:savingIdentity?"not-allowed":"pointer",fontFamily:"'Outfit',sans-serif",opacity:savingIdentity?0.7:1,transition:"all .2s"}}
+                  >
+                    {savingIdentity ? "Saving…" : "Update agent identity"}
+                  </button>
+                )}
               </div>
-              {/* Opening greeting */}
-              <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`}}>
-                <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:4,letterSpacing:".3px",textTransform:"uppercase"}}>Opening greeting</label>
-                <p style={{fontSize:11.5,color:T.soft,lineHeight:1.4,margin:"0 0 10px 0"}}>💡 Keep under 20 seconds of speech for the best experience</p>
-                <textarea rows={3} value={greeting} onChange={e=>setGreeting(e.target.value)} style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",resize:"none",lineHeight:1.6,transition:"border-color .2s, box-shadow .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)"}}/>
+            </div>
+            <div style={{marginBottom:14}}>
+              <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:6,letterSpacing:".3px",textTransform:"uppercase"}}>Agent name</label>
+              <input
+                value={localName}
+                onChange={e=>handleNameChange(e.target.value)}
+                style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${identityDirty?T.p400:T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",transition:"border-color .2s, box-shadow .2s",boxShadow:identityDirty?`0 0 0 3px ${T.p50}`:"0 1px 3px rgba(0,0,0,.04)",boxSizing:"border-box"}}
+              />
+            </div>
+            <div>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
+                <label style={{fontSize:12,fontWeight:700,color:T.mid,letterSpacing:".3px",textTransform:"uppercase"}}>Opening greeting</label>
+                <span style={{fontSize:11,color:T.soft}}>💡 Keep under 20 seconds</span>
               </div>
+              <textarea
+                rows={4}
+                value={greeting}
+                onChange={e=>handleGreetingChange(e.target.value)}
+                style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${identityDirty?T.p400:T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",resize:"none",lineHeight:1.6,transition:"border-color .2s, box-shadow .2s",boxShadow:identityDirty?`0 0 0 3px ${T.p50}`:"0 1px 3px rgba(0,0,0,.04)",boxSizing:"border-box"}}
+              />
             </div>
           </div>
 
           <div className="card">
             <div className="card-head">Call handling rules</div>
-            <p style={{fontSize:12,color:T.soft,margin:"-8px 0 16px 0"}}>When Aria can't help…</p>
+            <p style={{fontSize:12,color:T.soft,margin:"-8px 0 16px 0"}}>When {localName} can't help…</p>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,alignItems:"stretch"}}>
-              {/* Transfer to number - select */}
               <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`,display:"flex",flexDirection:"column"}}>
-                <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:8,letterSpacing:".3px",textTransform:"uppercase"}}>Transfer to number</label>
-                <select style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",cursor:"pointer",transition:"border-color .2s, box-shadow .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)",flex:1}}><option>Transfer to number</option><option>Take a voicemail</option><option>Call back later</option></select>
+                <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:8,letterSpacing:".3px",textTransform:"uppercase"}}>Fallback action</label>
+                <select value={fallbackAction} onChange={e=>setFallbackAction(e.target.value)} style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",cursor:"pointer",transition:"border-color .2s, box-shadow .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)",flex:1}}>
+                  <option value="transfer">Transfer to number</option>
+                  <option value="voicemail">Take a voicemail</option>
+                  <option value="callback">Call back later</option>
+                </select>
               </div>
-              {/* Transfer to number - input */}
               <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`,display:"flex",flexDirection:"column"}}>
                 <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:8,letterSpacing:".3px",textTransform:"uppercase"}}>Transfer to number</label>
-                <input defaultValue="+44 161 234 5678" style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",transition:"border-color .2s, box-shadow .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)",flex:1}}/>
+                <input value={transferNumber} onChange={e=>setTransferNumber(e.target.value)} placeholder="e.g. +44 161 234 5678" style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",transition:"border-color .2s, box-shadow .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)",flex:1}}/>
               </div>
             </div>
-            {/* Offer to take a message */}
             <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`,display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:14}}>
               <div>
                 <h4 style={{margin:0,fontSize:13.5,fontWeight:600,color:T.ink}}>Offer to take a message</h4>
-                <p style={{margin:"2px 0 0",fontSize:12,color:T.soft}}>Before transferring, offer to take a message</p>
+                <p style={{margin:"2px 0 0",fontSize:12,color:T.soft}}>Before transferring, {localName} will offer to take a message</p>
               </div>
-              <label className="toggle"><input type="checkbox" defaultChecked/><div className="toggle-track"/><div className="toggle-thumb"/></label>
+              <label className="toggle"><input type="checkbox" checked={takeMessages} onChange={e=>setTakeMessages(e.target.checked)}/><div className="toggle-track"/><div className="toggle-thumb"/></label>
             </div>
           </div>
         </div>
 
         <div>
-          <div className="card" style={{marginBottom:16,position:"sticky",top:20}}>
-            <div className="card-head">Live preview</div>
-            <div style={{background:T.paper,borderRadius:14,padding:16,marginBottom:16}}>
-              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
-                <div style={{width:36,height:36,borderRadius:10,background:`linear-gradient(135deg,${T.p400},${T.p700})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>🤖</div>
-                <div><div style={{fontSize:13,fontWeight:600,color:T.ink}}>{voices[voice].n}</div><div style={{fontSize:11,color:T.soft}}>{voices[voice].d}</div></div>
+          <div className="card" style={{position:"sticky",top:20,padding:0,overflow:"hidden"}}>
+            {/* Header */}
+            <div style={{padding:"18px 20px 14px",borderBottom:`1px solid ${T.line}`}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                <span style={{fontSize:13,fontWeight:700,color:T.ink}}>Test call</span>
+                {demoActive && (
+                  <div style={{display:"flex",alignItems:"center",gap:5,background:T.greenBg,border:`1px solid ${T.greenBd}`,borderRadius:50,padding:"3px 10px",fontSize:11,fontWeight:700,color:T.green}}>
+                    <div style={{width:6,height:6,borderRadius:"50%",background:T.green,animation:"pulse 1.2s infinite"}}/>LIVE
+                  </div>
+                )}
+                {demoEnded && (
+                  <span style={{fontSize:11,fontWeight:700,color:T.green}}>✓ Call ended</span>
+                )}
               </div>
-              <div style={{background:T.p50,border:`1px solid ${T.p100}`,borderRadius:12,padding:"10px 13px",fontSize:12.5,color:T.ink2,lineHeight:1.55,fontWeight: "700"}}>"{greeting}"</div>
-              <div className="waveform" style={{justifyContent:"center",marginTop:10}}>
-                {Array.from({length:14},(_,i)=><div key={i} className="wave-bar" style={{animationDelay:`${i*.07}s`}}/>)}
-              </div>
-              <button className="btn-primary" style={{width:"100%",justifyContent:"center",marginTop:4}}>▶ Play preview</button>
             </div>
-            <div style={{background:T.amberBg,border:`1.5px solid ${T.amberBd}`,borderRadius:12,padding:"12px 14px"}}>
-              <div style={{fontSize:12,fontWeight:700,color:T.amber,marginBottom:4}}>📝 Script tip</div>
-              <div style={{fontSize:12,color:T.mid,lineHeight:1.55}}>Keep your greeting warm and concise. Customers respond best to greetings under 15 seconds.</div>
+
+            {/* Agent identity strip */}
+            <div style={{padding:"16px 20px",borderBottom:`1px solid ${T.line}`,display:"flex",alignItems:"center",gap:12}}>
+              <div style={{width:46,height:46,borderRadius:"50%",background:`linear-gradient(135deg,${T.p400},${T.p700})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0,boxShadow:demoActive?`0 0 0 3px ${T.p100},0 0 0 6px ${T.p50}`:"none",transition:"box-shadow .3s"}}>🤖</div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:14,fontWeight:700,color:T.ink}}>{localName}</div>
+                <div style={{fontSize:12,color:T.soft}}>{voices[voice].d}</div>
+              </div>
+            </div>
+
+            {/* Greeting bubble */}
+            <div style={{padding:"14px 20px",borderBottom:`1px solid ${T.line}`}}>
+              <div style={{fontSize:10,fontWeight:700,color:T.p500,letterSpacing:".6px",marginBottom:6,textTransform:"uppercase"}}>{localName}</div>
+              <div style={{background:T.p50,border:`1px solid ${T.p100}`,borderRadius:"4px 14px 14px 14px",padding:"10px 14px",fontSize:13,color:T.ink2,lineHeight:1.6,fontStyle:"italic"}}>
+                "{greeting}"
+              </div>
+            </div>
+
+            {/* Waveform (active only) */}
+            {demoActive && (
+              <div style={{padding:"16px 20px",borderBottom:`1px solid ${T.line}`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                <div className="waveform">
+                  {Array.from({length:18},(_,i)=><div key={i} className="wave-bar" style={{animationDelay:`${i*.06}s`}}/>)}
+                </div>
+              </div>
+            )}
+
+            {/* Knowledge base footer */}
+            {!demoActive && (
+              <div style={{padding:"12px 20px",borderBottom:`1px solid ${T.line}`,fontSize:12,color:T.soft,lineHeight:1.5}}>
+                💬 {localName} will use your <strong style={{color:T.mid}}>menu</strong>, <strong style={{color:T.mid}}>opening hours</strong>, <strong style={{color:T.mid}}>FAQ</strong> and <strong style={{color:T.mid}}>ordering rules</strong> as its knowledge base.
+              </div>
+            )}
+
+            {/* Call button */}
+            <div style={{padding:"16px 20px"}}>
+              {!demoActive ? (
+                <button
+                  onClick={startDemo}
+                  style={{width:"100%",padding:"14px",borderRadius:14,border:"none",background:`linear-gradient(135deg,${T.p600},${T.p700})`,color:"white",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",justifyContent:"center",gap:8,boxShadow:`0 4px 16px rgba(112,53,245,.3)`,transition:"all .2s"}}
+                >
+                  <span style={{fontSize:18}}>📞</span> Start test call
+                </button>
+              ) : (
+                <button
+                  onClick={()=>{setDemoActive(false);setDemoEnded(true);}}
+                  style={{width:"100%",padding:"14px",borderRadius:14,border:"none",background:T.red,color:"white",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",justifyContent:"center",gap:8,boxShadow:"0 4px 16px rgba(239,68,68,.3)",transition:"all .2s"}}
+                >
+                  <span style={{fontSize:18}}>📵</span> End call
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -2412,108 +3041,403 @@ function PageVoiceScript() {
 /* ═══════════════════════════════════════════
    PAGE 7 — MENU
 ═══════════════════════════════════════════ */
-function PageMenu() {
-  const [activeCategory, setActiveCategory] = useState("Pizzas");
+function PageMenu({ user, agentName, bizName }) {
+  const displayAgent = agentName || 'your agent';
+  const [categories, setCategories] = useState([]);
+  const [activeCatId, setActiveCatId] = useState(null);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingItems, setLoadingItems] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  useEffect(()=>{ const h=()=>setIsMobile(window.innerWidth<=768); window.addEventListener('resize',h); return ()=>window.removeEventListener('resize',h); },[]);
-  const categories = ["Pizzas","Pasta","Sides","Desserts","Drinks"];
-  const items = {
-    Pizzas: [
-      {name:"Margherita",price:"£12.50",desc:"Tomato, mozzarella, fresh basil",status:"active"},
-      {name:"Pepperoni",price:"£14.50",desc:"Tomato, mozzarella, pepperoni",status:"active"},
-      {name:"Quattro Formaggi",price:"£15.00",desc:"Four cheese blend, truffle oil",status:"active"},
-      {name:"Calzone",price:"£14.00",desc:"Folded pizza, ricotta, ham",status:"active"},
-      {name:"Vegan Garden",price:"£13.50",desc:"Roasted vegetables, vegan cheese",status:"active"},
-    ],
-    Pasta: [
-      {name:"Spaghetti Carbonara",price:"£13.00",desc:"Pancetta, egg, parmesan",status:"active"},
-      {name:"Penne Arrabiata",price:"£11.50",desc:"Spicy tomato, garlic",status:"active"},
-    ],
-    Sides: [
-      {name:"Garlic Bread",price:"£4.50",desc:"Toasted with garlic butter",status:"active"},
-      {name:"Mixed Salad",price:"£5.00",desc:"Seasonal greens",status:"active"},
-    ],
-    Desserts: [{name:"Tiramisu",price:"£6.50",desc:"Classic Italian",status:"active"}],
-    Drinks: [{name:"Soft drinks",price:"£2.50",desc:"Coke, Fanta, Sprite",status:"active"}],
+
+  // Import modal
+  const [showImport, setShowImport] = useState(false);
+  const [importTab, setImportTab] = useState('url');
+  const [importUrl, setImportUrl] = useState('');
+  const [importLoading, setImportLoading] = useState(false);
+  const [importResult, setImportResult] = useState(null);
+  const [importError, setImportError] = useState('');
+  const menuFileRef = useRef(null);
+  const [importPosSelected, setImportPosSelected] = useState(null);
+  const [importPosFields, setImportPosFields] = useState({});
+
+  // Add item modal
+  const [showAddItem, setShowAddItem] = useState(false);
+  const [newItemCatId, setNewItemCatId] = useState(null);
+  const [newItemName, setNewItemName] = useState('');
+  const [newItemDesc, setNewItemDesc] = useState('');
+  const [newItemPrice, setNewItemPrice] = useState('');
+  const [addingItem, setAddingItem] = useState(false);
+
+  // Add category modal
+  const [showAddCat, setShowAddCat] = useState(false);
+  const [newCatName, setNewCatName] = useState('');
+  const [addingCat, setAddingCat] = useState(false);
+
+  useEffect(() => {
+    const h = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', h);
+    return () => window.removeEventListener('resize', h);
+  }, []);
+
+  const loadCategories = async () => {
+    setLoading(true);
+    try {
+      const cats = await api.menu.getCategories();
+      setCategories(cats || []);
+      if (cats?.length > 0) setActiveCatId(id => id || cats[0].id);
+    } catch {}
+    setLoading(false);
   };
+
+  useEffect(() => { loadCategories(); }, []);
+
+  useEffect(() => {
+    if (!activeCatId) { setItems([]); return; }
+    setLoadingItems(true);
+    api.menu.getCategoryItems(activeCatId)
+      .then(d => { setItems(d || []); setLoadingItems(false); })
+      .catch(() => setLoadingItems(false));
+  }, [activeCatId]);
+
+  const activeCat = categories.find(c => c.id === activeCatId);
+
+  const catEmoji = (name) => {
+    const n = (name || '').toLowerCase();
+    if (n.includes('pizza')) return '🍕';
+    if (n.includes('pasta') || n.includes('noodle')) return '🍝';
+    if (n.includes('drink') || n.includes('beverage') || n.includes('juice') || n.includes('coffee')) return '🥤';
+    if (n.includes('dessert') || n.includes('sweet') || n.includes('cake')) return '🍰';
+    if (n.includes('side') || n.includes('salad')) return '🥗';
+    if (n.includes('burger') || n.includes('sandwich')) return '🍔';
+    if (n.includes('chicken')) return '🍗';
+    if (n.includes('fish') || n.includes('seafood')) return '🐟';
+    if (n.includes('starter') || n.includes('appetizer')) return '🥣';
+    return '🍽️';
+  };
+
+  const fmtPrice = (p) => p != null ? `£${Number(p).toFixed(2)}` : '';
+
+  const runUrlImport = async () => {
+    setImportLoading(true); setImportError(''); setImportResult(null);
+    try {
+      const r = await api.menu.importFromUrl(importUrl);
+      setImportResult(r);
+      await loadCategories();
+    } catch (e) { setImportError(e.message || 'Import failed'); }
+    setImportLoading(false);
+  };
+
+  const runFileImport = async (file) => {
+    setImportLoading(true); setImportError(''); setImportResult(null);
+    try {
+      const r = await api.menu.importFromFile(file);
+      setImportResult(r);
+      await loadCategories();
+    } catch (e) { setImportError(e.message || 'Import failed'); }
+    setImportLoading(false);
+  };
+
+  const runPosImport = async () => {
+    if (!importPosSelected) { setImportError('Please select a POS system.'); return; }
+    const pos = POS_SYSTEMS.find(p => p.name === importPosSelected);
+    const missing = pos?.fields.find(f => !importPosFields[f.key]?.trim());
+    if (missing) { setImportError(`${missing.label} is required.`); return; }
+    setImportLoading(true); setImportError(''); setImportResult(null);
+    try {
+      const r = await api.menu.importFromPos(importPosSelected, importPosFields);
+      setImportResult({ pos: r });
+    } catch (e) { setImportError(e.message || 'POS import failed'); }
+    setImportLoading(false);
+  };
+
+  const closeImport = () => { setShowImport(false); setImportResult(null); setImportError(''); setImportUrl(''); setImportPosSelected(null); setImportPosFields({}); };
+
+  const handleAddItem = async () => {
+    const catId = newItemCatId || activeCatId;
+    if (!catId || !newItemName || !newItemPrice) return;
+    setAddingItem(true);
+    try {
+      await api.menu.createItem({ categoryId: catId, name: newItemName, description: newItemDesc, price: parseFloat(newItemPrice) });
+      setShowAddItem(false); setNewItemName(''); setNewItemDesc(''); setNewItemPrice('');
+      if (catId === activeCatId) {
+        const d = await api.menu.getCategoryItems(activeCatId);
+        setItems(d || []);
+      }
+      await loadCategories();
+    } catch {}
+    setAddingItem(false);
+  };
+
+  const handleDeleteItem = async (id) => {
+    try {
+      await api.menu.deleteItem(id);
+      setItems(prev => prev.filter(i => i.id !== id));
+      setCategories(prev => prev.map(c => c.id === activeCatId ? { ...c, _count: { ...c._count, items: (c._count?.items || 1) - 1 } } : c));
+    } catch {}
+  };
+
+  const handleAddCategory = async () => {
+    if (!newCatName) return;
+    setAddingCat(true);
+    try {
+      const cat = await api.menu.createCategory({ name: newCatName });
+      setNewCatName(''); setShowAddCat(false);
+      await loadCategories();
+      setActiveCatId(cat.id);
+    } catch {}
+    setAddingCat(false);
+  };
+
+  const inputStyle = { width:"100%", padding:"12px 16px", border:`1.5px solid ${T.line}`, borderRadius:12, background:T.paper, color:T.ink, fontSize:14, fontFamily:"'Outfit',sans-serif", outline:"none", boxSizing:"border-box" };
+  const modalOverlay = { position:"fixed", inset:0, zIndex:9999, display:"flex", alignItems:"center", justifyContent:"center", padding:24 };
+  const modalBox = { position:"relative", width:"100%", background:T.white, border:`1.5px solid ${T.line}`, borderRadius:22, boxShadow:`0 24px 80px rgba(134,87,255,.18)`, animation:"fadeUp .3s ease both" };
+
   return (
     <>
-      <TopBar title={<>Menu <strong>Manager</strong></>} subtitle="Items Aria knows and can take orders for">
-        <button className="btn-secondary" style={{fontSize:13,padding:"8px 18px"}}>Import from URL</button>
-        <button className="btn-primary" style={{fontSize:13,padding:"9px 20px"}}>+ Add item</button>
+      <TopBar title={<>Menu <strong>Manager</strong></>} subtitle={`Items ${displayAgent} knows and can take orders for`} user={user} agentName={agentName}>
+        <button className="btn-secondary" style={{fontSize:13,padding:"8px 16px"}} onClick={()=>{ setImportTab('url'); setShowImport(true); }}>Import from URL</button>
+        <button className="btn-secondary" style={{fontSize:13,padding:"8px 16px"}} onClick={()=>{ setImportTab('file'); setShowImport(true); }}>Upload files</button>
+        <button className="btn-primary" style={{fontSize:13,padding:"9px 18px"}} onClick={()=>{ setNewItemCatId(activeCatId); setShowAddItem(true); }}>+ Add item</button>
       </TopBar>
 
-      {isMobile && (
-        <div style={{display:"flex",gap:6,marginBottom:16,overflowX:"auto",paddingBottom:4}}>
-          {categories.map(c=>(
-            <button key={c} onClick={()=>setActiveCategory(c)} style={{padding:"7px 16px",borderRadius:50,border:`1.5px solid ${activeCategory===c?T.p500:T.line}`,background:activeCategory===c?T.p50:"transparent",color:activeCategory===c?T.p700:T.mid,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif",whiteSpace:"nowrap",flexShrink:0}}>{c} <span style={{fontSize:11,color:activeCategory===c?T.p400:T.faint}}>({(items[c]||[]).length})</span></button>
-          ))}
+      {loading ? (
+        <div style={{textAlign:"center",padding:"80px 20px"}}>
+          <div style={{fontSize:36,marginBottom:12}}>🍽️</div>
+          <div style={{fontSize:14,color:T.soft}}>Loading menu…</div>
+        </div>
+      ) : categories.length === 0 ? (
+        <div className="card" style={{textAlign:"center",padding:"64px 32px"}}>
+          <div style={{fontSize:48,marginBottom:16}}>🍽️</div>
+          <div style={{fontSize:18,fontWeight:700,color:T.ink,marginBottom:8}}>No menu added yet</div>
+          <div style={{fontSize:14,color:T.soft,marginBottom:28,lineHeight:1.6,maxWidth:400,margin:"0 auto 28px"}}>
+            Import from a website, upload a PDF, DOCX, or image file, or add items manually.<br/>
+            {displayAgent} will use your menu to answer questions and take orders.
+          </div>
+          <div style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap"}}>
+            <button className="btn-primary" style={{fontSize:13,padding:"11px 24px"}} onClick={()=>{ setImportTab('url'); setShowImport(true); }}>🌐 Import from URL</button>
+            <button className="btn-secondary" style={{fontSize:13,padding:"11px 24px"}} onClick={()=>{ setImportTab('file'); setShowImport(true); }}>📁 Upload files</button>
+            <button className="btn-secondary" style={{fontSize:13,padding:"11px 24px"}} onClick={()=>setShowAddCat(true)}>+ Add manually</button>
+          </div>
+        </div>
+      ) : (
+        <>
+          {isMobile && (
+            <div style={{display:"flex",gap:6,marginBottom:16,overflowX:"auto",paddingBottom:4}}>
+              {categories.map(c=>(
+                <button key={c.id} onClick={()=>setActiveCatId(c.id)} style={{padding:"7px 16px",borderRadius:50,border:`1.5px solid ${activeCatId===c.id?T.p500:T.line}`,background:activeCatId===c.id?T.p50:"transparent",color:activeCatId===c.id?T.p700:T.mid,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif",whiteSpace:"nowrap",flexShrink:0}}>
+                  {c.name} <span style={{fontSize:11,color:activeCatId===c.id?T.p400:T.faint}}>({c._count?.items||0})</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="resp-grid-sidebar-left">
+            {!isMobile && (
+              <div className="card" style={{padding:16,height:"fit-content"}}>
+                <div style={{fontSize:11,fontWeight:700,color:T.soft,textTransform:"uppercase",letterSpacing:".8px",marginBottom:12}}>Categories</div>
+                {categories.map(c=>(
+                  <div key={c.id} onClick={()=>setActiveCatId(c.id)} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 12px",borderRadius:10,cursor:"pointer",fontSize:13.5,fontWeight:500,color:activeCatId===c.id?T.p700:T.mid,background:activeCatId===c.id?T.p50:"transparent",border:`1.5px solid ${activeCatId===c.id?T.p100:"transparent"}`,marginBottom:2,transition:"all .18s"}}>
+                    <span>{c.name}</span>
+                    <span style={{fontSize:11,color:activeCatId===c.id?T.p400:T.faint}}>{c._count?.items||0}</span>
+                  </div>
+                ))}
+                <div style={{marginTop:16,paddingTop:16,borderTop:`1px solid ${T.line}`}}>
+                  <div onClick={()=>setShowAddCat(true)} style={{padding:"10px 12px",borderRadius:10,cursor:"pointer",fontSize:13.5,fontWeight:500,color:T.mid,border:`1.5px dashed ${T.line}`,textAlign:"center"}}>+ Add category</div>
+                </div>
+              </div>
+            )}
+
+            <div className="card">
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20,flexWrap:"wrap",gap:10}}>
+                <div className="card-head" style={{marginBottom:0}}>{activeCat?.name || ''}</div>
+                <div style={{fontSize:12,color:T.soft}}>{items.length} items</div>
+              </div>
+
+              {loadingItems ? (
+                <div style={{textAlign:"center",padding:"32px",color:T.soft,fontSize:13}}>Loading items…</div>
+              ) : items.length === 0 ? (
+                <div style={{textAlign:"center",padding:"40px 20px"}}>
+                  <div style={{fontSize:32,marginBottom:10}}>{catEmoji(activeCat?.name)}</div>
+                  <div style={{fontSize:14,fontWeight:600,color:T.ink,marginBottom:6}}>No items in {activeCat?.name}</div>
+                  <div style={{fontSize:13,color:T.soft,marginBottom:16}}>Add items manually or import from a menu source</div>
+                  <button className="btn-primary" style={{fontSize:13,padding:"9px 20px"}} onClick={()=>{ setNewItemCatId(activeCatId); setShowAddItem(true); }}>+ Add item</button>
+                </div>
+              ) : isMobile ? (
+                <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                  {items.map(item=>(
+                    <div key={item.id} style={{background:T.paper,border:`1.5px solid ${T.line}`,borderRadius:14,padding:"14px 16px"}}>
+                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
+                        <div style={{display:"flex",alignItems:"center",gap:10}}>
+                          <div style={{width:36,height:36,borderRadius:10,background:T.p50,border:`1.5px solid ${T.p100}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>{catEmoji(activeCat?.name)}</div>
+                          <div style={{fontSize:14,fontWeight:600,color:T.ink}}>{item.name}</div>
+                        </div>
+                        <div style={{fontSize:15,fontWeight:700,color:T.p600}}>{fmtPrice(item.price)}</div>
+                      </div>
+                      {item.description && <div style={{fontSize:12,color:T.soft,marginBottom:10,paddingLeft:46}}>{item.description}</div>}
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:8,borderTop:`1px solid ${T.line}`}}>
+                        <span className={`badge ${item.status==='INACTIVE'?'badge-amber':item.status==='OUT_OF_STOCK'?'badge-amber':'badge-green'}`}>{item.status==='OUT_OF_STOCK'?'Out of stock':item.status==='INACTIVE'?'Inactive':'Active'}</span>
+                        <button className="btn-danger" style={{fontSize:12,padding:"5px 12px"}} onClick={()=>handleDeleteItem(item.id)}>Remove</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <>
+                  {items.map(item=>(
+                    <div key={item.id} style={{display:"flex",alignItems:"center",gap:14,padding:"13px 0",borderBottom:`1px solid ${T.paper}`}}>
+                      <div style={{width:42,height:42,borderRadius:12,background:T.p50,border:`1.5px solid ${T.p100}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{catEmoji(activeCat?.name)}</div>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:14,fontWeight:600,color:T.ink}}>{item.name}</div>
+                        {item.description && <div style={{fontSize:12,color:T.soft,marginTop:2}}>{item.description}</div>}
+                      </div>
+                      <div style={{fontSize:15,fontWeight:700,color:T.p600,minWidth:60,textAlign:"right"}}>{fmtPrice(item.price)}</div>
+                      <span className={`badge ${item.status==='INACTIVE'?'badge-amber':item.status==='OUT_OF_STOCK'?'badge-amber':'badge-green'}`}>{item.status==='OUT_OF_STOCK'?'Out of stock':item.status==='INACTIVE'?'Inactive':'Active'}</span>
+                      <button className="btn-danger" style={{fontSize:12,padding:"5px 12px"}} onClick={()=>handleDeleteItem(item.id)}>Remove</button>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ── Import Modal ── */}
+      {showImport && (
+        <div style={modalOverlay} onClick={()=>{ if(!importLoading) closeImport(); }}>
+          <div style={{position:"absolute",inset:0,background:"rgba(19,13,46,.45)",backdropFilter:"blur(6px)"}}/>
+          <div onClick={e=>e.stopPropagation()} style={{...modalBox, maxWidth:480}}>
+            <div style={{padding:"24px 28px 18px",borderBottom:`1px solid ${T.line}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:900,color:T.ink,margin:0}}>Import menu</h3>
+              <button onClick={closeImport} style={{width:32,height:32,borderRadius:"50%",border:`1.5px solid ${T.line}`,background:T.paper,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:T.mid}}>✕</button>
+            </div>
+            <div style={{padding:"20px 28px 24px"}}>
+              <div style={{display:"flex",gap:6,marginBottom:20,flexWrap:"wrap"}}>
+                {[['url','🌐 From URL'],['file','📁 Upload file'],['pos','🔌 POS']].map(([k,l])=>(
+                  <button key={k} onClick={()=>{ setImportTab(k); setImportResult(null); setImportError(''); setImportPosSelected(null); setImportPosFields({}); }} style={{padding:"7px 16px",borderRadius:50,border:`1.5px solid ${importTab===k?T.p500:T.line}`,background:importTab===k?T.p50:"transparent",color:importTab===k?T.p700:T.mid,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>{l}</button>
+                ))}
+              </div>
+
+              {importTab==='url' && !importResult && (
+                <>
+                  <input value={importUrl} onChange={e=>setImportUrl(e.target.value)} placeholder="e.g. yourrestaurant.com/menu" style={{...inputStyle, marginBottom:14}} onKeyDown={e=>e.key==='Enter'&&!importLoading&&importUrl&&runUrlImport()}/>
+                  <button className="btn-primary" style={{width:"100%",justifyContent:"center",fontSize:14,padding:"12px"}} disabled={importLoading||!importUrl.trim()} onClick={runUrlImport}>{importLoading?"Scraping menu…":"Import menu"}</button>
+                </>
+              )}
+
+              {importTab==='file' && !importResult && (
+                <>
+                  <input type="file" ref={menuFileRef} accept=".pdf,.docx,.png,.jpg,.jpeg" style={{display:"none"}} onChange={e=>{ const f=e.target.files?.[0]; if(f) runFileImport(f); }}/>
+                  <div onClick={()=>!importLoading&&menuFileRef.current?.click()} style={{border:`2px dashed ${T.line}`,borderRadius:14,padding:"36px 20px",textAlign:"center",cursor:importLoading?"default":"pointer",marginBottom:14,background:T.paper,transition:"border-color .2s"}} onMouseEnter={e=>{ if(!importLoading) e.currentTarget.style.borderColor=T.p400; }} onMouseLeave={e=>e.currentTarget.style.borderColor=T.line}>
+                    <div style={{fontSize:36,marginBottom:10}}>{importLoading?"⏳":"📁"}</div>
+                    <div style={{fontSize:14,fontWeight:600,color:T.ink,marginBottom:4}}>{importLoading?"Extracting menu data…":"Click to upload your menu file"}</div>
+                    <div style={{fontSize:12,color:T.soft}}>PDF · DOCX · PNG · JPG — text & prices extracted automatically</div>
+                  </div>
+                </>
+              )}
+
+              {importTab==='pos' && !importResult && (
+                <>
+                  <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:7,marginBottom:14}}>
+                    {POS_SYSTEMS.map(p=>{
+                      const active = importPosSelected===p.name;
+                      return (
+                        <div key={p.name} onClick={()=>{ setImportPosSelected(p.name); setImportPosFields({}); setImportError(''); }}
+                          style={{border:`1.5px solid ${active?T.p500:T.line}`,borderRadius:10,padding:"9px 6px",textAlign:"center",cursor:"pointer",background:active?T.p50:T.white,fontSize:12.5,fontWeight:active?700:500,color:active?T.p700:T.mid,transition:"all .15s",display:"flex",flexDirection:"column",alignItems:"center",gap:3}}
+                          onMouseEnter={e=>{if(!active){e.currentTarget.style.borderColor=T.p300;e.currentTarget.style.color=T.p600;}}}
+                          onMouseLeave={e=>{if(!active){e.currentTarget.style.borderColor=T.line;e.currentTarget.style.color=T.mid;}}}>
+                          <span style={{fontSize:16}}>{p.icon}</span><span>{p.name}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {importPosSelected && (() => {
+                    const pos = POS_SYSTEMS.find(p=>p.name===importPosSelected);
+                    return (
+                      <div style={{background:T.paper,borderRadius:12,padding:"14px 16px",border:`1.5px solid ${T.line}`,marginBottom:14}}>
+                        <div style={{fontSize:13,fontWeight:700,color:T.ink,marginBottom:10}}>{pos.icon} {pos.name} credentials</div>
+                        {pos.fields.map(f=>(
+                          <div key={f.key} style={{marginBottom:10}}>
+                            <label style={{display:"block",fontSize:11,fontWeight:700,color:T.soft,marginBottom:4,textTransform:"uppercase",letterSpacing:".3px"}}>{f.label}</label>
+                            <input value={importPosFields[f.key]||""} onChange={e=>{setImportPosFields(v=>({...v,[f.key]:e.target.value}));setImportError('');}} placeholder={f.ph} style={inputStyle}/>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                  <button className="btn-primary" style={{width:"100%",justifyContent:"center",fontSize:14,padding:"12px"}} disabled={importLoading||!importPosSelected} onClick={runPosImport}>{importLoading?"Connecting…":"Connect & sync menu"}</button>
+                </>
+              )}
+
+              {importError && <div style={{background:T.redBg,border:`1.5px solid #FECACA`,borderRadius:10,padding:"10px 14px",fontSize:13,color:T.red,marginTop:4}}>{importError}</div>}
+
+              {importResult && (
+                <div style={{background:T.greenBg,border:`1.5px solid ${T.greenBd}`,borderRadius:12,padding:"16px 18px"}}>
+                  <div style={{fontSize:14,fontWeight:700,color:T.green,marginBottom:10}}>✓ {importResult.pos ? `${importResult.pos.posSystem} connected` : 'Import complete'}</div>
+                  <div style={{fontSize:13,color:T.mid,lineHeight:1.7}}>
+                    {importResult.pos ? (
+                      <>
+                        <div>{importResult.pos.message}</div>
+                        {importResult.pos.categories?.map(c=><div key={c.name}>· {c.name}: {c.itemCount} items</div>)}
+                      </>
+                    ) : (<>
+                      {importResult.categorized?.menu && <>
+                        <div>🍽️ Menu items saved: <strong>{importResult.categorized.menu.savedItems}</strong></div>
+                        {importResult.categorized.menu.duplicatesSkipped > 0 && <div style={{color:T.soft}}>⟳ Duplicates skipped: {importResult.categorized.menu.duplicatesSkipped}</div>}
+                      </>}
+                      {importResult.categorized?.hours?.found && <div>⏰ Opening hours extracted</div>}
+                      {importResult.categorized?.faq?.found && <div>💬 FAQs saved: <strong>{importResult.categorized.faq.count}</strong></div>}
+                    </>)}
+                  </div>
+                  <button className="btn-primary" style={{marginTop:14,fontSize:13,padding:"9px 22px"}} onClick={closeImport}>Done</button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
-      <div className="resp-grid-sidebar-left">
-        {!isMobile && (
-          <div className="card" style={{padding:16,height:"fit-content"}}>
-            <div style={{fontSize:11,fontWeight:700,color:T.soft,textTransform:"uppercase",letterSpacing:".8px",marginBottom:12}}>Categories</div>
-            {categories.map(c=>(
-              <div key={c} onClick={()=>setActiveCategory(c)} style={{padding:"10px 12px",borderRadius:10,cursor:"pointer",fontSize:13.5,fontWeight:500,color:activeCategory===c?T.p700:T.mid,background:activeCategory===c?T.p50:"transparent",border:`1.5px solid ${activeCategory===c?T.p100:"transparent"}`,marginBottom:2,transition:"all .18s"}}>
-                {c} <span style={{fontSize:11,color:activeCategory===c?T.p400:T.faint,float:"right"}}>{(items[c]||[]).length}</span>
-              </div>
-            ))}
-            <div style={{marginTop:16,paddingTop:16,borderTop:`1px solid ${T.line}`}}>
-              <div style={{padding:"10px 12px",borderRadius:10,cursor:"pointer",fontSize:13.5,fontWeight:500,color:T.mid,border:`1.5px dashed ${T.line}`,textAlign:"center"}}>+ Add category</div>
+      {/* ── Add Item Modal ── */}
+      {showAddItem && (
+        <div style={modalOverlay} onClick={()=>setShowAddItem(false)}>
+          <div style={{position:"absolute",inset:0,background:"rgba(19,13,46,.45)",backdropFilter:"blur(6px)"}}/>
+          <div onClick={e=>e.stopPropagation()} style={{...modalBox, maxWidth:440}}>
+            <div style={{padding:"24px 28px 18px",borderBottom:`1px solid ${T.line}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:900,color:T.ink,margin:0}}>Add item</h3>
+              <button onClick={()=>setShowAddItem(false)} style={{width:32,height:32,borderRadius:"50%",border:`1.5px solid ${T.line}`,background:T.paper,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:T.mid}}>✕</button>
+            </div>
+            <div style={{padding:"20px 28px 24px",display:"flex",flexDirection:"column",gap:12}}>
+              {categories.length > 0 && (
+                <select value={newItemCatId||''} onChange={e=>setNewItemCatId(e.target.value)} style={inputStyle}>
+                  {categories.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              )}
+              <input value={newItemName} onChange={e=>setNewItemName(e.target.value)} placeholder="Item name *" style={inputStyle}/>
+              <input value={newItemDesc} onChange={e=>setNewItemDesc(e.target.value)} placeholder="Description (optional)" style={inputStyle}/>
+              <input value={newItemPrice} onChange={e=>setNewItemPrice(e.target.value)} placeholder="Price e.g. 12.50 *" type="number" min="0" step="0.01" style={inputStyle}/>
+              <button className="btn-primary" style={{width:"100%",justifyContent:"center",padding:"12px",fontSize:14}} disabled={addingItem||!newItemName||!newItemPrice} onClick={handleAddItem}>{addingItem?"Adding…":"Add item"}</button>
             </div>
           </div>
-        )}
-
-        <div className="card">
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20,flexWrap:"wrap",gap:10}}>
-            <div className="card-head" style={{marginBottom:0}}>{activeCategory}</div>
-            <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
-              <div style={{fontSize:12,color:T.soft}}>{(items[activeCategory]||[]).length} items</div>
-              <button className="btn-secondary" style={{fontSize:12,padding:"6px 14px"}}>Sync POS</button>
-            </div>
-          </div>
-          {isMobile ? (
-            <div style={{display:"flex",flexDirection:"column",gap:10}}>
-              {(items[activeCategory]||[]).map((item,i)=>(
-                <div key={i} style={{background:T.paper,border:`1.5px solid ${T.line}`,borderRadius:14,padding:"14px 16px"}}>
-                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
-                    <div style={{display:"flex",alignItems:"center",gap:10}}>
-                      <div style={{width:36,height:36,borderRadius:10,background:T.p50,border:`1.5px solid ${T.p100}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>🍕</div>
-                      <div style={{fontSize:14,fontWeight:600,color:T.ink}}>{item.name}</div>
-                    </div>
-                    <div style={{fontSize:15,fontWeight:700,color:T.p600}}>{item.price}</div>
-                  </div>
-                  <div style={{fontSize:12,color:T.soft,marginBottom:10,paddingLeft:46}}>{item.desc}</div>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:8,borderTop:`1px solid ${T.line}`}}>
-                    <span className="badge badge-green">Active</span>
-                    <div style={{display:"flex",gap:6}}>
-                      <button className="btn-secondary" style={{fontSize:12,padding:"5px 12px"}}>Edit</button>
-                      <button className="btn-danger" style={{fontSize:12,padding:"5px 12px"}}>Remove</button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <>
-              {(items[activeCategory]||[]).map((item,i)=>(
-                <div key={i} style={{display:"flex",alignItems:"center",gap:14,padding:"13px 0",borderBottom:`1px solid ${T.paper}`}}>
-                  <div style={{width:42,height:42,borderRadius:12,background:T.p50,border:`1.5px solid ${T.p100}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>🍕</div>
-                  <div style={{flex:1}}><div style={{fontSize:14,fontWeight:600,color:T.ink}}>{item.name}</div><div style={{fontSize:12,color:T.soft,marginTop:2}}>{item.desc}</div></div>
-                  <div style={{fontSize:15,fontWeight:700,color:T.p600,minWidth:60,textAlign:"right"}}>{item.price}</div>
-                  <span className="badge badge-green">Active</span>
-                  <div style={{display:"flex",gap:6}}>
-                    <button className="btn-secondary" style={{fontSize:12,padding:"5px 12px"}}>Edit</button>
-                    <button className="btn-danger" style={{fontSize:12,padding:"5px 12px"}}>Remove</button>
-                  </div>
-                </div>
-              ))}
-            </>
-          )}
         </div>
-      </div>
+      )}
+
+      {/* ── Add Category Modal ── */}
+      {showAddCat && (
+        <div style={modalOverlay} onClick={()=>setShowAddCat(false)}>
+          <div style={{position:"absolute",inset:0,background:"rgba(19,13,46,.45)",backdropFilter:"blur(6px)"}}/>
+          <div onClick={e=>e.stopPropagation()} style={{...modalBox, maxWidth:380}}>
+            <div style={{padding:"24px 28px 18px",borderBottom:`1px solid ${T.line}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:900,color:T.ink,margin:0}}>Add category</h3>
+              <button onClick={()=>setShowAddCat(false)} style={{width:32,height:32,borderRadius:"50%",border:`1.5px solid ${T.line}`,background:T.paper,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:T.mid}}>✕</button>
+            </div>
+            <div style={{padding:"20px 28px 24px",display:"flex",flexDirection:"column",gap:12}}>
+              <input value={newCatName} onChange={e=>setNewCatName(e.target.value)} placeholder="e.g. Starters, Mains, Desserts" style={inputStyle} onKeyDown={e=>e.key==='Enter'&&!addingCat&&newCatName&&handleAddCategory()}/>
+              <button className="btn-primary" style={{width:"100%",justifyContent:"center",padding:"12px",fontSize:14}} disabled={addingCat||!newCatName} onClick={handleAddCategory}>{addingCat?"Creating…":"Create category"}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
@@ -2521,50 +3445,188 @@ function PageMenu() {
 /* ═══════════════════════════════════════════
    PAGE 8 — INTEGRATIONS
 ═══════════════════════════════════════════ */
-function PageIntegrations() {
-  const integrations = [
-    {logo:"🍞",name:"Toast POS",desc:"Sync orders directly to your Toast system in real-time",status:"connected",category:"POS"},
-    {logo:"🔷",name:"Clover",desc:"Full order and inventory sync with Clover",status:"available",category:"POS"},
-    {logo:"🟦",name:"Square",desc:"Connect your Square account for seamless order flow",status:"available",category:"POS"},
-    {logo:"📅",name:"OpenTable",desc:"Two-way reservation sync with OpenTable",status:"connected",category:"Reservations"},
-    {logo:"🗓️",name:"Resy",desc:"Real-time reservation management via Resy",status:"available",category:"Reservations"},
-    {logo:"📊",name:"Google Analytics",desc:"Track call conversion and customer behaviour",status:"available",category:"Analytics"},
-    {logo:"💬",name:"Slack",desc:"Get notified in Slack for orders, calls, and alerts",status:"connected",category:"Notifications"},
-    {logo:"📱",name:"Twilio",desc:"Advanced phone number management and call routing",status:"connected",category:"Phone"},
-  ];
-  const categories = ["All",...[...new Set(integrations.map(i=>i.category))]];
+const INTEGRATION_META = {
+  "resOS":          { logo: "📅", desc: "Manage and sync reservations directly through resOS", configFields: [{ key: "apiKey", label: "API Key", placeholder: "res_live_..." }] },
+  "Square":         { logo: "🟦", desc: "Send orders to your Square POS in real-time", configFields: [{ key: "accessToken", label: "Access Token", placeholder: "EAAAl..." }, { key: "locationId", label: "Location ID", placeholder: "LXXXXXXXXXXXXXXXX" }] },
+  "Clover":         { logo: "🍀", desc: "Full order and inventory sync with Clover POS", configFields: [{ key: "accessToken", label: "Access Token", placeholder: "..." }, { key: "merchantId", label: "Merchant ID", placeholder: "XXXXXXXXXXXXXXXX" }] },
+  "Square KDS":     { logo: "🖥️", desc: "Route orders to Square Kitchen Display System automatically", configFields: [{ key: "deviceId", label: "Device ID", placeholder: "device:..." }] },
+  "Clover KDS":     { logo: "📟", desc: "Display tickets on Clover KDS as orders come in", configFields: [{ key: "deviceId", label: "Device ID", placeholder: "..." }] },
+  "Fresh KDS":      { logo: "🍳", desc: "Third-party kitchen display — works with any POS", configFields: [{ key: "apiKey", label: "API Key", placeholder: "fkds_..." }, { key: "webhookUrl", label: "Webhook URL", placeholder: "https://..." }] },
+  "Resend":         { logo: "✉️", desc: "Send booking confirmations & order receipts via email", configFields: [{ key: "apiKey", label: "API Key", placeholder: "re_..." }] },
+  "Stripe Connect": { logo: "💳", desc: "Collect deposits and order payments from customers", configFields: [{ key: "accountId", label: "Stripe Account ID", placeholder: "acct_..." }, { key: "publishableKey", label: "Publishable Key", placeholder: "pk_live_..." }] },
+  "Google OAuth":   { logo: "🔵", desc: "Allow business owners to sign in with their Google account", configFields: [{ key: "clientId", label: "Client ID", placeholder: "...apps.googleusercontent.com" }, { key: "clientSecret", label: "Client Secret", placeholder: "GOCSPX-..." }] },
+};
+
+function PageIntegrations({ user, agentName }) {
+  const [integrations, setIntegrations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(null);
   const [cat, setCat] = useState("All");
-  const filtered = cat==="All"?integrations:integrations.filter(i=>i.category===cat);
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [configModal, setConfigModal] = useState(null); // { integration } | null
+  const [configValues, setConfigValues] = useState({});
+  const [configError, setConfigError] = useState("");
+
+  const fetchIntegrations = async () => {
+    try {
+      const data = await api.integrations.list();
+      setIntegrations(data);
+    } catch (e) { console.error("Failed to load integrations", e); }
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchIntegrations(); }, []);
+
+  const openConfigModal = (integration) => {
+    const fields = INTEGRATION_META[integration.name]?.configFields || [];
+    const initial = {};
+    fields.forEach(f => { initial[f.key] = ""; });
+    setConfigValues(initial);
+    setConfigError("");
+    setConfigModal(integration);
+  };
+
+  const handleConnect = async (id, config = {}) => {
+    setActionLoading(id);
+    try { await api.integrations.connect(id, config); await fetchIntegrations(); }
+    catch (e) { console.error("Connect failed", e); }
+    setActionLoading(null);
+  };
+
+  const handleConfigSubmit = async () => {
+    if (!configModal) return;
+    const fields = INTEGRATION_META[configModal.name]?.configFields || [];
+    const missing = fields.find(f => !configValues[f.key]?.trim());
+    if (missing) { setConfigError(`${missing.label} is required`); return; }
+    setConfigModal(null);
+    await handleConnect(configModal.id, configValues);
+  };
+
+  const handleDisconnect = async (id) => {
+    setActionLoading(id);
+    try { await api.integrations.disconnect(id); await fetchIntegrations(); }
+    catch (e) { console.error("Disconnect failed", e); }
+    setActionLoading(null);
+  };
+
+  const categories = ["All", ...Array.from(new Set(integrations.map(i => i.category)))];
+  const filtered = integrations
+    .filter(i => cat === "All" || i.category === cat)
+    .filter(i => statusFilter === "All" || (statusFilter === "Connected" ? i.status === "CONNECTED" : i.status !== "CONNECTED"));
+
+  const connectedCount = integrations.filter(i => i.status === "CONNECTED").length;
+
   return (
     <>
-      <TopBar title={<>Integrations</>} subtitle="Connect Talkativ to the tools you already use">
-        <button className="btn-secondary" style={{fontSize:13,padding:"8px 18px"}}>Request integration</button>
-      </TopBar>
+      <TopBar title={<>Integrations</>} subtitle="Connect Talkativ to the services you use" user={user} agentName={agentName} />
 
-      <div style={{display:"flex",gap:6,marginBottom:22}}>
-        {categories.map(c=>(
-          <button key={c} onClick={()=>setCat(c)} style={{padding:"7px 16px",borderRadius:50,border:`1.5px solid ${cat===c?T.p500:T.line}`,background:cat===c?T.p50:"transparent",color:cat===c?T.p700:T.mid,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>{c}</button>
+      {/* KPI summary */}
+      <div className="kpi-row" style={{gridTemplateColumns:"repeat(3, 1fr)", marginBottom:24}}>
+        {[
+          {l:"Total integrations", v:String(integrations.length), d:"Available to connect"},
+          {l:"Connected", v:String(connectedCount), d:connectedCount > 0 ? "Active right now" : "Connect one to get started"},
+          {l:"Available", v:String(integrations.length - connectedCount), d:"Ready to connect"},
+        ].map(k=>(
+          <div className="kpi-card" key={k.l}><div className="kpi-label">{k.l}</div><div className="kpi-value">{k.v}</div><div className="kpi-delta">{k.d}</div></div>
         ))}
       </div>
 
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(280px, 1fr))",gap:20}}>
-        {filtered.map((int,i)=>(
-          <div key={i} style={{background:T.white,border:`1.5px solid ${T.line}`,borderRadius:16,padding:24,display:"flex",flexDirection:"column",transition:"all .2s",cursor:"pointer"}} onMouseEnter={e=>{e.currentTarget.style.borderColor=T.p300;e.currentTarget.style.boxShadow=`0 8px 24px rgba(112,53,245,.08)`}} onMouseLeave={e=>{e.currentTarget.style.borderColor=T.line;e.currentTarget.style.boxShadow="none"}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16}}>
-              <div style={{width:52,height:52,borderRadius:14,background:T.paper,border:`1px solid ${T.line}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26}}>{int.logo}</div>
-              <span className="badge badge-purple" style={{fontSize:10,fontWeight:700}}>{int.category}</span>
-            </div>
-            <div style={{fontSize:17,fontWeight:700,color:T.ink,marginBottom:6}}>{int.name}</div>
-            <div style={{fontSize:13,color:T.soft,lineHeight:1.5,flex:1}}>{int.desc}</div>
-            <div style={{marginTop:24,paddingTop:16,borderTop:`1px solid ${T.paper}`,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-              {int.status==="connected"
-                ? <><span className="badge badge-green" style={{padding:"5px 10px"}}>✓ Connected</span><button className="btn-danger" style={{fontSize:12,padding:"6px 14px"}}>Disconnect</button></>
-                : <><div/><button className="btn-primary" style={{fontSize:12,padding:"6px 16px"}}>Connect</button></>
-              }
+      {/* Filters */}
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:22,flexWrap:"wrap",gap:10}}>
+        <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+          {categories.map(c=>(
+            <button key={c} onClick={()=>setCat(c)} style={{padding:"7px 16px",borderRadius:50,border:`1.5px solid ${cat===c?T.p500:T.line}`,background:cat===c?T.p50:"transparent",color:cat===c?T.p700:T.mid,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif",transition:"all .18s"}}>{c}</button>
+          ))}
+        </div>
+        <select value={statusFilter} onChange={e=>setStatusFilter(e.target.value)} style={{padding:"8px 16px",fontSize:13,border:`1.5px solid ${T.line}`,borderRadius:50,background:T.white,color:T.ink,fontFamily:"'Outfit',sans-serif",fontWeight:600,cursor:"pointer",outline:"none",transition:"border-color .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)"}}>
+          <option>All</option><option>Connected</option><option>Available</option>
+        </select>
+      </div>
+
+      {/* Loading / Empty */}
+      {loading ? (
+        <div style={{textAlign:"center",padding:"60px 20px"}}>
+          <div style={{fontSize:36,marginBottom:12}}>⏳</div>
+          <div style={{fontSize:15,fontWeight:600,color:T.ink}}>Loading integrations…</div>
+        </div>
+      ) : filtered.length === 0 ? (
+        <div style={{textAlign:"center",padding:"60px 20px"}}>
+          <div style={{fontSize:36,marginBottom:12}}>🔌</div>
+          <div style={{fontSize:15,fontWeight:600,color:T.ink,marginBottom:6}}>No integrations found</div>
+          <div style={{fontSize:13,color:T.soft}}>Try adjusting your filters</div>
+        </div>
+      ) : (
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(300px, 1fr))",gap:20}}>
+          {filtered.map(int => {
+            const meta = INTEGRATION_META[int.name] || { logo: "🔌", desc: int.name };
+            const isConnected = int.status === "CONNECTED";
+            const isBusy = actionLoading === int.id;
+            return (
+              <div key={int.id} style={{background:T.white,border:`1.5px solid ${isConnected ? T.greenBd : T.line}`,borderRadius:18,padding:26,display:"flex",flexDirection:"column",transition:"all .22s"}} onMouseEnter={e=>{e.currentTarget.style.borderColor=isConnected?T.green:T.p300;e.currentTarget.style.boxShadow=`0 8px 28px ${isConnected?'rgba(34,197,94,.1)':'rgba(112,53,245,.08)'}`}} onMouseLeave={e=>{e.currentTarget.style.borderColor=isConnected?T.greenBd:T.line;e.currentTarget.style.boxShadow="none"}}>
+                {/* Header */}
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:18}}>
+                  <div style={{width:56,height:56,borderRadius:16,background:isConnected?T.greenBg:T.paper,border:`1.5px solid ${isConnected?T.greenBd:T.line}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,transition:"all .2s"}}>{meta.logo}</div>
+                  <span style={{padding:"4px 11px",borderRadius:50,fontSize:10.5,fontWeight:700,letterSpacing:".3px",textTransform:"uppercase",background:T.p50,color:T.p700,border:`1px solid ${T.p100}`}}>{int.category}</span>
+                </div>
+                {/* Name + desc */}
+                <div style={{fontSize:17,fontWeight:700,color:T.ink,marginBottom:6}}>{int.name}</div>
+                <div style={{fontSize:13,color:T.soft,lineHeight:1.55,flex:1}}>{meta.desc}</div>
+                {/* Last synced */}
+                {isConnected && int.lastSynced && (
+                  <div style={{fontSize:11.5,color:T.soft,marginTop:10}}>Last synced: {new Date(int.lastSynced).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
+                )}
+                {/* Action */}
+                <div style={{marginTop:20,paddingTop:18,borderTop:`1px solid ${T.paper}`,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                  {isConnected ? (
+                    <>
+                      <span style={{display:"inline-flex",alignItems:"center",gap:5,padding:"5px 12px",borderRadius:50,fontSize:12,fontWeight:700,background:T.greenBg,color:T.green,border:`1px solid ${T.greenBd}`}}>
+                        <span style={{width:6,height:6,borderRadius:"50%",background:T.green,display:"inline-block"}}/>Connected
+                      </span>
+                      <button disabled={isBusy} onClick={()=>handleDisconnect(int.id)} style={{padding:"7px 16px",borderRadius:50,border:`1.5px solid ${T.red}22`,background:T.redBg,color:T.red,fontSize:12,fontWeight:700,cursor:isBusy?"not-allowed":"pointer",fontFamily:"'Outfit',sans-serif",opacity:isBusy?.6:1,transition:"all .18s"}}>{isBusy?"Disconnecting…":"Disconnect"}</button>
+                    </>
+                  ) : (
+                    <>
+                      <span style={{fontSize:12,color:T.faint,fontWeight:500}}>Not connected</span>
+                      <button disabled={isBusy} onClick={()=>openConfigModal(int)} className="btn-primary" style={{fontSize:12,padding:"7px 18px",opacity:isBusy?.6:1}}>{isBusy?"Connecting…":"Connect"}</button>
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── Config Modal ── */}
+      {configModal && (
+        <div style={{position:"fixed",inset:0,zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:24,background:"rgba(0,0,0,.35)"}} onClick={()=>setConfigModal(null)}>
+          <div onClick={e=>e.stopPropagation()} style={{position:"relative",width:"100%",maxWidth:440,background:T.white,border:`1.5px solid ${T.line}`,borderRadius:22,boxShadow:`0 24px 80px rgba(134,87,255,.18)`,animation:"fadeUp .3s ease both",padding:32}}>
+            <button onClick={()=>setConfigModal(null)} style={{position:"absolute",top:16,right:16,width:32,height:32,borderRadius:"50%",border:`1.5px solid ${T.line}`,background:T.paper,cursor:"pointer",fontSize:16,color:T.soft,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
+            <div style={{fontSize:32,marginBottom:12}}>{INTEGRATION_META[configModal.name]?.logo || "🔌"}</div>
+            <div style={{fontSize:18,fontWeight:700,color:T.ink,marginBottom:4}}>Connect {configModal.name}</div>
+            <div style={{fontSize:13,color:T.soft,marginBottom:24}}>{INTEGRATION_META[configModal.name]?.desc}</div>
+            {(INTEGRATION_META[configModal.name]?.configFields || []).map(f => (
+              <div key={f.key} style={{marginBottom:16}}>
+                <label style={{display:"block",fontSize:12,fontWeight:700,color:T.ink,marginBottom:6,textTransform:"uppercase",letterSpacing:".4px"}}>{f.label}</label>
+                <input
+                  type="text"
+                  value={configValues[f.key] || ""}
+                  onChange={e => { setConfigValues(v => ({...v, [f.key]: e.target.value})); setConfigError(""); }}
+                  placeholder={f.placeholder}
+                  style={{width:"100%",padding:"10px 14px",borderRadius:10,border:`1.5px solid ${T.line}`,fontSize:13,fontFamily:"'Outfit',sans-serif",outline:"none",boxSizing:"border-box",background:T.paper,color:T.ink}}
+                  onFocus={e=>e.target.style.borderColor=T.p400}
+                  onBlur={e=>e.target.style.borderColor=T.line}
+                />
+              </div>
+            ))}
+            {configError && <div style={{fontSize:12,color:T.red,marginBottom:12}}>{configError}</div>}
+            <div style={{display:"flex",gap:10,marginTop:8}}>
+              <button onClick={()=>setConfigModal(null)} style={{flex:1,padding:"10px",borderRadius:50,border:`1.5px solid ${T.line}`,background:"transparent",color:T.mid,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>Cancel</button>
+              <button onClick={handleConfigSubmit} className="btn-primary" style={{flex:2,fontSize:13,padding:"10px"}}>Connect</button>
             </div>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
     </>
   );
 }
@@ -2572,7 +3634,7 @@ function PageIntegrations() {
 /* ═══════════════════════════════════════════
    PAGE 9 — BILLING
 ═══════════════════════════════════════════ */
-function PageBilling() {
+function PageBilling({ user, agentName }) {
   const invoices = [
     {date:"1 Mar 2026",desc:"Growth plan · March 2026",amount:"£399.00",status:"paid"},
     {date:"1 Feb 2026",desc:"Growth plan · February 2026",amount:"£399.00",status:"paid"},
@@ -2582,7 +3644,7 @@ function PageBilling() {
   ];
   return (
     <>
-      <TopBar title={<>Billing</>} subtitle="Manage your subscription and payment details" />
+      <TopBar title={<>Billing</>} subtitle="Manage your subscription and payment details" user={user} agentName={agentName}/>
 
       <div className="resp-grid-2">
         <div className="card" style={{background:`linear-gradient(135deg,${T.ink},${T.ink2})`,border:"none"}}>
@@ -2649,21 +3711,307 @@ function PageBilling() {
 /* ═══════════════════════════════════════════
    PAGE 10 — SETTINGS
 ═══════════════════════════════════════════ */
-function PageSettings() {
+function PageSettings({ user, agentName, bizData, onBizNameChange }) {
   const [section, setSection] = useState("Business");
-  const [showPw, setShowPw] = useState({current:false,new_:false,confirm:false});
+
+  // ── Business ──────────────────────────────────────────────────────────────
+  const [bizName, setBizName] = useState('');
+  const [bizType, setBizType] = useState('');
+  const [bizAddress, setBizAddress] = useState('');
+  const [bizPhone, setBizPhone] = useState('');
+  const [bizEmail, setBizEmail] = useState('');
+  const [savingBiz, setSavingBiz] = useState(false);
+
+  // ── Ordering ──────────────────────────────────────────────────────────────
+  const [deliveryRadius, setDeliveryRadius] = useState(5);
+  const [radiusUnit, setRadiusUnit] = useState('miles');
+  const [minOrder, setMinOrder] = useState(0);
+  const [payNow, setPayNow] = useState(true);
+  const [payOnDelivery, setPayOnDelivery] = useState(true);
+  const [deliveryEnabled, setDeliveryEnabled] = useState(true);
+  const [collectionEnabled, setCollectionEnabled] = useState(true);
+  const [savingOrder, setSavingOrder] = useState(false);
+
+  // ── Reservations ──────────────────────────────────────────────────────────
+  const [maxPartySize, setMaxPartySize] = useState(20);
+  const [bookingLeadTime, setBookingLeadTime] = useState(24);
+  const [depositRequired, setDepositRequired] = useState(false);
+  const [depositAmount, setDepositAmount] = useState(0);
+  const [depositType, setDepositType] = useState('PER_GUEST');
+  const [cancellationHours, setCancellationHours] = useState(24);
+  const [refundPercentage, setRefundPercentage] = useState(100);
+  const [savingRes, setSavingRes] = useState(false);
+
+  // ── Notifications ─────────────────────────────────────────────────────────
+  const [notifs, setNotifs] = useState({ emailNewOrder:true, emailMissedCall:true, emailDailySummary:true, emailNewReservation:true, emailAgentOffline:true, emailPaymentProcessed:true, emailRefundRequest:true, emailWeeklyReport:true, pushLiveCall:true, pushNewOrder:true });
+  const [savingNotifs, setSavingNotifs] = useState(false);
+
+  // ── Phone ─────────────────────────────────────────────────────────────────
+  const [forwardNumber, setForwardNumber] = useState('');
+  const [ringsBeforeAi, setRingsBeforeAi] = useState(0);
+  const [callRecording, setCallRecording] = useState(true);
+  const [voicemailFallback, setVoicemailFallback] = useState(false);
+  const [savingPhone, setSavingPhone] = useState(false);
+
+  // ── Team ──────────────────────────────────────────────────────────────────
+  const [staffList, setStaffList] = useState([]);
   const [showAddStaff, setShowAddStaff] = useState(false);
-  const [staffList, setStaffList] = useState([
-    {name:"Tony Chen",email:"tony@tonys-pizzeria.com",role:"Owner",av:"TC"},
-    {name:"Maria Lopez",username:"maria.lopez",role:"Manager",av:"ML"},
-    {name:"Jake Smith",username:"jake.smith",role:"Staff",av:"JS"},
-  ]);
+  const [staffFn, setStaffFn] = useState('');
+  const [staffLn, setStaffLn] = useState('');
+  const [staffRole, setStaffRole] = useState('STAFF');
+  const [newStaffCreds, setNewStaffCreds] = useState(null);
+  const [copiedPw, setCopiedPw] = useState(false);
+
+  // ── Security ──────────────────────────────────────────────────────────────
+  const [curPw, setCurPw] = useState('');
+  const [newPw, setNewPw] = useState('');
+  const [confPw, setConfPw] = useState('');
+  const [showPw, setShowPw] = useState({ cur:false, new_:false, conf:false });
+  const [pwMsg, setPwMsg] = useState('');
+  const [pwErr, setPwErr] = useState('');
+  const [savingPw, setSavingPw] = useState(false);
+  const [twoFa, setTwoFa] = useState(false);
+  const [showOtp, setShowOtp] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [otpMsg, setOtpMsg] = useState('');
+  const [otpEnable, setOtpEnable] = useState(true);
+  const [sessions, setSessions] = useState([]);
+  // Pre-fill from bizData prop (initial load)
+  useEffect(() => {
+    if (bizData) {
+      setBizName(bizData.name || '');
+      setBizType(bizData.type || bizData.category || '');
+      setBizAddress(bizData.address || '');
+      setBizPhone(bizData.phone || '');
+      setBizEmail(bizData.email || user?.email || '');
+    } else if (user?.email) {
+      setBizEmail(user.email);
+    }
+  }, [bizData, user]);
+
+  useEffect(() => {
+    if (user) setTwoFa(user.twoFactorEnabled || false);
+  }, [user]);
+
+  // Load section data on nav
+  useEffect(() => {
+    if (section === 'Business') {
+      api.business.get().then(d => {
+        if (!d) return;
+        setBizName(d.name || '');
+        setBizType(d.type || d.category || '');
+        setBizAddress(d.address || '');
+        setBizPhone(d.phone || '');
+        setBizEmail(d.email || user?.email || '');
+      }).catch(() => {});
+    } else if (section === 'Ordering') {
+      api.settings.getOrderingPolicy().then(d => {
+        setDeliveryRadius(d.deliveryRadius ?? 5);
+        setRadiusUnit(d.deliveryRadiusUnit || 'miles');
+        setMinOrder(d.minOrderAmount ?? 0);
+        setPayNow(d.payNowEnabled ?? true);
+        setPayOnDelivery(d.payOnDelivery ?? true);
+        setDeliveryEnabled(d.deliveryEnabled ?? true);
+        setCollectionEnabled(d.collectionEnabled ?? true);
+      }).catch(() => {});
+    } else if (section === 'Reservations') {
+      api.settings.getReservationPolicy().then(d => {
+        setMaxPartySize(d.maxPartySize ?? 20);
+        setBookingLeadTime(d.bookingLeadTime ?? 24);
+        setDepositRequired(d.depositRequired ?? false);
+        setDepositAmount(d.depositAmount ?? 0);
+        setDepositType(d.depositType || 'PER_GUEST');
+        setCancellationHours(d.cancellationHours ?? 24);
+        setRefundPercentage(d.refundPercentage ?? 100);
+      }).catch(() => {});
+    } else if (section === 'Notifications') {
+      api.settings.getNotifications().then(d => setNotifs(prev => ({ ...prev, ...d }))).catch(() => {});
+    } else if (section === 'Phone') {
+      api.settings.getPhone().then(d => {
+        setForwardNumber(d.forwardNumber || '');
+        setRingsBeforeAi(d.ringsBeforeAi ?? 0);
+        setCallRecording(d.callRecording ?? true);
+        setVoicemailFallback(d.voicemailFallback ?? false);
+      }).catch(() => {});
+    } else if (section === 'Team') {
+      api.settings.getStaff().then(setStaffList).catch(() => {});
+    } else if (section === 'Security') {
+      api.settings.getSessions().then(setSessions).catch(() => {});
+    }
+  }, [section]);
+
+  const saveBiz = async () => {
+    setSavingBiz(true);
+    try {
+      await api.settings.updateBusiness({ name: bizName, type: bizType, address: bizAddress, phone: bizPhone, email: bizEmail });
+      if (onBizNameChange) onBizNameChange(bizName);
+    } catch (e) {} finally { setSavingBiz(false); }
+  };
+
+  const saveOrdering = async () => {
+    setSavingOrder(true);
+    try { await api.settings.updateOrderingPolicy({ deliveryRadius: parseFloat(deliveryRadius), deliveryRadiusUnit: radiusUnit, minOrderAmount: parseFloat(minOrder), payNowEnabled: payNow, payOnDelivery, deliveryEnabled, collectionEnabled }); }
+    catch (e) {} finally { setSavingOrder(false); }
+  };
+
+  const saveReservation = async () => {
+    setSavingRes(true);
+    try { await api.settings.updateReservationPolicy({ maxPartySize: parseInt(maxPartySize), bookingLeadTime: parseInt(bookingLeadTime), depositRequired, depositAmount: parseFloat(depositAmount), depositType, cancellationHours: parseInt(cancellationHours), refundPercentage: parseInt(refundPercentage) }); }
+    catch (e) {} finally { setSavingRes(false); }
+  };
+
+  const saveNotifications = async () => {
+    setSavingNotifs(true);
+    try { await api.settings.updateNotifications(notifs); }
+    catch (e) {} finally { setSavingNotifs(false); }
+  };
+
+  const savePhone = async () => {
+    setSavingPhone(true);
+    try { await api.settings.updatePhone({ forwardNumber: forwardNumber || null, ringsBeforeAi: parseInt(ringsBeforeAi), callRecording, voicemailFallback }); }
+    catch (e) {} finally { setSavingPhone(false); }
+  };
+
+  const handleChangePassword = async () => {
+    setPwErr(''); setPwMsg('');
+    if (!curPw || !newPw || !confPw) { setPwErr('Please fill all fields'); return; }
+    if (newPw !== confPw) { setPwErr('New passwords do not match'); return; }
+    if (newPw.length < 8) { setPwErr('Password must be at least 8 characters'); return; }
+    setSavingPw(true);
+    try {
+      await api.settings.changePassword({ currentPassword: curPw, newPassword: newPw });
+      setPwMsg('Password changed. A security alert was sent to your email.');
+      setCurPw(''); setNewPw(''); setConfPw('');
+    } catch (e) { setPwErr(e.message || 'Failed to change password'); }
+    finally { setSavingPw(false); }
+  };
+
+  const handleAddStaff = async () => {
+    if (!staffFn || !staffLn) return;
+    try {
+      const result = await api.settings.createStaff({ firstName: staffFn, lastName: staffLn, role: staffRole });
+      setNewStaffCreds({ username: result.username, password: result.plainPassword });
+      setStaffList(prev => [...prev, result]);
+      setStaffFn(''); setStaffLn(''); setStaffRole('STAFF');
+      setShowAddStaff(false);
+    } catch (e) {}
+  };
+
+  const handleDeleteStaff = async (id) => {
+    try { await api.settings.deleteStaff(id); setStaffList(prev => prev.filter(s => s.id !== id)); }
+    catch (e) {}
+  };
+
+  const handleToggle2fa = async (checked) => {
+    setOtpEnable(checked);
+    try { await api.settings.sendOtp(); setShowOtp(true); setOtpMsg(''); }
+    catch (e) { setOtpMsg('Failed to send OTP'); }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (otpCode.length !== 6) return;
+    try {
+      const res = await api.settings.verifyOtp(otpCode, otpEnable);
+      setTwoFa(res.twoFactorEnabled);
+      // Update localStorage so initials/user data persists
+      try {
+        const stored = localStorage.getItem('talkativ_user');
+        if (stored) {
+          const u = JSON.parse(stored);
+          localStorage.setItem('talkativ_user', JSON.stringify({ ...u, twoFactorEnabled: res.twoFactorEnabled }));
+        }
+      } catch {}
+      setShowOtp(false); setOtpCode('');
+    } catch (e) { setOtpMsg('Invalid or expired code'); }
+  };
+
+  const fi = {width:"100%",padding:"13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",transition:"border-color .2s, box-shadow .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)"};
+  const fw = {background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`};
+  const lb = {display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:8,letterSpacing:".3px",textTransform:"uppercase"};
+  const eyeShow = <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={T.soft} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>;
+  const eyeHide = <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={T.soft} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>;
   const sections = ["Business","Ordering","Reservations","Notifications","Phone","Team","Security"];
   return (
     <>
-      <TopBar title={<>Settings</>} subtitle="Manage your account and business preferences">
-        <button className="btn-primary" style={{fontSize:13,padding:"9px 20px"}}>Save changes</button>
-      </TopBar>
+      <TopBar title={<>Settings</>} subtitle="Manage your account and business preferences" user={user} agentName={agentName}/>
+
+      {/* New staff credentials modal */}
+      {newStaffCreds && (
+        <div style={{position:"fixed",inset:0,zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:24}} onClick={()=>setNewStaffCreds(null)}>
+          <div style={{position:"absolute",inset:0,background:"rgba(19,13,46,.45)",backdropFilter:"blur(6px)"}}/>
+          <div onClick={e=>e.stopPropagation()} style={{position:"relative",width:"100%",maxWidth:440,background:T.white,border:`1.5px solid ${T.line}`,borderRadius:22,padding:32,boxShadow:`0 24px 80px rgba(134,87,255,.18)`,animation:"fadeUp .3s ease both"}}>
+            <div style={{textAlign:"center",marginBottom:20}}>
+              <div style={{width:52,height:52,borderRadius:"50%",background:`linear-gradient(135deg,${T.p400},${T.p700})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,margin:"0 auto 12px",color:"white"}}>✓</div>
+              <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:900,color:T.ink,margin:0}}>Staff account created</h3>
+              <p style={{fontSize:13,color:T.soft,margin:"6px 0 0"}}>Save these credentials — the password won't be shown again</p>
+            </div>
+            <div style={{background:T.p50,border:`1.5px solid ${T.p100}`,borderRadius:14,padding:20,marginBottom:20}}>
+              <div style={{marginBottom:12}}>
+                <div style={{fontSize:11,fontWeight:700,color:T.mid,textTransform:"uppercase",letterSpacing:".3px",marginBottom:4}}>Username</div>
+                <div style={{fontSize:15,fontWeight:700,color:T.ink,fontFamily:"monospace"}}>{newStaffCreds.username}</div>
+              </div>
+              <div>
+                <div style={{fontSize:11,fontWeight:700,color:T.mid,textTransform:"uppercase",letterSpacing:".3px",marginBottom:4}}>Password</div>
+                <div style={{display:"flex",alignItems:"center",gap:10}}>
+                  <div style={{fontSize:15,fontWeight:700,color:T.ink,fontFamily:"monospace",flex:1}}>{newStaffCreds.password}</div>
+                  <button onClick={()=>{navigator.clipboard.writeText(newStaffCreds.password);setCopiedPw(true);setTimeout(()=>setCopiedPw(false),2000);}} style={{padding:"6px 14px",borderRadius:8,border:`1.5px solid ${T.p200}`,background:copiedPw?T.p50:T.white,color:copiedPw?T.p600:T.mid,fontSize:12,fontWeight:700,cursor:"pointer",transition:"all .2s"}}>{copiedPw?"Copied!":"Copy"}</button>
+                </div>
+              </div>
+            </div>
+            <button onClick={()=>setNewStaffCreds(null)} className="btn-primary" style={{width:"100%"}}>Done</button>
+          </div>
+        </div>
+      )}
+
+      {/* OTP verification modal */}
+      {showOtp && (
+        <div style={{position:"fixed",inset:0,zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:24}} onClick={()=>{setShowOtp(false);setOtpCode('');}}>
+          <div style={{position:"absolute",inset:0,background:"rgba(19,13,46,.45)",backdropFilter:"blur(6px)"}}/>
+          <div onClick={e=>e.stopPropagation()} style={{position:"relative",width:"100%",maxWidth:400,background:T.white,border:`1.5px solid ${T.line}`,borderRadius:22,padding:32,boxShadow:`0 24px 80px rgba(134,87,255,.18)`,animation:"fadeUp .3s ease both"}}>
+            <div style={{textAlign:"center",marginBottom:24}}>
+              <div style={{fontSize:40,marginBottom:12}}>🔐</div>
+              <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:900,color:T.ink,margin:0}}>{otpEnable?"Enable":"Disable"} 2FA</h3>
+              <p style={{fontSize:13,color:T.soft,margin:"8px 0 0"}}>Enter the 6-digit code sent to your email</p>
+            </div>
+            <input value={otpCode} onChange={e=>setOtpCode(e.target.value.replace(/\D/g,'').slice(0,6))} placeholder="000000" style={{width:"100%",padding:"18px",border:`2px solid ${otpCode.length===6?T.p400:T.line}`,borderRadius:14,background:T.paper,color:T.ink,fontSize:28,fontWeight:900,fontFamily:"monospace",letterSpacing:"12px",textAlign:"center",outline:"none",transition:"border-color .2s",boxSizing:"border-box"}} maxLength={6}/>
+            {otpMsg && <div style={{fontSize:13,color:"#e53e3e",textAlign:"center",marginTop:10}}>{otpMsg}</div>}
+            <div style={{display:"flex",gap:10,marginTop:20}}>
+              <button onClick={()=>{setShowOtp(false);setOtpCode('');}} className="btn-ghost" style={{flex:1}}>Cancel</button>
+              <button onClick={handleVerifyOtp} className="btn-primary" style={{flex:1}} disabled={otpCode.length!==6}>Verify</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Staff Modal */}
+      {showAddStaff && (
+        <div style={{position:"fixed",inset:0,zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:24}} onClick={()=>setShowAddStaff(false)}>
+          <div style={{position:"absolute",inset:0,background:"rgba(19,13,46,.45)",backdropFilter:"blur(6px)"}}/>
+          <div onClick={e=>e.stopPropagation()} style={{position:"relative",width:"100%",maxWidth:440,background:T.white,border:`1.5px solid ${T.line}`,borderRadius:22,padding:32,boxShadow:`0 24px 80px rgba(134,87,255,.18)`,animation:"fadeUp .3s ease both"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24}}>
+              <div>
+                <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:900,color:T.ink,margin:0}}>Add staff member</h3>
+                <p style={{fontSize:13,color:T.soft,margin:"6px 0 0",fontWeight:300}}>Login credentials are auto-generated</p>
+              </div>
+              <button onClick={()=>setShowAddStaff(false)} style={{width:32,height:32,borderRadius:"50%",border:`1.5px solid ${T.line}`,background:T.paper,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:T.mid}}>✕</button>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+              <div className="form-group" style={{marginBottom:0}}><label className="form-label">First name</label><input className="form-input" value={staffFn} onChange={e=>setStaffFn(e.target.value)} placeholder="Maria"/></div>
+              <div className="form-group" style={{marginBottom:0}}><label className="form-label">Last name</label><input className="form-input" value={staffLn} onChange={e=>setStaffLn(e.target.value)} placeholder="Lopez"/></div>
+            </div>
+            <div className="form-group"><label className="form-label">Role</label>
+              <select className="form-input" value={staffRole} onChange={e=>setStaffRole(e.target.value)}><option value="STAFF">Staff</option></select>
+            </div>
+            <div style={{background:T.p50,border:`1px solid ${T.p100}`,borderRadius:10,padding:"10px 14px",fontSize:12,color:T.mid,marginBottom:16}}>
+              A unique username and password will be auto-generated and shown once after creation.
+            </div>
+            <div style={{display:"flex",gap:10}}>
+              <button onClick={()=>setShowAddStaff(false)} className="btn-ghost" style={{flex:1}}>Cancel</button>
+              <button onClick={handleAddStaff} className="btn-primary" style={{flex:1}} disabled={!staffFn||!staffLn}>Add staff member</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="resp-grid-sidebar-left">
         <div className="card" style={{padding:16,height:"fit-content"}}>
@@ -2675,56 +4023,32 @@ function PageSettings() {
         <div>
           {section==="Business" && (
             <div className="card">
-              <div className="card-head">Business details</div>
-              
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
-                <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`}}>
-                  <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:8,letterSpacing:".3px",textTransform:"uppercase"}}>Business name</label>
-                  <input defaultValue="Tony's Pizzeria" style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",transition:"border-color .2s, box-shadow .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)"}}/>
-                </div>
-                <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`}}>
-                  <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:8,letterSpacing:".3px",textTransform:"uppercase"}}>Business type</label>
-                  <select style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",cursor:"pointer",transition:"border-color .2s, box-shadow .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)"}}><option>Pizza Restaurant</option><option>Café</option><option>Bar & Restaurant</option></select>
-                </div>
-                <div style={{gridColumn:"1 / -1",background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`}}>
-                  <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:8,letterSpacing:".3px",textTransform:"uppercase"}}>Address</label>
-                  <input defaultValue="14 High Street, Manchester M1 1AE" style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",transition:"border-color .2s, box-shadow .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)"}}/>
-                </div>
-                <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`}}>
-                  <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:8,letterSpacing:".3px",textTransform:"uppercase"}}>Phone number</label>
-                  <input defaultValue="+44 161 234 5678" style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",transition:"border-color .2s, box-shadow .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)"}}/>
-                </div>
-                <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`}}>
-                  <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:8,letterSpacing:".3px",textTransform:"uppercase"}}>Email</label>
-                  <input defaultValue="info@tonys-pizzeria.com" type="email" style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",transition:"border-color .2s, box-shadow .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)"}}/>
-                </div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+                <div className="card-head" style={{margin:0}}>Business details</div>
+                <button className="btn-primary" style={{fontSize:13,padding:"9px 20px"}} onClick={saveBiz} disabled={savingBiz}>{savingBiz?"Saving...":"Save changes"}</button>
               </div>
-              <div style={{marginTop:16,paddingTop:20,borderTop:`1px solid ${T.line}`}}>
-                <div style={{fontSize:13,fontWeight:700,color:T.ink,marginBottom:16}}>Opening hours</div>
-                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(280px, 1fr))",gap:12}}>
-                  {["Monday–Thursday","Friday–Saturday","Sunday"].map((day,i)=>(
-                    <div key={day} style={{background:T.paper,borderRadius:12,padding:"14px 16px",display:"flex",alignItems:"center",gap:12}}>
-                      <div style={{fontSize:13,fontWeight:600,color:T.ink,minWidth:130}}>{day}</div>
-                      <input className="fi" defaultValue={i===1?"11:00am":"12:00pm"} style={{width:80,padding:"8px 10px",backgroundColor:T.white,color:T.ink,textAlign:"center",fontSize:12}}/>
-                      <span style={{color:T.soft,fontSize:13}}>to</span>
-                      <input className="fi" defaultValue={i===0?"10:00pm":i===1?"11:30pm":"9:00pm"} style={{width:80,padding:"8px 10px",backgroundColor:T.white,color:T.ink,textAlign:"center",fontSize:12}}/>
-                      <label className="toggle" style={{marginLeft:"auto"}}><input type="checkbox" defaultChecked/><div className="toggle-track"/><div className="toggle-thumb"/></label>
-                    </div>
-                  ))}
-                </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+                <div style={fw}><label style={lb}>Business name</label><input style={fi} value={bizName} onChange={e=>setBizName(e.target.value)}/></div>
+                <div style={fw}><label style={lb}>Business type</label><input style={fi} value={bizType} onChange={e=>setBizType(e.target.value)} placeholder="e.g. Pizza Restaurant"/></div>
+                <div style={{...fw,gridColumn:"1 / -1"}}><label style={lb}>Address</label><input style={fi} value={bizAddress} onChange={e=>setBizAddress(e.target.value)}/></div>
+                <div style={fw}><label style={lb}>Phone number</label><input style={fi} value={bizPhone} onChange={e=>setBizPhone(e.target.value)}/></div>
+                <div style={fw}><label style={lb}>Email</label><input style={fi} value={bizEmail} onChange={e=>setBizEmail(e.target.value)} type="email"/></div>
               </div>
             </div>
           )}
 
           {section==="Notifications" && (
             <div>
-              <div style={{fontSize:17,fontWeight:700,color:T.ink,marginBottom:16}}>Notification preferences</div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+                <div style={{fontSize:17,fontWeight:700,color:T.ink}}>Notification preferences</div>
+                <button className="btn-primary" style={{fontSize:13,padding:"9px 20px"}} onClick={saveNotifications} disabled={savingNotifs}>{savingNotifs?"Saving...":"Save changes"}</button>
+              </div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(260px, 1fr))",gap:16}}>
-                {[["📞","New order via call","Get notified when Aria takes a phone order",true],["📅","New reservation","Alert when a table is booked",true],["📱","Missed call","Get notified when a call is missed",true],["📊","Weekly report","Summary of calls and orders every Monday",false],["⚠️","Agent offline","Alert if Aria stops responding",true],["💳","Payment processed","Confirmation for each charge",false]].map(([ic,h,d,on])=>(
+                {[["📞","New order via call","Notify when agent takes a phone order","emailNewOrder"],["📅","New reservation","Alert when a table is booked","emailNewReservation"],["📱","Missed call","Notify when a call is missed","emailMissedCall"],["📊","Weekly report","Summary every Monday","emailWeeklyReport"],["⚠️","Agent offline","Alert if agent stops responding","emailAgentOffline"],["💳","Payment processed","Confirmation for each charge","emailPaymentProcessed"],["↩️","Refund request","Alert when a refund is requested","emailRefundRequest"]].map(([ic,h,d,key])=>(
                   <div key={h} style={{background:T.white,border:`1.5px solid ${T.line}`,borderRadius:14,padding:20,transition:"all .2s"}} onMouseEnter={e=>{e.currentTarget.style.borderColor=T.p300;e.currentTarget.style.boxShadow=`0 6px 20px rgba(112,53,245,.06)`}} onMouseLeave={e=>{e.currentTarget.style.borderColor=T.line;e.currentTarget.style.boxShadow="none"}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
                       <div style={{width:42,height:42,borderRadius:12,background:T.p50,border:`1px solid ${T.p100}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>{ic}</div>
-                      <label className="toggle"><input type="checkbox" defaultChecked={on}/><div className="toggle-track"/><div className="toggle-thumb"/></label>
+                      <label className="toggle"><input type="checkbox" checked={notifs[key]??true} onChange={e=>setNotifs(prev=>({...prev,[key]:e.target.checked}))}/><div className="toggle-track"/><div className="toggle-thumb"/></label>
                     </div>
                     <div style={{fontSize:14,fontWeight:700,color:T.ink,marginBottom:4}}>{h}</div>
                     <div style={{fontSize:12.5,color:T.soft,lineHeight:1.4}}>{d}</div>
@@ -2736,33 +4060,28 @@ function PageSettings() {
 
           {section==="Phone" && (
             <div className="card">
-              <div className="card-head">Phone number settings</div>
-              <div className="info-block" style={{marginBottom:20,marginTop:0}}>
-                <div style={{display:"flex",alignItems:"center",gap:12}}>
-                  <div style={{fontSize:28}}>📞</div>
-                  <div>
-                    <div style={{fontSize:16,fontWeight:700,color:T.p600}}>+44 161 792 4831</div>
-                    <div style={{fontSize:12,color:T.soft,marginTop:3}}>Your Talkativ number · Manchester area code</div>
-                  </div>
-                  <span className="badge badge-green" style={{marginLeft:"auto"}}>Active</span>
-                </div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+                <div className="card-head" style={{margin:0}}>Phone settings</div>
+                <button className="btn-primary" style={{fontSize:13,padding:"9px 20px"}} onClick={savePhone} disabled={savingPhone}>{savingPhone?"Saving...":"Save changes"}</button>
               </div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:20,alignItems:"stretch"}}>
-                <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`,display:"flex",flexDirection:"column"}}>
-                  <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:8,letterSpacing:".3px",textTransform:"uppercase"}}>Forward to (backup number)</label>
-                  <input defaultValue="+44 161 234 5678" style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",transition:"border-color .2s, box-shadow .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)",flex:1}}/>
+                <div style={{...fw,display:"flex",flexDirection:"column"}}>
+                  <label style={lb}>Backup number (optional)</label>
+                  <input value={forwardNumber} onChange={e=>setForwardNumber(e.target.value)} placeholder="e.g. +44 161 234 5678" style={{...fi,flex:1}}/>
                 </div>
-                <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`,display:"flex",flexDirection:"column"}}>
-                  <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:8,letterSpacing:".3px",textTransform:"uppercase"}}>Rings before Aria answers</label>
-                  <select style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",cursor:"pointer",transition:"border-color .2s, box-shadow .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)",flex:1}}><option>Immediately</option><option>After 2 rings</option><option>After 3 rings</option></select>
+                <div style={{...fw,display:"flex",flexDirection:"column"}}>
+                  <label style={lb}>Rings before agent answers</label>
+                  <select value={ringsBeforeAi} onChange={e=>setRingsBeforeAi(e.target.value)} style={{...fi,flex:1,cursor:"pointer"}}>
+                    <option value={0}>Immediately</option><option value={2}>After 2 rings</option><option value={3}>After 3 rings</option><option value={5}>After 5 rings</option>
+                  </select>
                 </div>
               </div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
-                {[["Call recording","Record all calls for quality assurance",true],["Voicemail fallback","If transfer fails, offer voicemail",true]].map(([title,desc,on])=>(
+                {[["Call recording","Record all calls for quality assurance",callRecording,setCallRecording],["Voicemail fallback","If transfer fails, offer voicemail",voicemailFallback,setVoicemailFallback]].map(([title,desc,val,setter])=>(
                   <div key={title} style={{background:T.paper,borderRadius:12,padding:"16px 14px",display:"flex",flexDirection:"column",gap:10}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                       <h4 style={{margin:0,fontSize:13,fontWeight:700,color:T.ink}}>{title}</h4>
-                      <label className="toggle"><input type="checkbox" defaultChecked={on}/><div className="toggle-track"/><div className="toggle-thumb"/></label>
+                      <label className="toggle"><input type="checkbox" checked={val} onChange={e=>setter(e.target.checked)}/><div className="toggle-track"/><div className="toggle-thumb"/></label>
                     </div>
                     <p style={{margin:0,fontSize:12,color:T.soft,lineHeight:1.4}}>{desc}</p>
                   </div>
@@ -2778,156 +4097,128 @@ function PageSettings() {
                 <button className="btn-primary" style={{fontSize:13,padding:"8px 18px"}} onClick={()=>setShowAddStaff(true)}>+ Add Staff</button>
               </div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(260px, 1fr))",gap:16}}>
-                {staffList.map((m,i)=>(
-                  <div key={i} style={{background:T.white,border:`1.5px solid ${T.line}`,borderRadius:14,padding:20,transition:"all .2s"}} onMouseEnter={e=>{e.currentTarget.style.borderColor=T.p300;e.currentTarget.style.boxShadow=`0 6px 20px rgba(112,53,245,.06)`}} onMouseLeave={e=>{e.currentTarget.style.borderColor=T.line;e.currentTarget.style.boxShadow="none"}}>
+                {/* Owner card */}
+                <div style={{background:T.white,border:`1.5px solid ${T.line}`,borderRadius:14,padding:20}}>
+                  <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:14}}>
+                    <div style={{width:44,height:44,borderRadius:"50%",background:`linear-gradient(135deg,${T.p400},${T.p700})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:"white",flexShrink:0}}>{user?.firstName?.[0]}{user?.lastName?.[0]}</div>
+                    <div>
+                      <div style={{fontSize:14,fontWeight:600,color:T.ink}}>{user?.firstName} {user?.lastName}</div>
+                      <div style={{fontSize:12,color:T.soft,marginTop:2}}>{user?.email}</div>
+                    </div>
+                  </div>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",borderTop:`1px solid ${T.paper}`,paddingTop:14}}>
+                    <span className="badge badge-purple">Owner</span>
+                  </div>
+                </div>
+                {staffList.map(m=>(
+                  <div key={m.id} style={{background:T.white,border:`1.5px solid ${T.line}`,borderRadius:14,padding:20,transition:"all .2s"}} onMouseEnter={e=>{e.currentTarget.style.borderColor=T.p300;e.currentTarget.style.boxShadow=`0 6px 20px rgba(112,53,245,.06)`}} onMouseLeave={e=>{e.currentTarget.style.borderColor=T.line;e.currentTarget.style.boxShadow="none"}}>
                     <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:14}}>
-                      <div style={{width:44,height:44,borderRadius:"50%",background:`linear-gradient(135deg,${T.p400},${T.p700})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:"white",flexShrink:0}}>{m.av}</div>
+                      <div style={{width:44,height:44,borderRadius:"50%",background:`linear-gradient(135deg,${T.p400},${T.p700})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:"white",flexShrink:0}}>{m.firstName?.[0]}{m.lastName?.[0]}</div>
                       <div>
-                        <div style={{fontSize:14,fontWeight:600,color:T.ink}}>{m.name}</div>
-                        <div style={{fontSize:12,color:T.soft,marginTop:2}}>{m.username ? `@${m.username}` : m.email}</div>
+                        <div style={{fontSize:14,fontWeight:600,color:T.ink}}>{m.firstName} {m.lastName}</div>
+                        <div style={{fontSize:12,color:T.soft,marginTop:2}}>@{m.username}</div>
                       </div>
                     </div>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",borderTop:`1px solid ${T.paper}`,paddingTop:14}}>
                       <span className="badge badge-purple">{m.role}</span>
-                      {m.role!=="Owner"&&<button className="btn-danger" style={{fontSize:12,padding:"5px 12px"}} onClick={()=>setStaffList(prev=>prev.filter((_,j)=>j!==i))}>Remove</button>}
+                      <button className="btn-danger" style={{fontSize:12,padding:"5px 12px"}} onClick={()=>handleDeleteStaff(m.id)}>Remove</button>
                     </div>
                   </div>
                 ))}
               </div>
-
-              {/* Add Staff Modal */}
-              {showAddStaff && (
-                <div style={{position:"fixed",inset:0,zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:24}} onClick={()=>setShowAddStaff(false)}>
-                  <div style={{position:"absolute",inset:0,background:"rgba(19,13,46,.45)",backdropFilter:"blur(6px)"}}/>
-                  <div onClick={e=>e.stopPropagation()} style={{position:"relative",width:"100%",maxWidth:460,background:T.white,border:`1.5px solid ${T.line}`,borderRadius:22,padding:32,boxShadow:`0 24px 80px rgba(134,87,255,.18)`,animation:"fadeUp .3s ease both"}}>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24}}>
-                      <div>
-                        <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:900,color:T.ink,margin:0,letterSpacing:"-.3px"}}>Add new staff</h3>
-                        <p style={{fontSize:13,color:T.soft,margin:"6px 0 0",fontWeight:300}}>Create credentials for a new team member</p>
-                      </div>
-                      <button onClick={()=>setShowAddStaff(false)} style={{width:32,height:32,borderRadius:"50%",border:`1.5px solid ${T.line}`,background:T.paper,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:T.mid}}>✕</button>
-                    </div>
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
-                      <div className="form-group" style={{marginBottom:0}}><label className="form-label">First name</label><input className="form-input" id="staff-fn" placeholder="Maria"/></div>
-                      <div className="form-group" style={{marginBottom:0}}><label className="form-label">Last name</label><input className="form-input" id="staff-ln" placeholder="Lopez"/></div>
-                    </div>
-                    <div className="form-group"><label className="form-label">Username</label><input className="form-input" id="staff-un" placeholder="e.g. maria.lopez"/></div>
-                    <div className="form-group"><label className="form-label">Password</label><input className="form-input" id="staff-pw" placeholder="At least 8 characters" type="password"/></div>
-                    <div className="form-group"><label className="form-label">Role</label>
-                      <select className="form-input" id="staff-role"><option value="Staff">Staff</option><option value="Manager">Manager</option></select>
-                    </div>
-                    <div style={{display:"flex",gap:10,marginTop:20}}>
-                      <button onClick={()=>setShowAddStaff(false)} className="btn-ghost" style={{flex:1}}>Cancel</button>
-                      <button onClick={()=>{
-                        const fn=document.getElementById("staff-fn")?.value||"";
-                        const ln=document.getElementById("staff-ln")?.value||"";
-                        const un=document.getElementById("staff-un")?.value||"";
-                        const rl=document.getElementById("staff-role")?.value||"Staff";
-                        if(fn&&ln&&un){
-                          setStaffList(prev=>[...prev,{name:`${fn} ${ln}`,username:un,role:rl,av:`${fn[0]}${ln[0]}`}]);
-                          setShowAddStaff(false);
-                        }
-                      }} className="btn-primary" style={{flex:1}}>Add staff member</button>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           )}
 
           {section==="Security" && (
             <div className="card">
-              <div className="card-head">Security settings</div>
+              <div className="card-head">Change password</div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:14,alignItems:"stretch"}}>
-                <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`,display:"flex",flexDirection:"column"}}>
-                  <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:8,letterSpacing:".3px",textTransform:"uppercase"}}>Current password</label>
-                  <div style={{position:"relative",flex:1,display:"flex"}}>
-                    <input type={showPw.current?"text":"password"} placeholder="Enter current password" style={{width:"100%",padding:"13px 48px 13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",transition:"border-color .2s, box-shadow .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)",flex:1}}/>
-                    <button onClick={()=>setShowPw(p=>({...p,current:!p.current}))} style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",padding:0,lineHeight:1,display:"flex",alignItems:"center"}}>{showPw.current?<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={T.soft} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={T.soft} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>}</button>
+                {[["Current password",curPw,setCurPw,"cur","Enter current password"],["New password",newPw,setNewPw,"new_","At least 8 characters"],["Confirm new password",confPw,setConfPw,"conf","Repeat new password"]].map(([label,val,setter,key,ph])=>(
+                  <div key={key} style={{...fw,display:"flex",flexDirection:"column"}}>
+                    <label style={lb}>{label}</label>
+                    <div style={{position:"relative",flex:1,display:"flex"}}>
+                      <input type={showPw[key]?"text":"password"} value={val} onChange={e=>setter(e.target.value)} placeholder={ph} style={{...fi,padding:"13px 48px 13px 18px",flex:1}}/>
+                      <button onClick={()=>setShowPw(p=>({...p,[key]:!p[key]}))} style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",padding:0,lineHeight:1,display:"flex",alignItems:"center"}}>{showPw[key]?eyeShow:eyeHide}</button>
+                    </div>
                   </div>
-                </div>
-                <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`,display:"flex",flexDirection:"column"}}>
-                  <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:8,letterSpacing:".3px",textTransform:"uppercase"}}>New password</label>
-                  <div style={{position:"relative",flex:1,display:"flex"}}>
-                    <input type={showPw.new_?"text":"password"} placeholder="At least 8 characters" style={{width:"100%",padding:"13px 48px 13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",transition:"border-color .2s, box-shadow .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)",flex:1}}/>
-                    <button onClick={()=>setShowPw(p=>({...p,new_:!p.new_}))} style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",padding:0,lineHeight:1,display:"flex",alignItems:"center"}}>{showPw.new_?<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={T.soft} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={T.soft} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>}</button>
-                  </div>
-                </div>
-                <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`,display:"flex",flexDirection:"column"}}>
-                  <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:8,letterSpacing:".3px",textTransform:"uppercase"}}>Confirm new password</label>
-                  <div style={{position:"relative",flex:1,display:"flex"}}>
-                    <input type={showPw.confirm?"text":"password"} placeholder="Repeat new password" style={{width:"100%",padding:"13px 48px 13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",transition:"border-color .2s, box-shadow .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)",flex:1}}/>
-                    <button onClick={()=>setShowPw(p=>({...p,confirm:!p.confirm}))} style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",padding:0,lineHeight:1,display:"flex",alignItems:"center"}}>{showPw.confirm?<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={T.soft} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={T.soft} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>}</button>
-                  </div>
-                </div>
+                ))}
               </div>
-              <div style={{paddingTop:20,borderTop:`1px solid ${T.line}`,marginTop:16}}>
+              {pwErr && <div style={{fontSize:13,color:"#e53e3e",marginTop:12}}>{pwErr}</div>}
+              {pwMsg && <div style={{fontSize:13,color:"#38a169",marginTop:12}}>{pwMsg}</div>}
+              <div style={{marginTop:16,display:"flex",justifyContent:"flex-end"}}>
+                <button className="btn-primary" style={{fontSize:13,padding:"9px 20px"}} onClick={handleChangePassword} disabled={savingPw}>{savingPw?"Saving...":"Change password"}</button>
+              </div>
+              <div style={{paddingTop:20,borderTop:`1px solid ${T.line}`,marginTop:20}}>
                 <div style={{fontSize:13,fontWeight:700,color:T.ink,marginBottom:16}}>Two-factor authentication</div>
                 <div style={{background:T.paper,borderRadius:12,padding:"16px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                   <div>
                     <h4 style={{margin:0,fontSize:13,fontWeight:700,color:T.ink}}>Enable 2FA</h4>
-                    <p style={{margin:0,fontSize:12,color:T.soft,marginTop:4}}>Require a code when logging in from a new device</p>
+                    <p style={{margin:0,fontSize:12,color:T.soft,marginTop:4}}>Require a code when logging in from a new device · {twoFa ? <span style={{color:"#38a169",fontWeight:600}}>Enabled</span> : <span style={{color:T.soft}}>Disabled</span>}</p>
                   </div>
-                  <label className="toggle"><input type="checkbox"/><div className="toggle-track"/><div className="toggle-thumb"/></label>
+                  <label className="toggle"><input type="checkbox" checked={twoFa} onChange={e=>handleToggle2fa(e.target.checked)}/><div className="toggle-track"/><div className="toggle-thumb"/></label>
                 </div>
               </div>
-              <div style={{paddingTop:20,borderTop:`1px solid ${T.line}`,marginTop:16}}>
+              <div style={{paddingTop:20,borderTop:`1px solid ${T.line}`,marginTop:20}}>
                 <div style={{fontSize:13,fontWeight:700,color:T.ink,marginBottom:12}}>Active sessions</div>
-                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(240px, 1fr))",gap:12}}>
-                  {[["Chrome · MacBook Pro","Manchester, UK · Active now"],["Safari · iPhone 15","Manchester, UK · 2h ago"]].map(([device,loc])=>(
-                    <div key={device} style={{background:T.paper,borderRadius:12,padding:"14px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                      <div><div style={{fontSize:13,fontWeight:600,color:T.ink}}>{device}</div><div style={{fontSize:11.5,color:T.soft,marginTop:2}}>{loc}</div></div>
-                      <button className="btn-danger" style={{fontSize:12,padding:"5px 12px"}}>Revoke</button>
-                    </div>
-                  ))}
-                </div>
+                {sessions.length===0 ? (
+                  <div style={{textAlign:"center",padding:32,color:T.soft,fontSize:13}}>No active sessions found</div>
+                ) : (
+                  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(240px, 1fr))",gap:12}}>
+                    {sessions.map(s=>(
+                      <div key={s.id} style={{background:T.paper,borderRadius:12,padding:"14px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                        <div>
+                          <div style={{fontSize:13,fontWeight:600,color:T.ink}}>{s.device}</div>
+                          <div style={{fontSize:11.5,color:T.soft,marginTop:2}}>{s.location} · {new Date(s.lastActive).toLocaleDateString()}</div>
+                        </div>
+                        <button className="btn-danger" style={{fontSize:12,padding:"5px 12px"}} onClick={()=>{api.settings.revokeSession(s.id).then(()=>setSessions(prev=>prev.filter(x=>x.id!==s.id))).catch(()=>{})}}>Revoke</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}
 
           {section==="Ordering" && (
             <div className="card">
-              <div className="card-head">Ordering policy</div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+                <div className="card-head" style={{margin:0}}>Ordering policy</div>
+                <button className="btn-primary" style={{fontSize:13,padding:"9px 20px"}} onClick={saveOrdering} disabled={savingOrder}>{savingOrder?"Saving...":"Save changes"}</button>
+              </div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:20}}>
-                <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`}}>
-                  <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:8,letterSpacing:".3px",textTransform:"uppercase"}}>Delivery radius</label>
+                <div style={fw}>
+                  <label style={lb}>Delivery radius</label>
                   <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                    <input defaultValue="5" style={{width:80,padding:"13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",textAlign:"center"}}/>
-                    <select style={{padding:"13px 14px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",cursor:"pointer"}}><option>Miles</option><option>Km</option></select>
+                    <input value={deliveryRadius} onChange={e=>setDeliveryRadius(e.target.value)} style={{...fi,width:80,textAlign:"center"}} type="number" min="0"/>
+                    <select value={radiusUnit} onChange={e=>setRadiusUnit(e.target.value)} style={{padding:"13px 14px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",cursor:"pointer"}}><option value="miles">Miles</option><option value="km">Km</option></select>
                   </div>
                 </div>
-                <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`}}>
-                  <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:8,letterSpacing:".3px",textTransform:"uppercase"}}>Minimum order amount</label>
+                <div style={fw}>
+                  <label style={lb}>Minimum order amount</label>
                   <div style={{display:"flex",alignItems:"center",gap:4}}>
                     <span style={{fontSize:16,fontWeight:700,color:T.mid}}>£</span>
-                    <input defaultValue="15.00" style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none"}}/>
+                    <input value={minOrder} onChange={e=>setMinOrder(e.target.value)} style={fi} type="number" min="0" step="0.01"/>
                   </div>
                 </div>
               </div>
               <div style={{fontSize:13,fontWeight:700,color:T.ink,marginBottom:14}}>Payment options</div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:20}}>
-                {[["💳","Pay now","Customer pays via payment link before order is prepared",true],["🚚","Pay on delivery / collection","Customer pays when order arrives or at pickup",true]].map(([ic,h,d,on])=>(
-                  <div key={h} style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`}}>
+                {[["💳","Pay now","Customer pays via payment link before order is prepared",payNow,setPayNow],["🚚","Pay on delivery / collection","Customer pays when order arrives or at pickup",payOnDelivery,setPayOnDelivery]].map(([ic,h,d,val,setter])=>(
+                  <div key={h} style={fw}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-                      <div style={{display:"flex",alignItems:"center",gap:8}}>
-                        <span style={{fontSize:20}}>{ic}</span>
-                        <h4 style={{margin:0,fontSize:13,fontWeight:700,color:T.ink}}>{h}</h4>
-                      </div>
-                      <label className="toggle"><input type="checkbox" defaultChecked={on}/><div className="toggle-track"/><div className="toggle-thumb"/></label>
+                      <div style={{display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:20}}>{ic}</span><h4 style={{margin:0,fontSize:13,fontWeight:700,color:T.ink}}>{h}</h4></div>
+                      <label className="toggle"><input type="checkbox" checked={val} onChange={e=>setter(e.target.checked)}/><div className="toggle-track"/><div className="toggle-thumb"/></label>
                     </div>
                     <p style={{margin:0,fontSize:12,color:T.soft,lineHeight:1.4}}>{d}</p>
                   </div>
                 ))}
               </div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
-                {[["🏠","Collection enabled","Allow customers to pick up orders in-store",true],["🚗","Delivery enabled","Deliver orders to customers within radius",true]].map(([ic,h,d,on])=>(
+                {[["🏠","Collection enabled","Allow customers to pick up orders in-store",collectionEnabled,setCollectionEnabled],["🚗","Delivery enabled","Deliver orders to customers within radius",deliveryEnabled,setDeliveryEnabled]].map(([ic,h,d,val,setter])=>(
                   <div key={h} style={{background:T.paper,borderRadius:12,padding:"16px 14px",display:"flex",flexDirection:"column",gap:10}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                      <div style={{display:"flex",alignItems:"center",gap:8}}>
-                        <span style={{fontSize:18}}>{ic}</span>
-                        <h4 style={{margin:0,fontSize:13,fontWeight:700,color:T.ink}}>{h}</h4>
-                      </div>
-                      <label className="toggle"><input type="checkbox" defaultChecked={on}/><div className="toggle-track"/><div className="toggle-thumb"/></label>
+                      <div style={{display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:18}}>{ic}</span><h4 style={{margin:0,fontSize:13,fontWeight:700,color:T.ink}}>{h}</h4></div>
+                      <label className="toggle"><input type="checkbox" checked={val} onChange={e=>setter(e.target.checked)}/><div className="toggle-track"/><div className="toggle-thumb"/></label>
                     </div>
                     <p style={{margin:0,fontSize:12,color:T.soft,lineHeight:1.4}}>{d}</p>
                   </div>
@@ -2938,76 +4229,58 @@ function PageSettings() {
 
           {section==="Reservations" && (
             <div className="card">
-              <div className="card-head">Reservation policy</div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+                <div className="card-head" style={{margin:0}}>Reservation policy</div>
+                <button className="btn-primary" style={{fontSize:13,padding:"9px 20px"}} onClick={saveReservation} disabled={savingRes}>{savingRes?"Saving...":"Save changes"}</button>
+              </div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:20}}>
-                <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`}}>
-                  <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:8,letterSpacing:".3px",textTransform:"uppercase"}}>Maximum party size</label>
-                  <input defaultValue="12" style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none"}}/>
-                </div>
-                <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`}}>
-                  <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:8,letterSpacing:".3px",textTransform:"uppercase"}}>Booking lead time</label>
-                  <select style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",cursor:"pointer"}}><option>30 minutes</option><option>1 hour</option><option>2 hours</option><option>Same day</option><option>24 hours</option></select>
+                <div style={fw}><label style={lb}>Maximum party size</label><input value={maxPartySize} onChange={e=>setMaxPartySize(e.target.value)} style={fi} type="number" min="1"/></div>
+                <div style={fw}>
+                  <label style={lb}>Booking lead time (hours)</label>
+                  <select value={bookingLeadTime} onChange={e=>setBookingLeadTime(e.target.value)} style={fi}>
+                    <option value={1}>1 hour</option><option value={2}>2 hours</option><option value={4}>4 hours</option><option value={24}>24 hours</option><option value={48}>48 hours</option>
+                  </select>
                 </div>
               </div>
-
               <div style={{fontSize:13,fontWeight:700,color:T.ink,marginBottom:14}}>Deposit settings</div>
               <div style={{background:T.p50,border:`1.5px solid ${T.p100}`,borderRadius:14,padding:"18px 20px",marginBottom:20}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
                   <div>
                     <h4 style={{margin:0,fontSize:14,fontWeight:700,color:T.ink}}>Require deposit</h4>
-                    <p style={{margin:0,fontSize:12,color:T.soft,marginTop:4}}>When enabled, a payment link is sent to the customer after they agree to make a reservation</p>
+                    <p style={{margin:0,fontSize:12,color:T.soft,marginTop:4}}>A payment link is sent after the customer agrees to reserve</p>
                   </div>
-                  <label className="toggle"><input type="checkbox" defaultChecked/><div className="toggle-track"/><div className="toggle-thumb"/></label>
+                  <label className="toggle"><input type="checkbox" checked={depositRequired} onChange={e=>setDepositRequired(e.target.checked)}/><div className="toggle-track"/><div className="toggle-thumb"/></label>
                 </div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-                  <div>
-                    <label style={{display:"block",fontSize:11,fontWeight:700,color:T.mid,marginBottom:6,letterSpacing:".3px",textTransform:"uppercase"}}>Deposit type</label>
-                    <select style={{width:"100%",padding:"11px 14px",border:`1.5px solid ${T.p200}`,borderRadius:10,background:T.white,color:T.ink,fontSize:13,fontFamily:"'Outfit',sans-serif",cursor:"pointer"}}><option>Per guest</option><option>Per table</option><option>Fixed amount</option></select>
-                  </div>
-                  <div>
-                    <label style={{display:"block",fontSize:11,fontWeight:700,color:T.mid,marginBottom:6,letterSpacing:".3px",textTransform:"uppercase"}}>Deposit amount</label>
-                    <div style={{display:"flex",alignItems:"center",gap:4}}>
-                      <span style={{fontSize:14,fontWeight:700,color:T.mid}}>£</span>
-                      <input defaultValue="10.00" style={{width:"100%",padding:"11px 14px",border:`1.5px solid ${T.p200}`,borderRadius:10,background:T.white,color:T.ink,fontSize:13,fontFamily:"'Outfit',sans-serif",outline:"none"}}/>
+                {depositRequired && (
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+                    <div>
+                      <label style={{...lb,fontSize:11}}>Deposit type</label>
+                      <select value={depositType} onChange={e=>setDepositType(e.target.value)} style={{width:"100%",padding:"11px 14px",border:`1.5px solid ${T.p200}`,borderRadius:10,background:T.white,color:T.ink,fontSize:13,fontFamily:"'Outfit',sans-serif",cursor:"pointer"}}><option value="PER_GUEST">Per guest</option><option value="PER_TABLE">Per table</option><option value="FIXED">Fixed amount</option></select>
                     </div>
-                  </div>
-                </div>
-              </div>
-
-              <div style={{fontSize:13,fontWeight:700,color:T.ink,marginBottom:14}}>Cancellation policy</div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:20}}>
-                <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`}}>
-                  <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:8,letterSpacing:".3px",textTransform:"uppercase"}}>Free cancellation window</label>
-                  <select style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",cursor:"pointer"}}><option>2 hours before</option><option>4 hours before</option><option>24 hours before</option><option>48 hours before</option></select>
-                </div>
-                <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`}}>
-                  <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:8,letterSpacing:".3px",textTransform:"uppercase"}}>No-show fee</label>
-                  <div style={{display:"flex",alignItems:"center",gap:4}}>
-                    <span style={{fontSize:14,fontWeight:700,color:T.mid}}>£</span>
-                    <input defaultValue="10.00" style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none"}}/>
-                  </div>
-                </div>
-              </div>
-
-              <div style={{fontSize:13,fontWeight:700,color:T.ink,marginBottom:14}}>Booking API integration</div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
-                {[["📅","OpenTable","Check table availability, make/update/cancel reservations via OpenTable",false],["🗓️","Free booking API","Use built-in table management for availability and reservation handling",true]].map(([ic,h,d,on])=>(
-                  <div key={h} style={{background:on?T.greenBg:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${on?T.greenBd:T.line}`}}>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-                      <div style={{display:"flex",alignItems:"center",gap:8}}>
-                        <span style={{fontSize:20}}>{ic}</span>
-                        <h4 style={{margin:0,fontSize:13,fontWeight:700,color:T.ink}}>{h}</h4>
+                    <div>
+                      <label style={{...lb,fontSize:11}}>Deposit amount</label>
+                      <div style={{display:"flex",alignItems:"center",gap:4}}>
+                        <span style={{fontSize:14,fontWeight:700,color:T.mid}}>£</span>
+                        <input value={depositAmount} onChange={e=>setDepositAmount(e.target.value)} style={{width:"100%",padding:"11px 14px",border:`1.5px solid ${T.p200}`,borderRadius:10,background:T.white,color:T.ink,fontSize:13,fontFamily:"'Outfit',sans-serif",outline:"none"}} type="number" min="0" step="0.01"/>
                       </div>
-                      <label className="toggle"><input type="checkbox" defaultChecked={on}/><div className="toggle-track"/><div className="toggle-thumb"/></label>
                     </div>
-                    <p style={{margin:0,fontSize:12,color:T.soft,lineHeight:1.4}}>{d}</p>
-                    {on && <span className="badge badge-green" style={{marginTop:10,display:"inline-block"}}>Active</span>}
                   </div>
-                ))}
+                )}
               </div>
-              <div className="info-block" style={{marginTop:20}}>
-                <div style={{fontSize:12,color:T.mid,lineHeight:1.6}}>
-                  <strong>How it works:</strong> The AI agent will automatically check available tables, manage party sizes, make reservations, update existing bookings, or cancel tables — all based on the caller's request during the phone call.
+              <div style={{fontSize:13,fontWeight:700,color:T.ink,marginBottom:14}}>Cancellation policy</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+                <div style={fw}>
+                  <label style={lb}>Free cancellation window</label>
+                  <select value={cancellationHours} onChange={e=>setCancellationHours(e.target.value)} style={fi}>
+                    <option value={2}>2 hours before</option><option value={4}>4 hours before</option><option value={24}>24 hours before</option><option value={48}>48 hours before</option>
+                  </select>
+                </div>
+                <div style={fw}>
+                  <label style={lb}>Refund if cancelled in time</label>
+                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                    <input value={refundPercentage} onChange={e=>setRefundPercentage(e.target.value)} style={{...fi,flex:1}} type="number" min="0" max="100"/>
+                    <span style={{fontSize:16,fontWeight:700,color:T.mid,flexShrink:0}}>%</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -3156,6 +4429,45 @@ function PaymentConfirmScreen({ onBack }) {
 function LoginScreen({ onBack, onDashboard }) {
   const [mode, setMode] = useState("owner");
   const [alert, setAlert] = useState(null);
+  const [loading, setLoading] = useState(false);
+  // Owner form state
+  const [ownerEmail, setOwnerEmail] = useState("");
+  const [ownerPassword, setOwnerPassword] = useState("");
+  // Staff form state
+  const [staffBusiness, setStaffBusiness] = useState("");
+  const [staffUsername, setStaffUsername] = useState("");
+  const [staffPassword, setStaffPassword] = useState("");
+
+  const handleOwnerLogin = async () => {
+    if (!ownerEmail || !ownerPassword) { setAlert({ type: "error", message: "Please fill in all fields." }); return; }
+    setLoading(true); setAlert(null);
+    try {
+      const data = await api.auth.login(ownerEmail, ownerPassword);
+      setAlert({ type: "success", message: "Welcome back! Redirecting..." });
+      setTimeout(() => onDashboard(data.user), 500);
+    } catch (err) {
+      setAlert({ type: "error", message: err.message || "Invalid email or password.", action: { label: "Create an account →", onClick: onBack } });
+    }
+    setLoading(false);
+  };
+
+  const handleStaffLogin = async () => {
+    if (!staffBusiness || !staffUsername || !staffPassword) { setAlert({ type: "error", message: "Please fill in all fields." }); return; }
+    setLoading(true); setAlert(null);
+    try {
+      const data = await api.auth.staffLogin(staffBusiness, staffUsername, staffPassword);
+      setAlert({ type: "success", message: "Welcome back! Redirecting..." });
+      setTimeout(() => onDashboard(data.user), 500);
+    } catch (err) {
+      setAlert({ type: "error", message: err.message || "No staff found with those credentials." });
+    }
+    setLoading(false);
+  };
+
+  const handleGoogleLogin = () => {
+    window.location.href = api.auth.googleLoginUrl();
+  };
+
   return (
     <div style={{minHeight:"100vh",background:T.paper,display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
       <style>{G}</style>
@@ -3192,16 +4504,16 @@ function LoginScreen({ onBack, onDashboard }) {
         {mode==="owner" && (
           <div style={{background:T.white,border:`1.5px solid ${T.line}`,borderRadius:20,padding:28,boxShadow:`0 8px 32px rgba(134,87,255,.06)`}}>
             <div className="sso-row" style={{marginBottom:16}}>
-              <button className="sso-btn" style={{width:"100%"}}>🔵 Continue with Google</button>
+              <button className="sso-btn" style={{width:"100%"}} onClick={handleGoogleLogin}>🔵 Continue with Google</button>
             </div>
             <div className="divider-row"><div className="divider-line"/><span className="divider-text">or sign in with email</span><div className="divider-line"/></div>
             <div style={{marginTop:16}}>
-              <div className="form-group"><label className="form-label">Email address</label><input className="form-input" placeholder="you@restaurant.com" type="email"/></div>
-              <div className="form-group"><label className="form-label">Password</label><input className="form-input" placeholder="Enter your password" type="password"/></div>
+              <div className="form-group"><label className="form-label">Email address</label><input className="form-input" placeholder="you@restaurant.com" type="email" value={ownerEmail} onChange={e=>setOwnerEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleOwnerLogin()}/></div>
+              <div className="form-group"><label className="form-label">Password</label><input className="form-input" placeholder="Enter your password" type="password" value={ownerPassword} onChange={e=>setOwnerPassword(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleOwnerLogin()}/></div>
               <div style={{display:"flex",justifyContent:"flex-end",marginBottom:18}}>
                 <span style={{fontSize:12.5,color:T.p600,cursor:"pointer",fontWeight:500}}>Forgot password?</span>
               </div>
-              <button onClick={()=>setAlert({type:"error",message:"No account found with this email.",action:{label:"Create an account →",onClick:onBack}})} style={{width:"100%",padding:"14px",background:T.ink,color:"white",border:"none",borderRadius:12,fontSize:14.5,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif",boxShadow:`0 4px 20px rgba(19,13,46,.2)`,transition:"all .22s"}}>Sign in →</button>
+              <button disabled={loading} onClick={handleOwnerLogin} style={{width:"100%",padding:"14px",background:loading?T.soft:T.ink,color:"white",border:"none",borderRadius:12,fontSize:14.5,fontWeight:600,cursor:loading?"not-allowed":"pointer",fontFamily:"'Outfit',sans-serif",boxShadow:`0 4px 20px rgba(19,13,46,.2)`,transition:"all .22s"}}>{loading?"Signing in...":"Sign in →"}</button>
             </div>
           </div>
         )}
@@ -3209,10 +4521,10 @@ function LoginScreen({ onBack, onDashboard }) {
         {/* Staff Login */}
         {mode==="staff" && (
           <div style={{background:T.white,border:`1.5px solid ${T.line}`,borderRadius:20,padding:28,boxShadow:`0 8px 32px rgba(134,87,255,.06)`}}>
-            <div className="form-group"><label className="form-label">Business name</label><input className="form-input" placeholder="e.g. Tony's Pizzeria"/></div>
-            <div className="form-group"><label className="form-label">Username</label><input className="form-input" placeholder="Your staff username"/></div>
-            <div className="form-group"><label className="form-label">Password</label><input className="form-input" placeholder="Enter your password" type="password"/></div>
-            <button onClick={()=>setAlert({type:"error",message:"No staff found with those credentials. Please check your details or contact the business owner."})} style={{width:"100%",padding:"14px",background:T.ink,color:"white",border:"none",borderRadius:12,fontSize:14.5,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif",boxShadow:`0 4px 20px rgba(19,13,46,.2)`,transition:"all .22s",marginTop:8}}>Sign in as staff →</button>
+            <div className="form-group"><label className="form-label">Business name</label><input className="form-input" placeholder="e.g. Tony's Pizzeria" value={staffBusiness} onChange={e=>setStaffBusiness(e.target.value)}/></div>
+            <div className="form-group"><label className="form-label">Username</label><input className="form-input" placeholder="Your staff username" value={staffUsername} onChange={e=>setStaffUsername(e.target.value)}/></div>
+            <div className="form-group"><label className="form-label">Password</label><input className="form-input" placeholder="Enter your password" type="password" value={staffPassword} onChange={e=>setStaffPassword(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleStaffLogin()}/></div>
+            <button disabled={loading} onClick={handleStaffLogin} style={{width:"100%",padding:"14px",background:loading?T.soft:T.ink,color:"white",border:"none",borderRadius:12,fontSize:14.5,fontWeight:600,cursor:loading?"not-allowed":"pointer",fontFamily:"'Outfit',sans-serif",boxShadow:`0 4px 20px rgba(19,13,46,.2)`,transition:"all .22s",marginTop:8}}>{loading?"Signing in...":"Sign in as staff →"}</button>
           </div>
         )}
 
@@ -3242,15 +4554,30 @@ const PAGE_MAP = {
 };
 
 
-function DashboardApp({ onBack }) {
+function DashboardApp({ onBack, user }) {
   const [active, setActive] = useState("Dashboard");
+  const [agentName, setAgentName] = useState("");
+  const [bizName, setBizName] = useState("");
+  const [agentData, setAgentData] = useState(null);
+  const [bizData, setBizData] = useState(null);
+  const [menuSynced, setMenuSynced] = useState(false);
+
+  useEffect(() => {
+    api.agent.get().then(d => { if (d?.name) setAgentName(d.name); setAgentData(d); }).catch(() => {});
+    api.business.get().then(d => { if (d?.name) setBizName(d.name); setBizData(d); }).catch(() => {});
+    api.menu.getCategories().then(cats => { setMenuSynced(Array.isArray(cats) && cats.length > 0); }).catch(() => {});
+  }, []);
+
+  const nav = (p) => { setActive(p); document.body.classList.remove('mob-nav-open'); window.scrollTo(0,0); };
   const PageComponent = PAGE_MAP[active] || PageDashboard;
+  const sharedProps = { onNav: nav, user, agentName, bizName, agentData, bizData, menuSynced, onAgentNameChange: setAgentName, onBizNameChange: setBizName };
+
   return (
     <div className="dash-wrap">
-      <Sidebar active={active} onNav={(p) => { setActive(p); document.body.classList.remove('mob-nav-open'); window.scrollTo(0,0); }} />
+      <Sidebar active={active} onNav={nav} user={user} agentName={agentName} bizName={bizName} />
       <main className="dash-main" key={active}>
         <div className="dash-overlay" onClick={() => document.body.classList.remove('mob-nav-open')} />
-        <PageComponent onNav={(p) => { setActive(p); document.body.classList.remove('mob-nav-open'); window.scrollTo(0,0); }} />
+        <PageComponent {...sharedProps} />
       </main>
     </div>
   );
@@ -3259,25 +4586,97 @@ function DashboardApp({ onBack }) {
 export default function App() {
   const [screen, setScreen] = useState("landing");
   const [step, setStep] = useState(0);
+  const [user, setUser] = useState(null);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [obBizName, setObBizName] = useState("");
+  const [obAgentName, setObAgentName] = useState("Aria");
+  const [obPhone, setObPhone] = useState("");
 
   const go = s => { document.body.classList.remove('mob-nav-open'); setScreen(s); window.scrollTo(0, 0); };
+
+  // Check for auth token in URL params (Google OAuth callback)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+
+    // ── Google register callback: pre-fill the form, don't log in yet ──────
+    if (params.get('google_signup') === 'true') {
+      sessionStorage.setItem('talkativ_google_profile', JSON.stringify({
+        email: decodeURIComponent(params.get('google_email') || ''),
+        firstName: decodeURIComponent(params.get('google_firstName') || ''),
+        lastName: decodeURIComponent(params.get('google_lastName') || ''),
+      }));
+      window.history.replaceState({}, '', window.location.pathname);
+      setStep(1);
+      setScreen('ob1');
+      setAuthChecked(true);
+      return;
+    }
+
+    // ── Google login callback: issue token and go to dashboard ──────────────
+    const authToken = params.get('auth_token');
+    if (authToken) {
+      setAccessToken(authToken);
+      const userData = {
+        id: params.get('user_id'),
+        email: decodeURIComponent(params.get('user_email') || ''),
+        role: params.get('user_role'),
+        firstName: decodeURIComponent(params.get('user_firstName') || ''),
+        lastName: decodeURIComponent(params.get('user_lastName') || ''),
+      };
+      setUser(userData);
+      window.history.replaceState({}, '', window.location.pathname);
+      setScreen('dashboard');
+      setAuthChecked(true);
+      return;
+    }
+
+    // Try to refresh token on mount (for returning users)
+    const tryRefresh = async () => {
+      const refreshed = await api.auth.refreshToken();
+      if (refreshed) {
+        // Restore user data from localStorage if available
+        try {
+          const stored = localStorage.getItem('talkativ_user');
+          if (stored) setUser(JSON.parse(stored));
+        } catch {}
+        setAuthChecked(true);
+      } else {
+        try { localStorage.removeItem('talkativ_user'); } catch {}
+        setAuthChecked(true);
+      }
+    };
+    tryRefresh();
+  }, []);
+
+  const handleLogin = (userData) => {
+    setUser(userData);
+    try { localStorage.setItem('talkativ_user', JSON.stringify(userData)); } catch {}
+    go('dashboard');
+  };
+
+  const handleLogout = async () => {
+    await api.auth.logout();
+    setUser(null);
+    try { localStorage.removeItem('talkativ_user'); } catch {}
+    go('landing');
+  };
 
   const nextOb = () => { if (step < 7) { setStep(step + 1); go(`ob${step + 1}`); } else go("success"); };
   const backOb = () => { if (step > 0) { setStep(step - 1); go(`ob${step - 1}`); } else go("landing"); };
 
   const renderScreen = () => {
     if (screen === "landing")   return <Landing onCTA={() => { setStep(0); go("ob0"); }} onLogin={() => go("login")} />;
-    if (screen === "login")     return <LoginScreen onBack={() => { setStep(0); go("ob0"); }} onDashboard={() => go("dashboard")} />;
+    if (screen === "login")     return <LoginScreen onBack={() => { setStep(0); go("ob0"); }} onDashboard={handleLogin} />;
     if (screen === "ob0")       return <Step0 onNext={nextOb} onBack={backOb} />;
-    if (screen === "ob1")       return <Step1 onNext={nextOb} onBack={backOb} />;
-    if (screen === "ob2")       return <Step2 onNext={nextOb} onBack={backOb} />;
+    if (screen === "ob1")       return <Step1 onNext={nextOb} onBack={backOb} onPhoneChange={setObPhone} onRegister={u => setUser(u)} />;
+    if (screen === "ob2")       return <Step2 onNext={nextOb} onBack={backOb} onBizNameChange={setObBizName} />;
     if (screen === "ob3")       return <Step3 onNext={nextOb} onBack={backOb} />;
-    if (screen === "ob4")       return <Step4 onNext={nextOb} onBack={backOb} />;
+    if (screen === "ob4")       return <Step4 onNext={nextOb} onBack={backOb} bizName={obBizName} bizPhone={obPhone} onAgentNameChange={setObAgentName} />;
     if (screen === "ob5")       return <Step5 onNext={nextOb} onBack={backOb} />;
-    if (screen === "ob6")       return <Step6 onNext={nextOb} onBack={backOb} />;
-    if (screen === "ob7")       return <Step7 onNext={() => go("success")} onBack={backOb} />;
-    if (screen === "success")   return <SuccessScreen onDashboard={() => go("dashboard")} />;
-    if (screen === "dashboard") return <DashboardApp onBack={() => go("landing")} />;
+    if (screen === "ob6")       return <Step6 onNext={nextOb} onBack={backOb} agentName={obAgentName} />;
+    if (screen === "ob7")       return <Step7 onNext={async () => { try { await api.business.completeOnboarding(); } catch (e) { console.error('completeOnboarding failed:', e); } go("success"); }} onBack={backOb} />;
+    if (screen === "success")   return <SuccessScreen onDashboard={() => go("dashboard")} agentName={obAgentName} bizName={obBizName} />;
+    if (screen === "dashboard") return <DashboardApp onBack={handleLogout} user={user} />;
     if (screen === "payment")   return <PaymentLinkScreen onBack={() => go("landing")} />;
     if (screen === "payment-confirm") return <PaymentConfirmScreen onBack={() => go("landing")} />;
   };
