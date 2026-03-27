@@ -2188,27 +2188,9 @@ function Step4({ onNext, onBack, bizName, bizPhone, onAgentNameChange }) {
   const [greeting, setGreeting] = useState(autoGreeting);
   const [fallbackAction, setFallbackAction] = useState("transfer");
 
-  // Schedule
-  const [agentIs24h, setAgentIs24h] = useState(false);
-  const [agentSchedule, setAgentSchedule] = useState({
-    mon: { open: false, openTime: "09:00", closeTime: "17:00" },
-    tue: { open: false, openTime: "09:00", closeTime: "17:00" },
-    wed: { open: false, openTime: "09:00", closeTime: "17:00" },
-    thu: { open: false, openTime: "09:00", closeTime: "17:00" },
-    fri: { open: false, openTime: "09:00", closeTime: "17:00" },
-    sat: { open: false, openTime: "09:00", closeTime: "17:00" },
-    sun: { open: false, openTime: "09:00", closeTime: "17:00" },
-  });
-  const toggleAgentDay = (day) => setAgentSchedule(prev => ({ ...prev, [day]: { ...prev[day], open: !prev[day].open } }));
-  const updateAgentTime = (day, field, value) => setAgentSchedule(prev => ({ ...prev, [day]: { ...prev[day], [field]: value } }));
-  const buildAgentSchedule = () => {
-    if (agentIs24h) return { is24h: "true" };
-    const result = { is24h: "false" };
-    Object.entries(agentSchedule).forEach(([day, val]) => {
-      result[day] = val.open ? `${val.openTime}-${val.closeTime}` : "closed";
-    });
-    return result;
-  };
+  // Schedule — uses module-level helpers
+  const [agentIs24h,   setAgentIs24h]   = useState(false);
+  const [agentSchedule, setAgentSchedule] = useState(makeDefaultSchedule());
 
   // Voice preview
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -2264,7 +2246,7 @@ function Step4({ onNext, onBack, bizName, bizPhone, onAgentNameChange }) {
         voiceName: voices[vc].n,
         voiceDescription: voices[vc].d,
         transferNumber: fallbackAction === "transfer" ? (bizPhone || null) : null,
-        agentSchedule: buildAgentSchedule(),
+        agentSchedule: buildHours(agentIs24h, agentSchedule),
       });
     } catch {}
     onNext();
@@ -2322,14 +2304,14 @@ function Step4({ onNext, onBack, bizName, bizPhone, onAgentNameChange }) {
       {/* ── Hear your agent preview ── */}
       <div style={{ background: T.paper, border: `1.5px solid ${T.line}`, borderRadius: 16, padding: "18px 20px", marginBottom: 20 }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: T.ink, marginBottom: 4 }}>Hear how your agent sounds</div>
-        <div style={{ fontSize: 12, color: T.soft, marginBottom: 16 }}>Based on your voice, name and greeting — powered by ElevenLabs.</div>
+        <div style={{ fontSize: 12, color: T.soft, marginBottom: 16 }}>Based on your voice selection, name and greeting message.</div>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           {/* Play/Stop button */}
           <button
             onClick={handlePreview}
             disabled={previewLoading}
-            style={{ width: 48, height: 48, borderRadius: "50%", border: "none", background: previewPlaying ? T.red : `linear-gradient(135deg,${T.p400},${T.p700})`, color: "white", fontSize: 18, cursor: previewLoading ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: `0 4px 14px rgba(112,53,245,.3)`, transition: "all .2s" }}>
-            {previewLoading ? <span style={{ fontSize: 14 }}>⏳</span> : previewPlaying ? "⏹" : "▶"}
+            style={{ width: 48, height: 48, borderRadius: "50%", border: "none", background: previewPlaying ? T.red : `linear-gradient(135deg,${T.p400},${T.p700})`, color: "white", fontSize: 18, cursor: previewLoading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: `0 4px 14px rgba(112,53,245,.3)`, transition: "all .2s", opacity: previewLoading ? 0.7 : 1 }}>
+            {previewPlaying ? "⏹" : "▶"}
           </button>
           {/* Waveform animation */}
           <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 3, height: 36 }}>
@@ -2362,53 +2344,17 @@ function Step4({ onNext, onBack, bizName, bizPhone, onAgentNameChange }) {
       </div>
 
       {/* ── Agent Working Schedule ── */}
-      <div style={{ marginTop: 8 }}>
-        <div style={{ fontSize: 13, color: T.soft, marginBottom: 4 }}>Agent working schedule</div>
-        <div style={{ fontSize: 16, fontWeight: 700, color: T.ink, marginBottom: 16 }}>When should your agent be active?</div>
-
-        {/* 24/7 */}
-        <label style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20, cursor: "pointer", userSelect: "none" }}
-          onClick={() => setAgentIs24h(v => !v)}>
-          <div style={{ width: 20, height: 20, borderRadius: 5, border: `2px solid ${agentIs24h ? T.p600 : T.line}`, background: agentIs24h ? T.p600 : T.white, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all .15s" }}>
-            {agentIs24h && <span style={{ color: "white", fontSize: 11, fontWeight: 800, lineHeight: 1 }}>✓</span>}
-          </div>
-          <span style={{ fontSize: 14, fontWeight: 600, color: T.ink }}>We operate 24/7</span>
-        </label>
-
-        {/* Day columns */}
-        {!agentIs24h && (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 8 }}>
-            {[["mon","Mon"],["tue","Tue"],["wed","Wed"],["thu","Thu"],["fri","Fri"],["sat","Sat"],["sun","Sun"]].map(([key, label]) => {
-              const day = agentSchedule[key];
-              return (
-                <div key={key} style={{ background: T.white, border: `1.5px solid ${day.open ? T.p400 : T.line}`, borderRadius: 12, padding: "12px 10px", display: "flex", flexDirection: "column", alignItems: "center", gap: 8, transition: "border-color .15s", minWidth: 0 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: day.open ? T.p700 : T.ink }}>{label}</div>
-                  <div onClick={() => toggleAgentDay(key)}
-                    style={{ width: 22, height: 22, borderRadius: 6, border: `2px solid ${day.open ? T.p600 : T.line}`, background: day.open ? T.p600 : T.white, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, transition: "all .15s" }}>
-                    {day.open && <span style={{ color: "white", fontSize: 11, fontWeight: 800, lineHeight: 1 }}>✓</span>}
-                  </div>
-                  {day.open && (
-                    <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 6 }}>
-                      <div>
-                        <div style={{ fontSize: 9, color: T.soft, marginBottom: 2, textAlign: "center" }}>Open</div>
-                        <input type="time" value={day.openTime} onChange={e => updateAgentTime(key, "openTime", e.target.value)}
-                          style={{ width: "100%", border: `1.5px solid ${T.line}`, borderRadius: 7, padding: "4px 4px", fontSize: 11, fontFamily: "'Outfit',sans-serif", color: T.ink, outline: "none", textAlign: "center", boxSizing: "border-box" }} />
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 9, color: T.soft, marginBottom: 2, textAlign: "center" }}>Close</div>
-                        <input type="time" value={day.closeTime} onChange={e => updateAgentTime(key, "closeTime", e.target.value)}
-                          style={{ width: "100%", border: `1.5px solid ${T.line}`, borderRadius: 7, padding: "4px 4px", fontSize: 11, fontFamily: "'Outfit',sans-serif", color: T.ink, outline: "none", textAlign: "center", boxSizing: "border-box" }} />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-
+      <div style={{ marginTop: 8, background: T.paper, border: `1.5px solid ${T.line}`, borderRadius: 16, padding: "18px 20px" }}>
+        <div style={{ fontSize: 13, color: T.soft, marginBottom: 2 }}>Agent working schedule</div>
+        <div style={{ fontSize: 16, fontWeight: 700, color: T.ink, marginBottom: 14 }}>When should your agent be active?</div>
+        <ScheduleInlineEditor
+          is24h={agentIs24h}
+          setIs24h={setAgentIs24h}
+          schedule={agentSchedule}
+          setSchedule={setAgentSchedule}
+        />
         {agentIs24h && (
-          <div style={{ background: T.greenBg, border: `1px solid ${T.greenBd}`, borderRadius: 12, padding: "14px 18px", fontSize: 13, color: T.green, fontWeight: 600 }}>
+          <div style={{ marginTop: 12, background: T.greenBg, border: `1px solid ${T.greenBd}`, borderRadius: 10, padding: "12px 16px", fontSize: 13, color: T.green, fontWeight: 600 }}>
             Your agent will answer calls around the clock, every day.
           </div>
         )}
@@ -3688,11 +3634,19 @@ function PageMenu({ user, agentName, bizName }) {
   const [newItemDesc, setNewItemDesc] = useState('');
   const [newItemPrice, setNewItemPrice] = useState('');
   const [addingItem, setAddingItem] = useState(false);
+  const [itemError, setItemError] = useState('');
+  const [editingItem, setEditingItem] = useState(null);
+  const [editItemName, setEditItemName] = useState('');
+  const [editItemDesc, setEditItemDesc] = useState('');
+  const [editItemPrice, setEditItemPrice] = useState('');
+  const [savingItem, setSavingItem] = useState(false);
+  const [editItemError, setEditItemError] = useState('');
 
   // Add category modal
   const [showAddCat, setShowAddCat] = useState(false);
   const [newCatName, setNewCatName] = useState('');
   const [addingCat, setAddingCat] = useState(false);
+  const [catError, setCatError] = useState('');
 
   // FAQ modal
   const [showFaq, setShowFaq] = useState(false);
@@ -3705,6 +3659,7 @@ function PageMenu({ user, agentName, bizName }) {
   const [editingFaqQ, setEditingFaqQ] = useState('');
   const [editingFaqA, setEditingFaqA] = useState('');
   const [savingFaq, setSavingFaq] = useState(false);
+  const [faqError, setFaqError] = useState('');
 
   useEffect(() => {
     const h = () => setIsMobile(window.innerWidth <= 768);
@@ -3788,16 +3743,16 @@ function PageMenu({ user, agentName, bizName }) {
   const handleAddItem = async () => {
     const catId = newItemCatId || activeCatId;
     if (!catId || !newItemName || !newItemPrice) return;
-    setAddingItem(true);
+    setAddingItem(true); setItemError('');
     try {
       await api.menu.createItem({ categoryId: catId, name: newItemName, description: newItemDesc, price: parseFloat(newItemPrice) });
-      setShowAddItem(false); setNewItemName(''); setNewItemDesc(''); setNewItemPrice('');
+      setShowAddItem(false); setNewItemName(''); setNewItemDesc(''); setNewItemPrice(''); setItemError('');
       if (catId === activeCatId) {
         const d = await api.menu.getCategoryItems(activeCatId);
         setItems(d || []);
       }
       await loadCategories();
-    } catch {}
+    } catch (e) { setItemError(e.message || 'Failed to save item. Please try again.'); }
     setAddingItem(false);
   };
 
@@ -3809,15 +3764,28 @@ function PageMenu({ user, agentName, bizName }) {
     } catch {}
   };
 
+  const openEditItem = (item) => { setEditingItem(item); setEditItemName(item.name); setEditItemDesc(item.description || ''); setEditItemPrice(String(item.price)); setEditItemError(''); };
+  const closeEditItem = () => { setEditingItem(null); setEditItemName(''); setEditItemDesc(''); setEditItemPrice(''); setEditItemError(''); };
+  const handleSaveItem = async () => {
+    if (!editItemName || !editItemPrice) return;
+    setSavingItem(true); setEditItemError('');
+    try {
+      const updated = await api.menu.updateItem(editingItem.id, { name: editItemName.trim(), description: editItemDesc.trim() || null, price: parseFloat(editItemPrice) });
+      setItems(prev => prev.map(i => i.id === editingItem.id ? updated : i));
+      closeEditItem();
+    } catch (e) { setEditItemError(e.message || 'Failed to save changes. Please try again.'); }
+    setSavingItem(false);
+  };
+
   const handleAddCategory = async () => {
     if (!newCatName) return;
-    setAddingCat(true);
+    setAddingCat(true); setCatError('');
     try {
       const cat = await api.menu.createCategory({ name: newCatName });
-      setNewCatName(''); setShowAddCat(false);
+      setNewCatName(''); setShowAddCat(false); setCatError('');
       await loadCategories();
       setActiveCatId(cat.id);
-    } catch {}
+    } catch (e) { setCatError(e.message || 'Failed to create category. Please try again.'); }
     setAddingCat(false);
   };
 
@@ -3829,12 +3797,12 @@ function PageMenu({ user, agentName, bizName }) {
   };
   const handleAddFaq = async () => {
     if (!faqQuestion.trim() || !faqAnswer.trim()) return;
-    setAddingFaq(true);
+    setAddingFaq(true); setFaqError('');
     try {
       const created = await api.faq.create({ question: faqQuestion.trim(), answer: faqAnswer.trim() });
       setFaqs(prev => [...prev, created]);
-      setFaqQuestion(''); setFaqAnswer('');
-    } catch {}
+      setFaqQuestion(''); setFaqAnswer(''); setFaqError('');
+    } catch (e) { setFaqError(e.message || 'Failed to save FAQ. Please try again.'); }
     setAddingFaq(false);
   };
   const handleDeleteFaq = async (id) => {
@@ -3944,7 +3912,10 @@ function PageMenu({ user, agentName, bizName }) {
                       {item.description && <div style={{fontSize:12,color:T.soft,marginBottom:10,paddingLeft:46}}>{item.description}</div>}
                       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:8,borderTop:`1px solid ${T.line}`}}>
                         <span className={`badge ${item.status==='INACTIVE'?'badge-amber':item.status==='OUT_OF_STOCK'?'badge-amber':'badge-green'}`}>{item.status==='OUT_OF_STOCK'?'Out of stock':item.status==='INACTIVE'?'Inactive':'Active'}</span>
-                        <button className="btn-danger" style={{fontSize:12,padding:"5px 12px"}} onClick={()=>handleDeleteItem(item.id)}>Remove</button>
+                        <div style={{display:"flex",gap:6}}>
+                          <button className="btn-secondary" style={{fontSize:12,padding:"5px 12px"}} onClick={()=>openEditItem(item)}>Edit</button>
+                          <button className="btn-danger" style={{fontSize:12,padding:"5px 12px"}} onClick={()=>handleDeleteItem(item.id)}>Remove</button>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -3960,7 +3931,10 @@ function PageMenu({ user, agentName, bizName }) {
                       </div>
                       <div style={{fontSize:15,fontWeight:700,color:T.p600,minWidth:60,textAlign:"right"}}>{fmtPrice(item.price)}</div>
                       <span className={`badge ${item.status==='INACTIVE'?'badge-amber':item.status==='OUT_OF_STOCK'?'badge-amber':'badge-green'}`}>{item.status==='OUT_OF_STOCK'?'Out of stock':item.status==='INACTIVE'?'Inactive':'Active'}</span>
-                      <button className="btn-danger" style={{fontSize:12,padding:"5px 12px"}} onClick={()=>handleDeleteItem(item.id)}>Remove</button>
+                      <div style={{display:"flex",gap:6}}>
+                        <button className="btn-secondary" style={{fontSize:12,padding:"5px 12px"}} onClick={()=>openEditItem(item)}>Edit</button>
+                        <button className="btn-danger" style={{fontSize:12,padding:"5px 12px"}} onClick={()=>handleDeleteItem(item.id)}>Remove</button>
+                      </div>
                     </div>
                   ))}
                 </>
@@ -4067,12 +4041,12 @@ function PageMenu({ user, agentName, bizName }) {
 
       {/* ── Add Item Modal ── */}
       {showAddItem && (
-        <div style={modalOverlay} onClick={()=>setShowAddItem(false)}>
+        <div style={modalOverlay} onClick={()=>{ setShowAddItem(false); setItemError(''); }}>
           <div style={{position:"absolute",inset:0,background:"rgba(19,13,46,.45)",backdropFilter:"blur(6px)"}}/>
           <div onClick={e=>e.stopPropagation()} style={{...modalBox, maxWidth:440}}>
             <div style={{padding:"24px 28px 18px",borderBottom:`1px solid ${T.line}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
               <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:900,color:T.ink,margin:0}}>Add item</h3>
-              <button onClick={()=>setShowAddItem(false)} style={{width:32,height:32,borderRadius:"50%",border:`1.5px solid ${T.line}`,background:T.paper,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:T.mid}}>✕</button>
+              <button onClick={()=>{ setShowAddItem(false); setItemError(''); }} style={{width:32,height:32,borderRadius:"50%",border:`1.5px solid ${T.line}`,background:T.paper,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:T.mid}}>✕</button>
             </div>
             <div style={{padding:"20px 28px 24px",display:"flex",flexDirection:"column",gap:12}}>
               {categories.length > 0 && (
@@ -4080,10 +4054,31 @@ function PageMenu({ user, agentName, bizName }) {
                   {categories.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               )}
-              <input value={newItemName} onChange={e=>setNewItemName(e.target.value)} placeholder="Item name *" style={inputStyle}/>
+              <input value={newItemName} onChange={e=>{ setNewItemName(e.target.value); setItemError(''); }} placeholder="Item name *" style={inputStyle}/>
               <input value={newItemDesc} onChange={e=>setNewItemDesc(e.target.value)} placeholder="Description (optional)" style={inputStyle}/>
-              <input value={newItemPrice} onChange={e=>setNewItemPrice(e.target.value)} placeholder="Price e.g. 12.50 *" type="number" min="0" step="0.01" style={inputStyle}/>
+              <input value={newItemPrice} onChange={e=>{ setNewItemPrice(e.target.value); setItemError(''); }} placeholder="Price e.g. 12.50 *" type="number" min="0" step="0.01" style={inputStyle}/>
+              {itemError && <div style={{fontSize:12,color:T.red,background:T.redBg,border:`1px solid ${T.red}`,borderRadius:8,padding:"8px 12px"}}>{itemError}</div>}
               <button className="btn-primary" style={{width:"100%",justifyContent:"center",padding:"12px",fontSize:14}} disabled={addingItem||!newItemName||!newItemPrice} onClick={handleAddItem}>{addingItem?"Adding…":"Add item"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Edit Item Modal ── */}
+      {editingItem && (
+        <div style={modalOverlay} onClick={closeEditItem}>
+          <div style={{position:"absolute",inset:0,background:"rgba(19,13,46,.45)",backdropFilter:"blur(6px)"}}/>
+          <div onClick={e=>e.stopPropagation()} style={{...modalBox, maxWidth:440}}>
+            <div style={{padding:"24px 28px 18px",borderBottom:`1px solid ${T.line}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:900,color:T.ink,margin:0}}>Edit item</h3>
+              <button onClick={closeEditItem} style={{width:32,height:32,borderRadius:"50%",border:`1.5px solid ${T.line}`,background:T.paper,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:T.mid}}>✕</button>
+            </div>
+            <div style={{padding:"20px 28px 24px",display:"flex",flexDirection:"column",gap:12}}>
+              <input value={editItemName} onChange={e=>{ setEditItemName(e.target.value); setEditItemError(''); }} placeholder="Item name *" style={inputStyle}/>
+              <input value={editItemDesc} onChange={e=>setEditItemDesc(e.target.value)} placeholder="Description (optional)" style={inputStyle}/>
+              <input value={editItemPrice} onChange={e=>{ setEditItemPrice(e.target.value); setEditItemError(''); }} placeholder="Price e.g. 12.50 *" type="number" min="0" step="0.01" style={inputStyle}/>
+              {editItemError && <div style={{fontSize:12,color:T.red,background:T.redBg,border:`1px solid ${T.red}`,borderRadius:8,padding:"8px 12px"}}>{editItemError}</div>}
+              <button className="btn-primary" style={{width:"100%",justifyContent:"center",padding:"12px",fontSize:14}} disabled={savingItem||!editItemName||!editItemPrice} onClick={handleSaveItem}>{savingItem?"Saving…":"Save changes"}</button>
             </div>
           </div>
         </div>
@@ -4091,15 +4086,16 @@ function PageMenu({ user, agentName, bizName }) {
 
       {/* ── Add Category Modal ── */}
       {showAddCat && (
-        <div style={modalOverlay} onClick={()=>setShowAddCat(false)}>
+        <div style={modalOverlay} onClick={()=>{ setShowAddCat(false); setCatError(''); }}>
           <div style={{position:"absolute",inset:0,background:"rgba(19,13,46,.45)",backdropFilter:"blur(6px)"}}/>
           <div onClick={e=>e.stopPropagation()} style={{...modalBox, maxWidth:380}}>
             <div style={{padding:"24px 28px 18px",borderBottom:`1px solid ${T.line}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
               <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:900,color:T.ink,margin:0}}>Add category</h3>
-              <button onClick={()=>setShowAddCat(false)} style={{width:32,height:32,borderRadius:"50%",border:`1.5px solid ${T.line}`,background:T.paper,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:T.mid}}>✕</button>
+              <button onClick={()=>{ setShowAddCat(false); setCatError(''); }} style={{width:32,height:32,borderRadius:"50%",border:`1.5px solid ${T.line}`,background:T.paper,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:T.mid}}>✕</button>
             </div>
             <div style={{padding:"20px 28px 24px",display:"flex",flexDirection:"column",gap:12}}>
-              <input value={newCatName} onChange={e=>setNewCatName(e.target.value)} placeholder="e.g. Starters, Mains, Desserts" style={inputStyle} onKeyDown={e=>e.key==='Enter'&&!addingCat&&newCatName&&handleAddCategory()}/>
+              <input value={newCatName} onChange={e=>{ setNewCatName(e.target.value); setCatError(''); }} placeholder="e.g. Starters, Mains, Desserts" style={inputStyle} onKeyDown={e=>e.key==='Enter'&&!addingCat&&newCatName&&handleAddCategory()}/>
+              {catError && <div style={{fontSize:12,color:T.red,background:T.redBg,border:`1px solid ${T.red}`,borderRadius:8,padding:"8px 12px"}}>{catError}</div>}
               <button className="btn-primary" style={{width:"100%",justifyContent:"center",padding:"12px",fontSize:14}} disabled={addingCat||!newCatName} onClick={handleAddCategory}>{addingCat?"Creating…":"Create category"}</button>
             </div>
           </div>
@@ -4108,7 +4104,7 @@ function PageMenu({ user, agentName, bizName }) {
 
       {/* ── FAQ Modal ── */}
       {showFaq && (
-        <div style={modalOverlay} onClick={()=>{ setShowFaq(false); cancelEditFaq(); }}>
+        <div style={modalOverlay} onClick={()=>{ setShowFaq(false); cancelEditFaq(); setFaqError(''); }}>
           <div style={{position:"absolute",inset:0,background:"rgba(19,13,46,.45)",backdropFilter:"blur(6px)"}}/>
           <div onClick={e=>e.stopPropagation()} style={{...modalBox, maxWidth:600, maxHeight:"88vh", display:"flex", flexDirection:"column"}}>
             {/* Header */}
@@ -4117,7 +4113,7 @@ function PageMenu({ user, agentName, bizName }) {
                 <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:900,color:T.ink,margin:0}}>💬 FAQ Manager</h3>
                 <p style={{margin:"4px 0 0",fontSize:12,color:T.soft}}>Questions your agent will answer automatically on every call</p>
               </div>
-              <button onClick={()=>{ setShowFaq(false); cancelEditFaq(); }} style={{width:32,height:32,borderRadius:"50%",border:`1.5px solid ${T.line}`,background:T.paper,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:T.mid,flexShrink:0}}>✕</button>
+              <button onClick={()=>{ setShowFaq(false); cancelEditFaq(); setFaqError(''); }} style={{width:32,height:32,borderRadius:"50%",border:`1.5px solid ${T.line}`,background:T.paper,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:T.mid,flexShrink:0}}>✕</button>
             </div>
 
             {/* Scrollable content */}
@@ -4173,17 +4169,18 @@ function PageMenu({ user, agentName, bizName }) {
                 <div style={{display:"flex",flexDirection:"column",gap:8}}>
                   <input
                     value={faqQuestion}
-                    onChange={e=>setFaqQuestion(e.target.value)}
+                    onChange={e=>{ setFaqQuestion(e.target.value); setFaqError(''); }}
                     placeholder="e.g. Do you offer gluten-free options?"
                     style={{...inputStyle,padding:"10px 14px",fontSize:13,background:T.white}}
                   />
                   <textarea
                     rows={3}
                     value={faqAnswer}
-                    onChange={e=>setFaqAnswer(e.target.value)}
+                    onChange={e=>{ setFaqAnswer(e.target.value); setFaqError(''); }}
                     placeholder="e.g. Yes! Several of our dishes are gluten-free. Ask your server for our allergen menu."
                     style={{...inputStyle,padding:"10px 14px",fontSize:13,resize:"vertical",lineHeight:1.5,background:T.white}}
                   />
+                  {faqError && <div style={{fontSize:12,color:T.red,background:T.redBg,border:`1px solid ${T.red}`,borderRadius:8,padding:"8px 12px"}}>{faqError}</div>}
                   <button
                     onClick={handleAddFaq}
                     disabled={addingFaq||!faqQuestion.trim()||!faqAnswer.trim()}
@@ -4996,32 +4993,13 @@ function PageSettings({ user, agentName, bizData, onBizNameChange }) {
 
           {section==="Security" && (
             <div className="card">
-              <div className="card-head">Change password</div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:14,alignItems:"stretch"}}>
-                {[["Current password",curPw,setCurPw,"cur","Enter current password"],["New password",newPw,setNewPw,"new_","At least 8 characters"],["Confirm new password",confPw,setConfPw,"conf","Repeat new password"]].map(([label,val,setter,key,ph])=>(
-                  <div key={key} style={{...fw,display:"flex",flexDirection:"column"}}>
-                    <label style={lb}>{label}</label>
-                    <div style={{position:"relative",flex:1,display:"flex"}}>
-                      <input type={showPw[key]?"text":"password"} value={val} onChange={e=>setter(e.target.value)} placeholder={ph} style={{...fi,padding:"13px 48px 13px 18px",flex:1}}/>
-                      <button onClick={()=>setShowPw(p=>({...p,[key]:!p[key]}))} style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",padding:0,lineHeight:1,display:"flex",alignItems:"center"}}>{showPw[key]?eyeShow:eyeHide}</button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {pwErr && <div style={{fontSize:13,color:"#e53e3e",marginTop:12}}>{pwErr}</div>}
-              {pwMsg && <div style={{fontSize:13,color:"#38a169",marginTop:12}}>{pwMsg}</div>}
-              <div style={{marginTop:16,display:"flex",justifyContent:"flex-end"}}>
-                <button className="btn-primary" style={{fontSize:13,padding:"9px 20px"}} onClick={handleChangePassword} disabled={savingPw}>{savingPw?"Saving...":"Change password"}</button>
-              </div>
-              <div style={{paddingTop:20,borderTop:`1px solid ${T.line}`,marginTop:20}}>
-                <div style={{fontSize:13,fontWeight:700,color:T.ink,marginBottom:16}}>Two-factor authentication</div>
-                <div style={{background:T.paper,borderRadius:12,padding:"16px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                  <div>
-                    <h4 style={{margin:0,fontSize:13,fontWeight:700,color:T.ink}}>Enable 2FA</h4>
-                    <p style={{margin:0,fontSize:12,color:T.soft,marginTop:4}}>Require a code when logging in from a new device · {twoFa ? <span style={{color:"#38a169",fontWeight:600}}>Enabled</span> : <span style={{color:T.soft}}>Disabled</span>}</p>
-                  </div>
-                  <label className="toggle"><input type="checkbox" checked={twoFa} onChange={e=>handleToggle2fa(e.target.checked)}/><div className="toggle-track"/><div className="toggle-thumb"/></label>
+              <div style={{fontSize:13,fontWeight:700,color:T.ink,marginBottom:16}}>Two-factor authentication</div>
+              <div style={{background:T.paper,borderRadius:12,padding:"16px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <div>
+                  <h4 style={{margin:0,fontSize:13,fontWeight:700,color:T.ink}}>Enable 2FA</h4>
+                  <p style={{margin:0,fontSize:12,color:T.soft,marginTop:4}}>Require a code when logging in from a new device · {twoFa ? <span style={{color:"#38a169",fontWeight:600}}>Enabled</span> : <span style={{color:T.soft}}>Disabled</span>}</p>
                 </div>
+                <label className="toggle"><input type="checkbox" checked={twoFa} onChange={e=>handleToggle2fa(e.target.checked)}/><div className="toggle-track"/><div className="toggle-thumb"/></label>
               </div>
               <div style={{paddingTop:20,borderTop:`1px solid ${T.line}`,marginTop:20}}>
                 <div style={{fontSize:13,fontWeight:700,color:T.ink,marginBottom:12}}>Active sessions</div>

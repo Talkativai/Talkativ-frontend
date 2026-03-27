@@ -32,8 +32,8 @@ async function authFetch(url, options = {}) {
 
   let res = await fetch(`${API_URL}${url}`, { ...options, headers, credentials: 'include' });
 
-  // On 401, try to refresh token
-  if (res.status === 401 && accessToken) {
+  // On 401, try to refresh token (always attempt, even if accessToken was null)
+  if (res.status === 401) {
     const refreshed = await refreshAccessToken();
     if (refreshed) {
       headers['Authorization'] = `Bearer ${accessToken}`;
