@@ -209,6 +209,8 @@ export const api = {
     updateVoice: (data) => put('/api/agent/voice', data),
     updateScript: (data) => put('/api/agent/script', data),
     updateCallRules: (data) => put('/api/agent/call-rules', data),
+    previewVoice: (data) => post('/api/agent/preview-voice', data),
+    getSignedUrl: () => get('/api/agent/signed-url'),
   },
 
   // ─── Voices ─────────────────────────────────
@@ -245,10 +247,18 @@ export const api = {
     importFromPos: (posSystem, credentials) => post('/api/menu/import/pos', { posSystem, credentials }),
   },
 
+  // ─── FAQ ────────────────────────────────────────
+  faq: {
+    list: () => get('/api/menu/faq'),
+    create: (data) => post('/api/menu/faq', data),
+    update: (id, data) => put(`/api/menu/faq/${id}`, data),
+    delete: (id) => del(`/api/menu/faq/${id}`),
+  },
+
   // ─── Integrations ──────────────────────────
   integrations: {
     list: () => get('/api/integrations'),
-    connect: (id, config = {}) => post(`/api/integrations/${id}/connect`, { config }),
+    connect: (name, category, config = {}) => post('/api/integrations/connect', { name, category, config }),
     disconnect: (id) => del(`/api/integrations/${id}/disconnect`),
   },
 

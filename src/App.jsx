@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Conversation } from "@elevenlabs/client";
 import { api, setAccessToken, getAccessToken, clearAccessToken } from "./api.js";
 
 /* ═══════════════════════════════════════════
@@ -518,6 +519,7 @@ textarea.form-input { resize: none; line-height: 1.6; }
 }
 .voice-card.selected .voice-play-btn { background: ${T.p600}; border-color: ${T.p600}; color: white; }
 @keyframes miniWave { 0%, 100% { height: 4px; } 50% { height: 16px; } }
+@keyframes audioBar { 0% { transform: scaleY(0.4); } 100% { transform: scaleY(1); } }
 .voice-wave {
   display: flex; align-items: center; justify-content: center; gap: 2.5px;
   width: 30px; height: 30px; border-radius: 50%;
@@ -1203,7 +1205,7 @@ function Landing({ onCTA, onLogin }) {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
             {[
               { icon: "⚡", label: "Live in 20 min", sub: "Self-serve setup" },
-              { icon: "🔌", label: "POS connected", sub: "Clover · Square · Olo" },
+              { icon: "🔌", label: "POS connected", sub: "Clover · Square · renOS" },
               { icon: "🌙", label: "24/7 coverage", sub: "Zero missed calls" },
               { icon: "📊", label: "Live dashboard", sub: "Every call tracked" },
             ].map(({ icon, label, sub }) => (
@@ -1250,7 +1252,7 @@ function Landing({ onCTA, onLogin }) {
               { span: 4, icon: "🎙️", title: "Sounds like you", body: "Custom voice, agent name, and brand tone. Your customers won't know it's AI." },
               { span: 4, icon: "📋", title: "Knows your menu", body: "Import via URL, PDF, or POS. Orders go directly to your kitchen system." },
               { span: 4, icon: "🌙", title: "Always on", body: "Every call answered — even at 2am, during peak rush, on bank holidays." },
-              { span: 6, icon: "🔌", title: "Deep POS integrations", body: "Clover, Square, OpenTable, Aloha, Olo and more. One-click setup, real-time sync." },
+              { span: 6, icon: "🔌", title: "Deep POS integrations", body: "Clover, Square, and renOS. One-click setup, real-time sync." },
               { span: 3, icon: "⚡", title: "Live in 20 min", body: "No sales calls. No IT team. Self-serve and ready in under 20 minutes." },
               { span: 3, icon: "📊", title: "Live analytics", body: "Every call, order and transcript in one beautiful dashboard." },
             ].map(({ span, icon, title, body }) => (
@@ -1472,6 +1474,30 @@ function Step2({ onNext, onBack, onBizNameChange }) {
   const [bizCategory, setBizCategory] = useState("");
   const [editing, setEditing] = useState(false);
 
+  // Schedule state
+  const [is24h, setIs24h] = useState(false);
+  const [schedule, setSchedule] = useState({
+    mon: { open: false, openTime: "09:00", closeTime: "17:00" },
+    tue: { open: false, openTime: "09:00", closeTime: "17:00" },
+    wed: { open: false, openTime: "09:00", closeTime: "17:00" },
+    thu: { open: false, openTime: "09:00", closeTime: "17:00" },
+    fri: { open: false, openTime: "09:00", closeTime: "17:00" },
+    sat: { open: false, openTime: "09:00", closeTime: "17:00" },
+    sun: { open: false, openTime: "09:00", closeTime: "17:00" },
+  });
+
+  const toggleDay = (day) => setSchedule(prev => ({ ...prev, [day]: { ...prev[day], open: !prev[day].open } }));
+  const updateTime = (day, field, value) => setSchedule(prev => ({ ...prev, [day]: { ...prev[day], [field]: value } }));
+
+  const buildOpeningHours = () => {
+    if (is24h) return { is24h: "true" };
+    const result = { is24h: "false" };
+    Object.entries(schedule).forEach(([day, val]) => {
+      result[day] = val.open ? `${val.openTime}-${val.closeTime}` : "closed";
+    });
+    return result;
+  };
+
   const handleSearch = async (query) => {
     const q = (query || searchQuery).trim();
     if (!q || q.length < 2) return;
@@ -1541,7 +1567,7 @@ function Step2({ onNext, onBack, onBizNameChange }) {
     <ObShell step={2} onNext={async () => {
       if (!bizName.trim()) return;
       try {
-        await api.settings.updateBusiness({ name: bizName, type: bizCategory, address: bizAddress, phone: bizPhone });
+        await api.settings.updateBusiness({ name: bizName, type: bizCategory, address: bizAddress, phone: bizPhone, openingHours: buildOpeningHours() });
       } catch {}
       if (onBizNameChange) onBizNameChange(bizName);
       onNext();
@@ -1661,20 +1687,99 @@ function Step2({ onNext, onBack, onBizNameChange }) {
           )}
         </div>
       )}
+
+      {/* ── Working Hours Schedule ── */}
+      <div style={{ marginTop: 28, animation: "fadeUp .3s ease both" }}>
+        <div style={{ fontSize: 13, color: T.soft, marginBottom: 4 }}>When are you open?</div>
+        <div style={{ fontSize: 16, fontWeight: 700, color: T.ink, marginBottom: 16 }}>Set your working schedule</div>
+
+        {/* 24/7 toggle */}
+        <label style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20, cursor: "pointer", userSelect: "none" }}
+          onClick={() => setIs24h(v => !v)}>
+          <div style={{
+            width: 20, height: 20, borderRadius: 5, border: `2px solid ${is24h ? T.p600 : T.line}`,
+            background: is24h ? T.p600 : T.white, display: "flex", alignItems: "center",
+            justifyContent: "center", flexShrink: 0, transition: "all .15s"
+          }}>
+            {is24h && <span style={{ color: "white", fontSize: 11, fontWeight: 800, lineHeight: 1 }}>✓</span>}
+          </div>
+          <span style={{ fontSize: 14, fontWeight: 600, color: T.ink }}>We operate 24/7</span>
+        </label>
+
+        {/* Day columns */}
+        {!is24h && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 8 }}>
+            {[["mon","Mon"],["tue","Tue"],["wed","Wed"],["thu","Thu"],["fri","Fri"],["sat","Sat"],["sun","Sun"]].map(([key, label]) => {
+              const day = schedule[key];
+              return (
+                <div key={key} style={{
+                  background: T.white, border: `1.5px solid ${day.open ? T.p400 : T.line}`,
+                  borderRadius: 12, padding: "12px 10px", display: "flex", flexDirection: "column",
+                  alignItems: "center", gap: 8, transition: "border-color .15s", minWidth: 0
+                }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: day.open ? T.p700 : T.ink }}>{label}</div>
+                  {/* Checkbox */}
+                  <div
+                    onClick={() => toggleDay(key)}
+                    style={{
+                      width: 22, height: 22, borderRadius: 6, border: `2px solid ${day.open ? T.p600 : T.line}`,
+                      background: day.open ? T.p600 : T.white, display: "flex", alignItems: "center",
+                      justifyContent: "center", cursor: "pointer", flexShrink: 0, transition: "all .15s"
+                    }}
+                  >
+                    {day.open && <span style={{ color: "white", fontSize: 11, fontWeight: 800, lineHeight: 1 }}>✓</span>}
+                  </div>
+                  {/* Time inputs — shown when day is checked */}
+                  {day.open && (
+                    <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 6 }}>
+                      <div>
+                        <div style={{ fontSize: 9, color: T.soft, marginBottom: 2, textAlign: "center" }}>Open</div>
+                        <input
+                          type="time"
+                          value={day.openTime}
+                          onChange={e => updateTime(key, "openTime", e.target.value)}
+                          style={{
+                            width: "100%", border: `1.5px solid ${T.line}`, borderRadius: 7,
+                            padding: "4px 4px", fontSize: 11, fontFamily: "'Outfit',sans-serif",
+                            color: T.ink, outline: "none", textAlign: "center", boxSizing: "border-box"
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 9, color: T.soft, marginBottom: 2, textAlign: "center" }}>Close</div>
+                        <input
+                          type="time"
+                          value={day.closeTime}
+                          onChange={e => updateTime(key, "closeTime", e.target.value)}
+                          style={{
+                            width: "100%", border: `1.5px solid ${T.line}`, borderRadius: 7,
+                            padding: "4px 4px", fontSize: 11, fontFamily: "'Outfit',sans-serif",
+                            color: T.ink, outline: "none", textAlign: "center", boxSizing: "border-box"
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {is24h && (
+          <div style={{ background: T.greenBg, border: `1px solid ${T.greenBd}`, borderRadius: 12, padding: "14px 18px", fontSize: 13, color: T.green, fontWeight: 600 }}>
+            Your agent will let customers know you're available around the clock.
+          </div>
+        )}
+      </div>
     </ObShell>
   );
 }
 
 const POS_SYSTEMS = [
-  { name: "Clover",      icon: "🍀", fields: [{ key: "accessToken", label: "Access Token", ph: "..." }, { key: "merchantId", label: "Merchant ID", ph: "XXXXXXXXXXXXXXXX" }] },
-  { name: "Square",      icon: "🟦", fields: [{ key: "accessToken", label: "Access Token", ph: "EAAAl..." }, { key: "locationId", label: "Location ID", ph: "LXXXXXXXXXXXXXXXX" }] },
-  { name: "OpenTable",   icon: "🪑", fields: [{ key: "restaurantId", label: "Restaurant ID", ph: "12345" }, { key: "apiKey", label: "API Key", ph: "..." }] },
-  { name: "Aloha",       icon: "🌺", fields: [{ key: "apiKey", label: "API Key", ph: "..." }, { key: "siteId", label: "Site ID", ph: "..." }] },
-  { name: "Olo",         icon: "📲", fields: [{ key: "apiKey", label: "API Key", ph: "..." }, { key: "restaurantId", label: "Restaurant ID", ph: "..." }] },
-  { name: "Lightspeed",  icon: "⚡", fields: [{ key: "apiKey", label: "API Key", ph: "..." }, { key: "accountId", label: "Account ID", ph: "..." }] },
-  { name: "TouchBistro", icon: "👆", fields: [{ key: "apiKey", label: "API Key", ph: "..." }, { key: "locationId", label: "Location ID", ph: "..." }] },
-  { name: "Revel",       icon: "🎰", fields: [{ key: "apiKey", label: "API Key", ph: "..." }, { key: "establishmentId", label: "Establishment ID", ph: "..." }] },
-  { name: "Micros",      icon: "🖥️", fields: [{ key: "apiKey", label: "API Key", ph: "..." }, { key: "locationId", label: "Location ID", ph: "..." }] },
+  { name: "Clover", icon: "🍀", type: "ordering",     fields: [{ key: "accessToken", label: "Access Token", ph: "..." }, { key: "merchantId", label: "Merchant ID", ph: "XXXXXXXXXXXXXXXX" }] },
+  { name: "Square", icon: "🟦", type: "ordering",     fields: [{ key: "accessToken", label: "Access Token", ph: "EAAAl..." }, { key: "locationId", label: "Location ID", ph: "LXXXXXXXXXXXXXXXX" }] },
+  { name: "renOS",  icon: "📅", type: "reservation",  fields: [{ key: "apiKey", label: "API Key", ph: "rn_live_..." }, { key: "propertyId", label: "Property ID", ph: "PROP-XXXXXXXX" }] },
 ];
 
 function Step3({ onNext, onBack }) {
@@ -1685,25 +1790,48 @@ function Step3({ onNext, onBack }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [result, setResult] = useState(null);
-  const [posSelected, setPosSelected] = useState(null); // name string
+  const [posSelected, setPosSelected] = useState(null);
   const [posFields, setPosFields] = useState({});
+  // Integration setup state
+  const [configuredSystems, setConfiguredSystems] = useState({});
+  const [setupModal, setSetupModal] = useState(null); // null | "picker" | "ordering" | "reservation"
+  const [setupFields, setSetupFields] = useState({});
+  const [setupLoading, setSetupLoading] = useState(false);
+  const [setupError, setSetupError] = useState(null);
+  const [setupDone, setSetupDone] = useState(null);
   const fileInputRef = useRef(null);
 
   const opts = [
     { icon: "🌐", title: "Import from URL", desc: "Paste your website or online menu link", badge: "Fastest" },
     { icon: "📁", title: "Upload your file", desc: "PDF, DOCX, or PNG accepted" },
-    { icon: "🔌", title: "Connect your POS", desc: "Clover, Square, Olo and more", badge: "Recommended" },
+    { icon: "🔌", title: "Connect your POS", desc: "Clover, Square, renOS", badge: "Recommended" },
   ];
 
   const resetResult = () => { setResult(null); setError(null); };
-
   const handleSelChange = (i) => { setSel(i); resetResult(); setPosSelected(null); setPosFields({}); };
+  const handlePosSelect = (name) => { setPosSelected(name); setPosFields(configuredSystems[name] || {}); resetResult(); };
 
-  const handlePosSelect = (name) => {
-    setPosSelected(name);
-    setPosFields({});
-    resetResult();
+  // Setup wizard helpers
+  const setupSystem = setupModal === "ordering"
+    ? POS_SYSTEMS.find(p => p.name === "Square")
+    : setupModal === "reservation"
+    ? POS_SYSTEMS.find(p => p.name === "renOS")
+    : null;
+
+  const handleSetupConnect = () => {
+    if (!setupSystem) return;
+    const missing = setupSystem.fields.find(f => !setupFields[f.key]?.trim());
+    if (missing) { setSetupError(`${missing.label} is required.`); return; }
+    setSetupLoading(true);
+    setSetupError(null);
+    setTimeout(() => {
+      setConfiguredSystems(prev => ({ ...prev, [setupSystem.name]: { ...setupFields } }));
+      setSetupDone(setupSystem.name);
+      setSetupLoading(false);
+    }, 800);
   };
+
+  const closeSetupModal = () => { setSetupModal(null); setSetupFields({}); setSetupError(null); setSetupDone(null); };
 
   const handleFileSelect = (f) => {
     if (!f) return;
@@ -1726,8 +1854,7 @@ function Step3({ onNext, onBack }) {
     } else if (sel === 1) {
       if (!file) { setError("Please select a file."); return; }
     } else {
-      // POS
-      if (!posSelected) { setError("Please select a POS system."); return; }
+      if (!posSelected) { setError("Please select an integration."); return; }
       const pos = POS_SYSTEMS.find(p => p.name === posSelected);
       const missing = pos?.fields.find(f => !posFields[f.key]?.trim());
       if (missing) { setError(`${missing.label} is required.`); return; }
@@ -1735,7 +1862,7 @@ function Step3({ onNext, onBack }) {
       try {
         const data = await api.menu.importFromPos(posSelected, posFields);
         setResult({ pos: data });
-      } catch (err) { setError(err.message || "POS import failed. Please check your credentials."); }
+      } catch (err) { setError(err.message || "Connection failed. Please check your credentials."); }
       setLoading(false);
       return;
     }
@@ -1802,6 +1929,7 @@ function Step3({ onNext, onBack }) {
   };
 
   return (
+    <>
     <ObShell step={3} onNext={result ? onNext : handleImport} onBack={onBack}
       nextLabel={loading ? (sel === 2 ? "Connecting…" : "Importing…") : result ? "Continue →" : sel === 2 ? (posSelected ? "Connect POS →" : "Skip for now →") : "Import menu →"}>
       <div className="ob-step-label">Step 4 · Menu</div>
@@ -1857,45 +1985,59 @@ function Step3({ onNext, onBack }) {
         </div>
       )}
 
-      {/* POS panel */}
+      {/* POS / Integration panel */}
       {sel === 2 && (
         <div style={{ marginTop: 18 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: posSelected ? 16 : 0 }}>
+          {/* 3-column integration cards */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 14 }}>
             {POS_SYSTEMS.map(p => {
               const active = posSelected === p.name;
+              const configured = !!configuredSystems[p.name];
               return (
                 <div key={p.name} onClick={() => handlePosSelect(p.name)}
-                  style={{ border: `1.5px solid ${active ? T.p500 : T.line}`, borderRadius: 12, padding: "10px 8px", textAlign: "center", cursor: "pointer", background: active ? T.p50 : T.white, fontSize: 13, fontWeight: active ? 700 : 500, color: active ? T.p700 : T.mid, transition: "all .18s", display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}
-                  onMouseEnter={e => { if (!active) { e.currentTarget.style.borderColor = T.p300; e.currentTarget.style.color = T.p600; }}}
-                  onMouseLeave={e => { if (!active) { e.currentTarget.style.borderColor = T.line; e.currentTarget.style.color = T.mid; }}}>
-                  <span style={{ fontSize: 18 }}>{p.icon}</span>
-                  <span>{p.name}</span>
+                  style={{ border: `1.5px solid ${active ? T.p500 : configured ? T.greenBd : T.line}`, borderRadius: 14, padding: "14px 10px", textAlign: "center", cursor: "pointer", background: active ? T.p50 : configured ? T.greenBg : T.white, transition: "all .18s", display: "flex", flexDirection: "column", alignItems: "center", gap: 5, position: "relative" }}
+                  onMouseEnter={e => { if (!active) e.currentTarget.style.borderColor = configured ? T.greenBd : T.p300; }}
+                  onMouseLeave={e => { if (!active) e.currentTarget.style.borderColor = configured ? T.greenBd : T.line; }}>
+                  {configured && (
+                    <div style={{ position: "absolute", top: 7, right: 8, background: T.green, color: "white", borderRadius: 999, fontSize: 8, fontWeight: 800, padding: "2px 5px" }}>✓</div>
+                  )}
+                  <span style={{ fontSize: 24 }}>{p.icon}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: active ? T.p700 : T.ink }}>{p.name}</span>
+                  <span style={{ fontSize: 10, fontWeight: 600, color: p.type === "reservation" ? "#7C3AED" : T.soft }}>
+                    {p.type === "reservation" ? "Reservations" : "Ordering"}
+                  </span>
+                  {configured && <span style={{ fontSize: 10, fontWeight: 700, color: T.green }}>Connected</span>}
                 </div>
               );
             })}
           </div>
+
+          {/* Credential fields for selected integration */}
           {posSelected && (() => {
             const pos = POS_SYSTEMS.find(p => p.name === posSelected);
             return (
-              <div style={{ background: T.paper, borderRadius: 14, padding: "16px 18px", border: `1.5px solid ${T.line}` }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: T.ink, marginBottom: 12 }}>
-                  {pos.icon} {pos.name} credentials
-                </div>
+              <div style={{ background: T.paper, borderRadius: 14, padding: "16px 18px", border: `1.5px solid ${T.line}`, marginBottom: 14 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: T.ink, marginBottom: 12 }}>{pos.icon} {pos.name} credentials</div>
                 {pos.fields.map(f => (
                   <div key={f.key} style={{ marginBottom: 10 }}>
                     <label style={{ display: "block", fontSize: 11.5, fontWeight: 700, color: T.soft, marginBottom: 4, textTransform: "uppercase", letterSpacing: ".3px" }}>{f.label}</label>
-                    <input
-                      value={posFields[f.key] || ""}
-                      onChange={e => { setPosFields(v => ({ ...v, [f.key]: e.target.value })); setError(null); }}
-                      placeholder={f.ph}
-                      className="form-input"
-                      style={{ marginTop: 0 }}
-                    />
+                    <input value={posFields[f.key] || ""} onChange={e => { setPosFields(v => ({ ...v, [f.key]: e.target.value })); setError(null); }} placeholder={f.ph} className="form-input" style={{ marginTop: 0 }} />
                   </div>
                 ))}
               </div>
             );
           })()}
+
+          {/* "Don't have integration yet?" button */}
+          <button
+            onClick={() => { setSetupModal("picker"); setSetupFields({}); setSetupError(null); setSetupDone(null); }}
+            style={{ width: "100%", border: `1.5px dashed ${T.line}`, borderRadius: 12, padding: "12px 16px", background: "transparent", cursor: "pointer", fontSize: 13, fontFamily: "'Outfit',sans-serif", color: T.soft, textAlign: "center", transition: "all .15s" }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = T.p300; e.currentTarget.style.background = T.p50; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = T.line; e.currentTarget.style.background = "transparent"; }}
+          >
+            Don't have any integration yet?{" "}
+            <span style={{ color: T.p600, fontWeight: 700 }}>Setup your integration →</span>
+          </button>
         </div>
       )}
 
@@ -1918,18 +2060,191 @@ function Step3({ onNext, onBack }) {
       {/* Results */}
       {result && !loading && <ResultsPanel r={result} />}
     </ObShell>
+
+    {/* ── Integration Setup Modal ── */}
+    {setupModal && (
+      <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: "20px" }}
+        onClick={e => { if (e.target === e.currentTarget) closeSetupModal(); }}>
+        <div style={{ background: T.white, borderRadius: 22, padding: "28px 26px", maxWidth: 460, width: "100%", boxShadow: "0 32px 80px rgba(0,0,0,.22)", animation: "fadeUp .22s ease both" }}>
+
+          {/* Modal header */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
+            <div style={{ fontWeight: 800, fontSize: 17, color: T.ink }}>
+              {setupModal === "picker" ? "Setup your integration" : setupModal === "ordering" ? "🟦 Connect Square" : "📅 Connect renOS"}
+            </div>
+            <div onClick={closeSetupModal} style={{ cursor: "pointer", fontSize: 20, color: T.soft, lineHeight: 1, padding: "2px 8px" }}>✕</div>
+          </div>
+
+          {/* Step: Picker */}
+          {setupModal === "picker" && !setupDone && (
+            <div>
+              <p style={{ fontSize: 13, color: T.soft, marginBottom: 20, lineHeight: 1.6 }}>Choose an integration to connect to your AI agent. You can set up multiple.</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <div
+                  onClick={() => { setSetupModal("ordering"); setSetupFields({}); setSetupError(null); }}
+                  style={{ border: `1.5px solid ${T.line}`, borderRadius: 16, padding: "18px 20px", cursor: "pointer", display: "flex", alignItems: "center", gap: 16, transition: "all .15s" }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = T.p400; e.currentTarget.style.background = T.p50; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = T.line; e.currentTarget.style.background = "transparent"; }}
+                >
+                  <div style={{ width: 48, height: 48, background: `linear-gradient(135deg,${T.p400},${T.p700})`, borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, flexShrink: 0 }}>🟦</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 700, fontSize: 14, color: T.ink }}>Ordering — Connect with your KDS</div>
+                    <div style={{ fontSize: 12, color: T.soft, marginTop: 3 }}>Sync orders with Square Point of Sale</div>
+                  </div>
+                  {configuredSystems["Square"] && <span style={{ fontSize: 11, fontWeight: 700, color: T.green, background: T.greenBg, border: `1px solid ${T.greenBd}`, borderRadius: 8, padding: "3px 9px", flexShrink: 0 }}>Connected</span>}
+                  <span style={{ fontSize: 18, color: T.p500, flexShrink: 0 }}>→</span>
+                </div>
+                <div
+                  onClick={() => { setSetupModal("reservation"); setSetupFields({}); setSetupError(null); }}
+                  style={{ border: `1.5px solid ${T.line}`, borderRadius: 16, padding: "18px 20px", cursor: "pointer", display: "flex", alignItems: "center", gap: 16, transition: "all .15s" }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = "#7C3AED"; e.currentTarget.style.background = "#F5F3FF"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = T.line; e.currentTarget.style.background = "transparent"; }}
+                >
+                  <div style={{ width: 48, height: 48, background: "linear-gradient(135deg,#7C3AED,#4F46E5)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, flexShrink: 0 }}>📅</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 700, fontSize: 14, color: T.ink }}>Reservation — Connect with renOS</div>
+                    <div style={{ fontSize: 12, color: T.soft, marginTop: 3 }}>Manage bookings and table reservations</div>
+                  </div>
+                  {configuredSystems["renOS"] && <span style={{ fontSize: 11, fontWeight: 700, color: T.green, background: T.greenBg, border: `1px solid ${T.greenBd}`, borderRadius: 8, padding: "3px 9px", flexShrink: 0 }}>Connected</span>}
+                  <span style={{ fontSize: 18, color: "#7C3AED", flexShrink: 0 }}>→</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step: Credentials form */}
+          {(setupModal === "ordering" || setupModal === "reservation") && !setupDone && setupSystem && (
+            <div>
+              <p style={{ fontSize: 13, color: T.soft, marginBottom: 20, lineHeight: 1.6 }}>
+                Enter your <strong>{setupSystem.name}</strong> credentials. You can find these in your{" "}
+                {setupModal === "ordering" ? "Square Developer Dashboard" : "renOS account settings"}.
+              </p>
+              {setupSystem.fields.map(f => (
+                <div key={f.key} style={{ marginBottom: 12 }}>
+                  <label style={{ display: "block", fontSize: 11.5, fontWeight: 700, color: T.soft, marginBottom: 4, textTransform: "uppercase", letterSpacing: ".3px" }}>{f.label}</label>
+                  <input value={setupFields[f.key] || ""} onChange={e => { setSetupFields(v => ({ ...v, [f.key]: e.target.value })); setSetupError(null); }} placeholder={f.ph} className="form-input" style={{ marginTop: 0 }} />
+                </div>
+              ))}
+              {setupError && (
+                <div style={{ fontSize: 12, color: T.red, background: T.redBg, border: `1px solid #fecaca`, borderRadius: 8, padding: "8px 12px", marginBottom: 12 }}>{setupError}</div>
+              )}
+              <div style={{ display: "flex", gap: 10, marginTop: 6 }}>
+                <button onClick={() => { setSetupModal("picker"); setSetupError(null); }}
+                  style={{ flex: 1, border: `1.5px solid ${T.line}`, background: "transparent", borderRadius: 12, padding: "11px", fontSize: 13, fontWeight: 600, cursor: "pointer", color: T.soft, fontFamily: "'Outfit',sans-serif" }}>← Back</button>
+                <button onClick={handleSetupConnect} disabled={setupLoading} className="btn-primary" style={{ flex: 2, justifyContent: "center", fontSize: 13, padding: "11px" }}>
+                  {setupLoading ? "Connecting…" : `Connect ${setupSystem.name} →`}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Step: Success */}
+          {setupDone && (
+            <div style={{ textAlign: "center", padding: "8px 0" }}>
+              <div style={{ fontSize: 48, marginBottom: 14 }}>✅</div>
+              <div style={{ fontWeight: 800, fontSize: 17, color: T.ink, marginBottom: 8 }}>{setupDone} connected!</div>
+              <div style={{ fontSize: 13, color: T.soft, marginBottom: 28, lineHeight: 1.6 }}>
+                {setupDone === "renOS" ? "Reservation management is now linked to your agent." : "Order sync with your KDS is now active."}
+                <br />You can still set up your other integration below.
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <button onClick={() => { setSetupDone(null); setSetupModal("picker"); setSetupFields({}); }}
+                  style={{ border: `1.5px solid ${T.line}`, background: "transparent", borderRadius: 12, padding: "12px", fontSize: 13, fontWeight: 600, cursor: "pointer", color: T.mid, fontFamily: "'Outfit',sans-serif" }}>
+                  Set up another integration
+                </button>
+                <button onClick={closeSetupModal} className="btn-primary" style={{ justifyContent: "center", fontSize: 13, padding: "12px" }}>
+                  Back to import menu →
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    )}
+  </>
   );
 }
 
+// Voice catalogue — keyed by gender
+const VOICE_CATALOGUE = {
+  female: [
+    { n: "Aria",  id: "21m00Tcm4TlvDq8ikWAM", d: "Warm & professional" },
+    { n: "Bella", id: "EXAVITQu4vr4xnSDxMaL", d: "Soft & pleasant" },
+  ],
+  male: [
+    { n: "Antoni", id: "ErXwobaYiN019PkySvjV", d: "Well-rounded" },
+    { n: "Adam",   id: "pNInz6obpgDQGcFmaJgB", d: "Deep & authoritative" },
+  ],
+};
+
 function Step4({ onNext, onBack, bizName, bizPhone, onAgentNameChange }) {
+  const [gender, setGender] = useState("female");
+  const voices = VOICE_CATALOGUE[gender];
   const [vc, setVc] = useState(0);
-  const voices = [{ n: "Aria", d: "Warm & professional" }, { n: "Leo", d: "Friendly & upbeat" }, { n: "Nova", d: "Calm & precise" }, { n: "Finn", d: "Casual & relaxed" }];
   const [agentName, setAgentName] = useState("Aria");
   const [greetingEdited, setGreetingEdited] = useState(false);
   const displayBiz = bizName || "your restaurant";
   const autoGreeting = `Hi, thanks for calling us at ${displayBiz}! I'm ${agentName}, your AI assistant. Would you like to place an order, check our hours, or something else?`;
   const [greeting, setGreeting] = useState(autoGreeting);
   const [fallbackAction, setFallbackAction] = useState("transfer");
+
+  // Schedule
+  const [agentIs24h, setAgentIs24h] = useState(false);
+  const [agentSchedule, setAgentSchedule] = useState({
+    mon: { open: false, openTime: "09:00", closeTime: "17:00" },
+    tue: { open: false, openTime: "09:00", closeTime: "17:00" },
+    wed: { open: false, openTime: "09:00", closeTime: "17:00" },
+    thu: { open: false, openTime: "09:00", closeTime: "17:00" },
+    fri: { open: false, openTime: "09:00", closeTime: "17:00" },
+    sat: { open: false, openTime: "09:00", closeTime: "17:00" },
+    sun: { open: false, openTime: "09:00", closeTime: "17:00" },
+  });
+  const toggleAgentDay = (day) => setAgentSchedule(prev => ({ ...prev, [day]: { ...prev[day], open: !prev[day].open } }));
+  const updateAgentTime = (day, field, value) => setAgentSchedule(prev => ({ ...prev, [day]: { ...prev[day], [field]: value } }));
+  const buildAgentSchedule = () => {
+    if (agentIs24h) return { is24h: "true" };
+    const result = { is24h: "false" };
+    Object.entries(agentSchedule).forEach(([day, val]) => {
+      result[day] = val.open ? `${val.openTime}-${val.closeTime}` : "closed";
+    });
+    return result;
+  };
+
+  // Voice preview
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewPlaying, setPreviewPlaying] = useState(false);
+  const audioRef = useRef(null);
+
+  const handlePreview = async () => {
+    if (previewPlaying && audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+      setPreviewPlaying(false);
+      return;
+    }
+    setPreviewLoading(true);
+    try {
+      const data = await api.agent.previewVoice({ voiceId: voices[vc].id, text: greeting });
+      const audio = new Audio(`data:audio/mpeg;base64,${data.audio}`);
+      audioRef.current = audio;
+      audio.onended = () => { setPreviewPlaying(false); audioRef.current = null; };
+      audio.onerror = () => { setPreviewPlaying(false); audioRef.current = null; };
+      await audio.play();
+      setPreviewPlaying(true);
+    } catch { /* preview unavailable */ }
+    setPreviewLoading(false);
+  };
+
+  const handleGenderChange = (g) => {
+    setGender(g);
+    setVc(0);
+    // Reset agent name to first voice of new gender
+    const firstName = VOICE_CATALOGUE[g][0].n;
+    setAgentName(firstName);
+    if (!greetingEdited) {
+      setGreeting(`Hi, thanks for calling us at ${displayBiz}! I'm ${firstName}, your AI assistant. Would you like to place an order, check our hours, or something else?`);
+    }
+  };
 
   const handleAgentNameChange = (val) => {
     setAgentName(val);
@@ -1943,11 +2258,13 @@ function Step4({ onNext, onBack, bizName, bizPhone, onAgentNameChange }) {
     try {
       await api.agent.update({
         name: agentName,
+        gender,
         openingGreeting: greeting,
+        voiceId: voices[vc].id,
         voiceName: voices[vc].n,
         voiceDescription: voices[vc].d,
-        fallbackAction,
         transferNumber: fallbackAction === "transfer" ? (bizPhone || null) : null,
+        agentSchedule: buildAgentSchedule(),
       });
     } catch {}
     onNext();
@@ -1958,6 +2275,22 @@ function Step4({ onNext, onBack, bizName, bizPhone, onAgentNameChange }) {
       <div className="ob-step-label">Step 5 · Voice & script</div>
       <h1 className="ob-heading">Customise your<br /><em>AI agent</em></h1>
       <p className="ob-subheading">Pick a voice and personalise your greeting. All fields are pre-filled — just change what you want.</p>
+
+      {/* Gender toggle */}
+      <div style={{ marginBottom: 20 }}>
+        <label className="form-label" style={{ marginBottom: 10 }}>Agent gender</label>
+        <div style={{ display: "flex", gap: 10 }}>
+          {["female", "male"].map(g => (
+            <div key={g} onClick={() => handleGenderChange(g)}
+              style={{ flex: 1, border: `1.5px solid ${gender === g ? T.p500 : T.line}`, borderRadius: 12, padding: "12px 16px", textAlign: "center", cursor: "pointer", background: gender === g ? T.p50 : T.white, transition: "all .15s" }}>
+              <div style={{ fontSize: 22, marginBottom: 4 }}>{g === "female" ? "👩" : "👨"}</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: gender === g ? T.p700 : T.ink, textTransform: "capitalize" }}>{g}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Voice picker */}
       <label className="form-label" style={{ marginBottom: 12 }}>Choose a voice</label>
       <div className="voice-grid">
         {voices.map((v, i) => (
@@ -1976,12 +2309,49 @@ function Step4({ onNext, onBack, bizName, bizPhone, onAgentNameChange }) {
           </div>
         ))}
       </div>
+
       <div className="form-group"><label className="form-label">Agent name</label><input className="form-input" value={agentName} onChange={e => handleAgentNameChange(e.target.value)} /></div>
+
+      {/* Greeting */}
       <div className="form-group">
         <label className="form-label">Greeting message</label>
         <textarea className="form-input" rows={3} value={greeting} onChange={e => { setGreetingEdited(true); setGreeting(e.target.value); }} />
         <div style={{ fontSize: 11.5, color: T.soft, marginTop: 6 }}>Keep under 20 seconds of speech for the best experience</div>
       </div>
+
+      {/* ── Hear your agent preview ── */}
+      <div style={{ background: T.paper, border: `1.5px solid ${T.line}`, borderRadius: 16, padding: "18px 20px", marginBottom: 20 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: T.ink, marginBottom: 4 }}>Hear how your agent sounds</div>
+        <div style={{ fontSize: 12, color: T.soft, marginBottom: 16 }}>Based on your voice, name and greeting — powered by ElevenLabs.</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          {/* Play/Stop button */}
+          <button
+            onClick={handlePreview}
+            disabled={previewLoading}
+            style={{ width: 48, height: 48, borderRadius: "50%", border: "none", background: previewPlaying ? T.red : `linear-gradient(135deg,${T.p400},${T.p700})`, color: "white", fontSize: 18, cursor: previewLoading ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: `0 4px 14px rgba(112,53,245,.3)`, transition: "all .2s" }}>
+            {previewLoading ? <span style={{ fontSize: 14 }}>⏳</span> : previewPlaying ? "⏹" : "▶"}
+          </button>
+          {/* Waveform animation */}
+          <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 3, height: 36 }}>
+            {Array.from({ length: 28 }).map((_, i) => (
+              <div key={i} style={{
+                width: 3, borderRadius: 4,
+                background: previewPlaying ? T.p500 : T.line,
+                height: previewPlaying
+                  ? `${20 + Math.sin(i * 0.7) * 14 + Math.cos(i * 1.3) * 8}px`
+                  : `${6 + Math.sin(i * 0.5) * 4}px`,
+                transition: "height .3s ease, background .3s ease",
+                animation: previewPlaying ? `audioBar .8s ease-in-out ${(i * 0.04).toFixed(2)}s infinite alternate` : "none",
+              }} />
+            ))}
+          </div>
+          <div style={{ fontSize: 12, color: T.soft, whiteSpace: "nowrap" }}>
+            {previewLoading ? "Generating…" : previewPlaying ? "Playing…" : `${voices[vc].n} · ${voices[vc].d}`}
+          </div>
+        </div>
+      </div>
+
+      {/* Fallback */}
       <div className="form-group">
         <label className="form-label">When agent can't help, it should…</label>
         <select className="form-input" value={fallbackAction} onChange={e => setFallbackAction(e.target.value)}>
@@ -1989,6 +2359,59 @@ function Step4({ onNext, onBack, bizName, bizPhone, onAgentNameChange }) {
           <option value="voicemail">Take a voicemail</option>
           <option value="callback">Ask caller to call back later</option>
         </select>
+      </div>
+
+      {/* ── Agent Working Schedule ── */}
+      <div style={{ marginTop: 8 }}>
+        <div style={{ fontSize: 13, color: T.soft, marginBottom: 4 }}>Agent working schedule</div>
+        <div style={{ fontSize: 16, fontWeight: 700, color: T.ink, marginBottom: 16 }}>When should your agent be active?</div>
+
+        {/* 24/7 */}
+        <label style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20, cursor: "pointer", userSelect: "none" }}
+          onClick={() => setAgentIs24h(v => !v)}>
+          <div style={{ width: 20, height: 20, borderRadius: 5, border: `2px solid ${agentIs24h ? T.p600 : T.line}`, background: agentIs24h ? T.p600 : T.white, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all .15s" }}>
+            {agentIs24h && <span style={{ color: "white", fontSize: 11, fontWeight: 800, lineHeight: 1 }}>✓</span>}
+          </div>
+          <span style={{ fontSize: 14, fontWeight: 600, color: T.ink }}>We operate 24/7</span>
+        </label>
+
+        {/* Day columns */}
+        {!agentIs24h && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 8 }}>
+            {[["mon","Mon"],["tue","Tue"],["wed","Wed"],["thu","Thu"],["fri","Fri"],["sat","Sat"],["sun","Sun"]].map(([key, label]) => {
+              const day = agentSchedule[key];
+              return (
+                <div key={key} style={{ background: T.white, border: `1.5px solid ${day.open ? T.p400 : T.line}`, borderRadius: 12, padding: "12px 10px", display: "flex", flexDirection: "column", alignItems: "center", gap: 8, transition: "border-color .15s", minWidth: 0 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: day.open ? T.p700 : T.ink }}>{label}</div>
+                  <div onClick={() => toggleAgentDay(key)}
+                    style={{ width: 22, height: 22, borderRadius: 6, border: `2px solid ${day.open ? T.p600 : T.line}`, background: day.open ? T.p600 : T.white, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, transition: "all .15s" }}>
+                    {day.open && <span style={{ color: "white", fontSize: 11, fontWeight: 800, lineHeight: 1 }}>✓</span>}
+                  </div>
+                  {day.open && (
+                    <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 6 }}>
+                      <div>
+                        <div style={{ fontSize: 9, color: T.soft, marginBottom: 2, textAlign: "center" }}>Open</div>
+                        <input type="time" value={day.openTime} onChange={e => updateAgentTime(key, "openTime", e.target.value)}
+                          style={{ width: "100%", border: `1.5px solid ${T.line}`, borderRadius: 7, padding: "4px 4px", fontSize: 11, fontFamily: "'Outfit',sans-serif", color: T.ink, outline: "none", textAlign: "center", boxSizing: "border-box" }} />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 9, color: T.soft, marginBottom: 2, textAlign: "center" }}>Close</div>
+                        <input type="time" value={day.closeTime} onChange={e => updateAgentTime(key, "closeTime", e.target.value)}
+                          style={{ width: "100%", border: `1.5px solid ${T.line}`, borderRadius: 7, padding: "4px 4px", fontSize: 11, fontFamily: "'Outfit',sans-serif", color: T.ink, outline: "none", textAlign: "center", boxSizing: "border-box" }} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {agentIs24h && (
+          <div style={{ background: T.greenBg, border: `1px solid ${T.greenBd}`, borderRadius: 12, padding: "14px 18px", fontSize: 13, color: T.green, fontWeight: 600 }}>
+            Your agent will answer calls around the clock, every day.
+          </div>
+        )}
       </div>
     </ObShell>
   );
@@ -2287,7 +2710,7 @@ function PageDashboard({ onNav, user, agentName, bizName, agentData }) {
               <button className="agent-edit-btn" onClick={()=>onNav&&onNav("My Agent")}>Edit</button>
             </div>
             <div className="agent-meta">
-              {[["Voice",`${displayAgent} · ${voiceDesc}`],["Language","English"],["Call rules",callRulesLabel],["POS","Clover / Square"]].map(([l,v])=>(
+              {[["Voice",`${displayAgent} · ${voiceDesc}`],["Language","English"],["Call rules",callRulesLabel],["POS","Clover / Square / renOS"]].map(([l,v])=>(
                 <div key={l} className="agent-meta-item"><div className="agent-meta-label">{l}</div><div className="agent-meta-value">{v}</div></div>
               ))}
             </div>
@@ -2625,13 +3048,33 @@ function PageReservations({ user, agentName, bizName }) {
 /* ═══════════════════════════════════════════
    PAGE 5 — MY AGENT
 ═══════════════════════════════════════════ */
-function PageMyAgent({ user, agentName, bizName, agentData, bizData, menuSynced }) {
+// Format a saved schedule object into a readable string
+const formatSchedule = (schedule) => {
+  if (!schedule) return null;
+  if (schedule.is24h === "true") return "24/7";
+  const days = ["mon","tue","wed","thu","fri","sat","sun"];
+  const dayNames = { mon:"Mon", tue:"Tue", wed:"Wed", thu:"Thu", fri:"Fri", sat:"Sat", sun:"Sun" };
+  const open = days.filter(d => schedule[d] && schedule[d] !== "closed");
+  if (open.length === 0) return null;
+  const times = open.map(d => schedule[d]);
+  const allSame = times.every(t => t === times[0]);
+  if (allSame) {
+    const first = dayNames[open[0]];
+    const last = open.length > 1 ? `–${dayNames[open[open.length - 1]]}` : "";
+    return `${first}${last} · ${times[0].replace("-", "–")}`;
+  }
+  return open.slice(0, 3).map(d => `${dayNames[d]}: ${schedule[d].replace("-","–")}`).join(", ") + (open.length > 3 ? ` +${open.length - 3} more` : "");
+};
+
+function PageMyAgent({ user, agentName, bizName, agentData, bizData, menuSynced, onNav }) {
   const displayAgent = agentName || "Aria";
   const displayBiz = bizName || "your restaurant";
   const greeting = agentData?.openingGreeting || `Hi, thanks for calling us at ${displayBiz}! I'm ${displayAgent}, your AI assistant. Would you like to place an order, check our hours, or something else?`;
   const voiceDisplay = agentData ? `${agentData.voiceName} · ${agentData.voiceDescription}` : `${displayAgent} · Warm`;
-  const hoursDisplay = bizData?.openingHours ? "Configured" : "Not set";
   const menuDisplay = menuSynced ? "Synced" : "Not synced";
+
+  const bizHoursDisplay  = formatSchedule(bizData?.openingHours);
+  const agentHoursDisplay = formatSchedule(agentData?.agentSchedule);
 
   const [tab, setTab] = useState("Overview");
   const [acceptOrders, setAcceptOrders] = useState(true);
@@ -2684,20 +3127,34 @@ function PageMyAgent({ user, agentName, bizName, agentData, bizData, menuSynced 
                     <div className="agent-name" style={{fontSize:16}}>{displayAgent}</div>
                     <div className="agent-status"><div className="agent-status-dot"/>Ready · waiting for first call</div>
                   </div>
-                  <button className="agent-edit-btn">Edit agent</button>
+                  <button className="agent-edit-btn" onClick={() => onNav && onNav("Voice & Script")}>Edit agent</button>
                 </div>
+
+                {/* 5-item stats grid */}
                 <div style={{marginTop:20,display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
                   {[
-                    ["🎙️","Voice", voiceDisplay],
-                    ["🌍","Language","English"],
+                    ["🎙️","Voice",      voiceDisplay],
+                    ["🌍","Language",   "English"],
                     ["🔀","Call rules", agentData?.transferEnabled !== false ? "Transfer" : "End call"],
-                    ["🔌","POS","Not connected"],
-                    ["⏰","Hours", hoursDisplay],
-                    ["📋","Menu", menuDisplay],
+                    ["🔌","POS",        "Not connected"],
+                    ["📋","Menu",       menuDisplay],
                   ].map(([ic,l,v])=>(
                     <div key={l} style={{background:T.paper,border:`1.5px solid ${T.line}`,borderRadius:12,padding:"12px 14px"}}>
                       <div style={{fontSize:11,color:T.soft,marginBottom:4,textTransform:"uppercase",letterSpacing:".5px",fontWeight:700}}>{ic} {l}</div>
-                      <div style={{fontSize:13.5,fontWeight:600,color:menuDisplay==="Not synced"&&l==="Menu"?T.amber:hoursDisplay==="Not set"&&l==="Hours"?T.amber:T.ink}}>{v}</div>
+                      <div style={{fontSize:13.5,fontWeight:600,color:menuDisplay==="Not synced"&&l==="Menu"?T.amber:T.ink}}>{v}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Hours — 2-column section */}
+                <div style={{marginTop:10,display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                  {[
+                    ["⏰","Business hours", bizHoursDisplay],
+                    ["⏰","Agent hours",    agentHoursDisplay],
+                  ].map(([ic,l,v])=>(
+                    <div key={l} style={{background:T.paper,border:`1.5px solid ${v ? T.line : "#FEF3C7"}`,borderRadius:12,padding:"12px 14px"}}>
+                      <div style={{fontSize:11,color:T.soft,marginBottom:4,textTransform:"uppercase",letterSpacing:".5px",fontWeight:700}}>{ic} {l}</div>
+                      <div style={{fontSize:13.5,fontWeight:600,color:v ? T.ink : T.amber}}>{v || "Not set"}</div>
                     </div>
                   ))}
                 </div>
@@ -2783,68 +3240,151 @@ function PageMyAgent({ user, agentName, bizName, agentData, bizData, menuSynced 
   );
 }
 
+/* ── Shared schedule helpers used across multiple pages ── */
+const VS_DAY_KEYS   = ["mon","tue","wed","thu","fri","sat","sun"];
+const VS_DAY_LABELS = { mon:"Mon", tue:"Tue", wed:"Wed", thu:"Thu", fri:"Fri", sat:"Sat", sun:"Sun" };
+
+const makeDefaultSchedule = () => ({
+  mon: { open: false, openTime: "09:00", closeTime: "17:00" },
+  tue: { open: false, openTime: "09:00", closeTime: "17:00" },
+  wed: { open: false, openTime: "09:00", closeTime: "17:00" },
+  thu: { open: false, openTime: "09:00", closeTime: "17:00" },
+  fri: { open: false, openTime: "09:00", closeTime: "17:00" },
+  sat: { open: false, openTime: "09:00", closeTime: "17:00" },
+  sun: { open: false, openTime: "09:00", closeTime: "17:00" },
+});
+
+const parseSchedule = (obj) => {
+  if (!obj) return makeDefaultSchedule();
+  const r = {};
+  for (const day of VS_DAY_KEYS) {
+    const v = obj[day];
+    if (!v || v === "closed") r[day] = { open: false, openTime: "09:00", closeTime: "17:00" };
+    else { const [o, c] = v.split("-"); r[day] = { open: true, openTime: o || "09:00", closeTime: c || "17:00" }; }
+  }
+  return r;
+};
+
+const buildHours = (is24h, sched) => {
+  if (is24h) return { is24h: "true" };
+  const r = { is24h: "false" };
+  Object.entries(sched).forEach(([d, v]) => { r[d] = v.open ? `${v.openTime}-${v.closeTime}` : "closed"; });
+  return r;
+};
+
+function ScheduleInlineEditor({ is24h, setIs24h, schedule, setSchedule }) {
+  return (
+    <div style={{marginTop:12}}>
+      <label style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",marginBottom:12}}>
+        <input type="checkbox" checked={is24h} onChange={e=>setIs24h(e.target.checked)} style={{accentColor:T.p600,width:15,height:15}}/>
+        <span style={{fontSize:13,fontWeight:600,color:T.ink}}>We operate 24/7</span>
+      </label>
+      {!is24h && (
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {VS_DAY_KEYS.map(day=>(
+            <div key={day} style={{display:"flex",alignItems:"center",gap:10}}>
+              <label style={{display:"flex",alignItems:"center",gap:7,width:54,cursor:"pointer",flexShrink:0}}>
+                <input type="checkbox" checked={schedule[day]?.open||false} onChange={()=>setSchedule(p=>({...p,[day]:{...p[day],open:!p[day].open}}))} style={{accentColor:T.p600}}/>
+                <span style={{fontSize:13,fontWeight:600,color:T.ink}}>{VS_DAY_LABELS[day]}</span>
+              </label>
+              {schedule[day]?.open ? (
+                <div style={{display:"flex",alignItems:"center",gap:6,flex:1}}>
+                  <input type="time" value={schedule[day].openTime} onChange={e=>setSchedule(p=>({...p,[day]:{...p[day],openTime:e.target.value}}))} style={{flex:1,padding:"6px 8px",border:`1.5px solid ${T.line}`,borderRadius:8,fontSize:12.5,fontFamily:"'Outfit',sans-serif",color:T.ink,background:T.white,outline:"none"}}/>
+                  <span style={{color:T.soft,fontSize:13}}>–</span>
+                  <input type="time" value={schedule[day].closeTime} onChange={e=>setSchedule(p=>({...p,[day]:{...p[day],closeTime:e.target.value}}))} style={{flex:1,padding:"6px 8px",border:`1.5px solid ${T.line}`,borderRadius:8,fontSize:12.5,fontFamily:"'Outfit',sans-serif",color:T.ink,background:T.white,outline:"none"}}/>
+                </div>
+              ) : (
+                <span style={{fontSize:12,color:T.soft,marginLeft:4}}>Closed</span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ═══════════════════════════════════════════
    PAGE 6 — VOICE & SCRIPT
 ═══════════════════════════════════════════ */
 function PageVoiceScript({ user, agentName, bizName, agentData, bizData, onAgentNameChange }) {
-  const voices = [{n:"Aria",d:"Warm & professional",lang:"EN-GB"},{n:"Leo",d:"Friendly & upbeat",lang:"EN-GB"},{n:"Nova",d:"Calm & precise",lang:"EN-US"},{n:"Finn",d:"Casual & relaxed",lang:"EN-AU"}];
-  const initName = agentName || "Aria";
-  const initBiz  = bizName  || "your restaurant";
   const autoGreet = (name, biz) => `Hi, thanks for calling us at ${biz}! I'm ${name}, your AI assistant. Would you like to place an order, check our hours, or something else?`;
 
+  // ── Gender & voice ──────────────────────────────────────────────
+  const [gender, setGender] = useState("female");
+  const voices = VOICE_CATALOGUE[gender];
   const [voice, setVoice] = useState(0);
-  const [localName, setLocalName] = useState(initName);
+
+  // ── Identity ────────────────────────────────────────────────────
+  const [localName, setLocalName] = useState(agentName || "Aria");
   const [greetingEdited, setGreetingEdited] = useState(false);
-  const [greeting, setGreeting] = useState(autoGreet(initName, initBiz));
+  const [greeting, setGreeting] = useState(autoGreet(agentName||"Aria", bizName||"your restaurant"));
   const [fallbackAction, setFallbackAction] = useState("transfer");
   const [transferNumber, setTransferNumber] = useState('');
   const [takeMessages, setTakeMessages] = useState(true);
+
+  // ── Save flags ──────────────────────────────────────────────────
   const [saving, setSaving] = useState(false);
   const [identityDirty, setIdentityDirty] = useState(false);
   const [savingIdentity, setSavingIdentity] = useState(false);
   const [identitySaved, setIdentitySaved] = useState(false);
-  const [demoActive, setDemoActive] = useState(false);
-  const [demoEnded, setDemoEnded] = useState(false);
 
+  // ── Hours editing ───────────────────────────────────────────────
+  const [showBizHoursEdit,   setShowBizHoursEdit]   = useState(false);
+  const [showAgentHoursEdit, setShowAgentHoursEdit] = useState(false);
+  const [biz24h,   setBiz24h]   = useState(false);
+  const [bizSched, setBizSched] = useState(makeDefaultSchedule());
+  const [agent24h,   setAgent24h]   = useState(false);
+  const [agentSched, setAgentSched] = useState(makeDefaultSchedule());
+  const [savingBizHours,   setSavingBizHours]   = useState(false);
+  const [savingAgentHours, setSavingAgentHours] = useState(false);
+
+  // ── Test call ───────────────────────────────────────────────────
+  const [callStatus, setCallStatus] = useState('idle'); // idle | connecting | active | ended
+  const conversationRef = useRef(null);
+
+  // ── Load from DB data ───────────────────────────────────────────
   useEffect(() => {
     if (agentData) {
       if (agentData.name) setLocalName(agentData.name);
       if (agentData.openingGreeting && !greetingEdited) setGreeting(agentData.openingGreeting);
       if (agentData.fallbackAction) setFallbackAction(agentData.fallbackAction);
-      if (agentData.transferNumber) {
-        setTransferNumber(agentData.transferNumber);
-      } else if (bizData?.phone) {
-        setTransferNumber(bizData.phone);
-      }
+      if (agentData.transferNumber) setTransferNumber(agentData.transferNumber);
+      else if (bizData?.phone) setTransferNumber(bizData.phone);
       if (agentData.takeMessages !== undefined) setTakeMessages(agentData.takeMessages);
-      const vIdx = voices.findIndex(v => v.n.toLowerCase() === (agentData.voiceName||'').toLowerCase());
-      if (vIdx >= 0) setVoice(vIdx);
+      const g = agentData.gender || "female";
+      setGender(g);
+      const cat = VOICE_CATALOGUE[g];
+      const vIdx = cat.findIndex(v => v.id === agentData.voiceId);
+      setVoice(vIdx >= 0 ? vIdx : 0);
+      if (agentData.agentSchedule) {
+        if (agentData.agentSchedule.is24h === "true") setAgent24h(true);
+        else { setAgent24h(false); setAgentSched(parseSchedule(agentData.agentSchedule)); }
+      }
+    }
+    if (bizData?.openingHours) {
+      if (bizData.openingHours.is24h === "true") setBiz24h(true);
+      else { setBiz24h(false); setBizSched(parseSchedule(bizData.openingHours)); }
     }
   }, [agentData, bizData]);
 
   const handleNameChange = (val) => {
     setLocalName(val);
-    if (!greetingEdited) {
-      setGreeting(autoGreet(val, bizName || 'your restaurant'));
-    }
-    setIdentityDirty(true);
-    setIdentitySaved(false);
+    if (!greetingEdited) setGreeting(autoGreet(val, bizName||'your restaurant'));
+    setIdentityDirty(true); setIdentitySaved(false);
   };
-
   const handleGreetingChange = (val) => {
-    setGreetingEdited(true);
-    setGreeting(val);
-    setIdentityDirty(true);
-    setIdentitySaved(false);
+    setGreetingEdited(true); setGreeting(val);
+    setIdentityDirty(true); setIdentitySaved(false);
   };
+  const handleGenderChange = (g) => { setGender(g); setVoice(0); };
 
   const handleSaveIdentity = async () => {
     setSavingIdentity(true);
     try {
       await api.agent.update({ name: localName, openingGreeting: greeting });
       if (onAgentNameChange) onAgentNameChange(localName);
-      setIdentityDirty(false);
-      setIdentitySaved(true);
+      setIdentityDirty(false); setIdentitySaved(true);
       setTimeout(() => setIdentitySaved(false), 2500);
     } catch {}
     setSavingIdentity(false);
@@ -2854,24 +3394,62 @@ function PageVoiceScript({ user, agentName, bizName, agentData, bizData, onAgent
     setSaving(true);
     try {
       await api.agent.update({
-        name: localName,
-        openingGreeting: greeting,
-        voiceName: voices[voice].n,
-        voiceDescription: voices[voice].d,
-        fallbackAction,
-        transferNumber: transferNumber || null,
-        takeMessages,
+        name: localName, openingGreeting: greeting,
+        gender, voiceId: voices[voice].id, voiceName: voices[voice].n, voiceDescription: voices[voice].d,
+        fallbackAction, transferNumber: transferNumber||null, takeMessages,
       });
       if (onAgentNameChange) onAgentNameChange(localName);
     } catch {}
     setSaving(false);
   };
 
-  const startDemo = async () => {
-    setDemoEnded(false);
-    setDemoActive(true);
-    try { await api.agent.testCall(); } catch {}
+  const handleSaveBizHours = async () => {
+    setSavingBizHours(true);
+    try {
+      await api.settings.updateBusiness({ openingHours: buildHours(biz24h, bizSched) });
+      setShowBizHoursEdit(false);
+    } catch {}
+    setSavingBizHours(false);
   };
+
+  const handleSaveAgentHours = async () => {
+    setSavingAgentHours(true);
+    try {
+      await api.agent.update({ agentSchedule: buildHours(agent24h, agentSched) });
+      setShowAgentHoursEdit(false);
+    } catch {}
+    setSavingAgentHours(false);
+  };
+
+  const startDemo = async () => {
+    if (callStatus === 'connecting' || callStatus === 'active') return;
+    setCallStatus('connecting');
+    try {
+      const { signedUrl } = await api.agent.getSignedUrl();
+      const conv = await Conversation.startSession({
+        signedUrl,
+        onConnect: () => setCallStatus('active'),
+        onDisconnect: () => { setCallStatus('ended'); conversationRef.current = null; },
+        onError: (msg) => { console.error('ElevenLabs:', msg); setCallStatus('idle'); conversationRef.current = null; },
+      });
+      conversationRef.current = conv;
+    } catch (e) {
+      console.error('Test call failed:', e);
+      setCallStatus('idle');
+    }
+  };
+
+  const endDemo = async () => {
+    if (conversationRef.current) {
+      try { await conversationRef.current.endSession(); } catch {}
+      conversationRef.current = null;
+    }
+    setCallStatus('ended');
+  };
+
+  const bizHoursDisplay   = formatSchedule(bizData?.openingHours);
+  const agentHoursDisplay = formatSchedule(agentData?.agentSchedule);
+  const demoActive = callStatus === 'active' || callStatus === 'connecting';
 
   return (
     <>
@@ -2881,14 +3459,24 @@ function PageVoiceScript({ user, agentName, bizName, agentData, bizData, onAgent
 
       <div className="resp-grid-dashboard-hub">
         <div>
+          {/* Voice card */}
           <div className="card" style={{marginBottom:16}}>
-            <div className="card-head">Choose a voice</div>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+              <div className="card-head" style={{margin:0}}>Choose a voice</div>
+              <div style={{display:"flex",gap:4,background:T.paper,border:`1.5px solid ${T.line}`,borderRadius:50,padding:3}}>
+                {["female","male"].map(g=>(
+                  <button key={g} onClick={()=>handleGenderChange(g)} style={{padding:"5px 14px",borderRadius:50,border:"none",background:gender===g?T.p600:"transparent",color:gender===g?"white":T.mid,fontSize:12.5,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif",transition:"all .2s"}}>
+                    {g==="female"?"♀ Female":"♂ Male"}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="resp-grid-2">
               {voices.map((v,i)=>(
                 <div key={v.n} className={`voice-card ${voice===i?"selected":""}`} onClick={()=>setVoice(i)}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
                     <div><div style={{fontSize:15,fontWeight:600,color:T.ink,marginBottom:3}}>{v.n}</div><div style={{fontSize:12,color:T.soft}}>{v.d}</div></div>
-                    <span className="badge badge-purple">{v.lang}</span>
+                    <span className="badge badge-purple">{gender==="female"?"Female":"Male"}</span>
                   </div>
                   <div className="voice-play">▶</div>
                 </div>
@@ -2896,46 +3484,80 @@ function PageVoiceScript({ user, agentName, bizName, agentData, bizData, onAgent
             </div>
           </div>
 
+          {/* Identity & script */}
           <div className="card" style={{marginBottom:16}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:18}}>
               <div className="card-head" style={{margin:0}}>Agent identity & script</div>
               <div style={{display:"flex",alignItems:"center",gap:10}}>
-                {identitySaved && !identityDirty && (
-                  <span style={{fontSize:12,color:T.green,fontWeight:600}}>✓ Updated</span>
-                )}
+                {identitySaved && !identityDirty && <span style={{fontSize:12,color:T.green,fontWeight:600}}>✓ Updated</span>}
                 {identityDirty && (
-                  <button
-                    onClick={handleSaveIdentity}
-                    disabled={savingIdentity}
-                    style={{padding:"7px 16px",borderRadius:10,border:"none",background:T.p600,color:"white",fontSize:12.5,fontWeight:700,cursor:savingIdentity?"not-allowed":"pointer",fontFamily:"'Outfit',sans-serif",opacity:savingIdentity?0.7:1,transition:"all .2s"}}
-                  >
-                    {savingIdentity ? "Saving…" : "Update agent identity"}
+                  <button onClick={handleSaveIdentity} disabled={savingIdentity} style={{padding:"7px 16px",borderRadius:10,border:"none",background:T.p600,color:"white",fontSize:12.5,fontWeight:700,cursor:savingIdentity?"not-allowed":"pointer",fontFamily:"'Outfit',sans-serif",opacity:savingIdentity?0.7:1,transition:"all .2s"}}>
+                    {savingIdentity?"Saving…":"Update agent identity"}
                   </button>
                 )}
               </div>
             </div>
             <div style={{marginBottom:14}}>
               <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:6,letterSpacing:".3px",textTransform:"uppercase"}}>Agent name</label>
-              <input
-                value={localName}
-                onChange={e=>handleNameChange(e.target.value)}
-                style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${identityDirty?T.p400:T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",transition:"border-color .2s, box-shadow .2s",boxShadow:identityDirty?`0 0 0 3px ${T.p50}`:"0 1px 3px rgba(0,0,0,.04)",boxSizing:"border-box"}}
-              />
+              <input value={localName} onChange={e=>handleNameChange(e.target.value)} style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${identityDirty?T.p400:T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",transition:"border-color .2s, box-shadow .2s",boxShadow:identityDirty?`0 0 0 3px ${T.p50}`:"0 1px 3px rgba(0,0,0,.04)",boxSizing:"border-box"}}/>
             </div>
             <div>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
                 <label style={{fontSize:12,fontWeight:700,color:T.mid,letterSpacing:".3px",textTransform:"uppercase"}}>Opening greeting</label>
                 <span style={{fontSize:11,color:T.soft}}>💡 Keep under 20 seconds</span>
               </div>
-              <textarea
-                rows={4}
-                value={greeting}
-                onChange={e=>handleGreetingChange(e.target.value)}
-                style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${identityDirty?T.p400:T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",resize:"none",lineHeight:1.6,transition:"border-color .2s, box-shadow .2s",boxShadow:identityDirty?`0 0 0 3px ${T.p50}`:"0 1px 3px rgba(0,0,0,.04)",boxSizing:"border-box"}}
-              />
+              <textarea rows={4} value={greeting} onChange={e=>handleGreetingChange(e.target.value)} style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${identityDirty?T.p400:T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",resize:"none",lineHeight:1.6,transition:"border-color .2s, box-shadow .2s",boxShadow:identityDirty?`0 0 0 3px ${T.p50}`:"0 1px 3px rgba(0,0,0,.04)",boxSizing:"border-box"}}/>
             </div>
           </div>
 
+          {/* Hours & Availability */}
+          <div className="card" style={{marginBottom:16}}>
+            <div className="card-head">Hours &amp; Availability</div>
+
+            {/* Business hours */}
+            <div style={{border:`1.5px solid ${T.line}`,borderRadius:12,padding:"14px 16px",marginBottom:12}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                <div>
+                  <div style={{fontSize:13,fontWeight:700,color:T.ink}}>⏰ Business hours</div>
+                  <div style={{fontSize:12,color:bizHoursDisplay?T.soft:T.amber,marginTop:2}}>{bizHoursDisplay||"Not set"}</div>
+                </div>
+                <button onClick={()=>setShowBizHoursEdit(p=>!p)} style={{padding:"6px 14px",borderRadius:9,border:`1.5px solid ${T.line}`,background:T.paper,color:T.mid,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
+                  {showBizHoursEdit?"Cancel":"Edit"}
+                </button>
+              </div>
+              {showBizHoursEdit && (
+                <>
+                  <ScheduleInlineEditor is24h={biz24h} setIs24h={setBiz24h} schedule={bizSched} setSchedule={setBizSched}/>
+                  <button onClick={handleSaveBizHours} disabled={savingBizHours} style={{marginTop:14,width:"100%",padding:"10px",borderRadius:10,border:"none",background:T.p600,color:"white",fontSize:13,fontWeight:700,cursor:savingBizHours?"not-allowed":"pointer",fontFamily:"'Outfit',sans-serif",opacity:savingBizHours?0.7:1}}>
+                    {savingBizHours?"Saving…":"Save business hours"}
+                  </button>
+                </>
+              )}
+            </div>
+
+            {/* Agent hours */}
+            <div style={{border:`1.5px solid ${T.line}`,borderRadius:12,padding:"14px 16px"}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                <div>
+                  <div style={{fontSize:13,fontWeight:700,color:T.ink}}>🤖 Agent hours</div>
+                  <div style={{fontSize:12,color:agentHoursDisplay?T.soft:T.amber,marginTop:2}}>{agentHoursDisplay||"Not set"}</div>
+                </div>
+                <button onClick={()=>setShowAgentHoursEdit(p=>!p)} style={{padding:"6px 14px",borderRadius:9,border:`1.5px solid ${T.line}`,background:T.paper,color:T.mid,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
+                  {showAgentHoursEdit?"Cancel":"Edit"}
+                </button>
+              </div>
+              {showAgentHoursEdit && (
+                <>
+                  <ScheduleInlineEditor is24h={agent24h} setIs24h={setAgent24h} schedule={agentSched} setSchedule={setAgentSched}/>
+                  <button onClick={handleSaveAgentHours} disabled={savingAgentHours} style={{marginTop:14,width:"100%",padding:"10px",borderRadius:10,border:"none",background:T.p600,color:"white",fontSize:13,fontWeight:700,cursor:savingAgentHours?"not-allowed":"pointer",fontFamily:"'Outfit',sans-serif",opacity:savingAgentHours?0.7:1}}>
+                    {savingAgentHours?"Saving…":"Save agent hours"}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Call handling */}
           <div className="card">
             <div className="card-head">Call handling rules</div>
             <p style={{fontSize:12,color:T.soft,margin:"-8px 0 16px 0"}}>When {localName} can't help…</p>
@@ -2963,20 +3585,24 @@ function PageVoiceScript({ user, agentName, bizName, agentData, bizData, onAgent
           </div>
         </div>
 
+        {/* Right panel — test call */}
         <div>
           <div className="card" style={{position:"sticky",top:20,padding:0,overflow:"hidden"}}>
             {/* Header */}
             <div style={{padding:"18px 20px 14px",borderBottom:`1px solid ${T.line}`}}>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                 <span style={{fontSize:13,fontWeight:700,color:T.ink}}>Test call</span>
-                {demoActive && (
+                {callStatus==='connecting' && (
+                  <div style={{display:"flex",alignItems:"center",gap:5,background:"#FEF3C7",border:"1px solid #FDE68A",borderRadius:50,padding:"3px 10px",fontSize:11,fontWeight:700,color:"#92400E"}}>
+                    <div style={{width:6,height:6,borderRadius:"50%",background:"#F59E0B",animation:"pulse 1.2s infinite"}}/>CONNECTING…
+                  </div>
+                )}
+                {callStatus==='active' && (
                   <div style={{display:"flex",alignItems:"center",gap:5,background:T.greenBg,border:`1px solid ${T.greenBd}`,borderRadius:50,padding:"3px 10px",fontSize:11,fontWeight:700,color:T.green}}>
                     <div style={{width:6,height:6,borderRadius:"50%",background:T.green,animation:"pulse 1.2s infinite"}}/>LIVE
                   </div>
                 )}
-                {demoEnded && (
-                  <span style={{fontSize:11,fontWeight:700,color:T.green}}>✓ Call ended</span>
-                )}
+                {callStatus==='ended' && <span style={{fontSize:11,fontWeight:700,color:T.green}}>✓ Call ended</span>}
               </div>
             </div>
 
@@ -2997,7 +3623,7 @@ function PageVoiceScript({ user, agentName, bizName, agentData, bizData, onAgent
               </div>
             </div>
 
-            {/* Waveform (active only) */}
+            {/* Waveform (active call) */}
             {demoActive && (
               <div style={{padding:"16px 20px",borderBottom:`1px solid ${T.line}`,display:"flex",alignItems:"center",justifyContent:"center"}}>
                 <div className="waveform">
@@ -3016,17 +3642,11 @@ function PageVoiceScript({ user, agentName, bizName, agentData, bizData, onAgent
             {/* Call button */}
             <div style={{padding:"16px 20px"}}>
               {!demoActive ? (
-                <button
-                  onClick={startDemo}
-                  style={{width:"100%",padding:"14px",borderRadius:14,border:"none",background:`linear-gradient(135deg,${T.p600},${T.p700})`,color:"white",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",justifyContent:"center",gap:8,boxShadow:`0 4px 16px rgba(112,53,245,.3)`,transition:"all .2s"}}
-                >
+                <button onClick={startDemo} disabled={callStatus==='connecting'} style={{width:"100%",padding:"14px",borderRadius:14,border:"none",background:`linear-gradient(135deg,${T.p600},${T.p700})`,color:"white",fontSize:14,fontWeight:700,cursor:callStatus==='connecting'?"not-allowed":"pointer",fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",justifyContent:"center",gap:8,boxShadow:`0 4px 16px rgba(112,53,245,.3)`,transition:"all .2s",opacity:callStatus==='connecting'?0.7:1}}>
                   <span style={{fontSize:18}}>📞</span> Start test call
                 </button>
               ) : (
-                <button
-                  onClick={()=>{setDemoActive(false);setDemoEnded(true);}}
-                  style={{width:"100%",padding:"14px",borderRadius:14,border:"none",background:T.red,color:"white",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",justifyContent:"center",gap:8,boxShadow:"0 4px 16px rgba(239,68,68,.3)",transition:"all .2s"}}
-                >
+                <button onClick={endDemo} style={{width:"100%",padding:"14px",borderRadius:14,border:"none",background:T.red,color:"white",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",justifyContent:"center",gap:8,boxShadow:"0 4px 16px rgba(239,68,68,.3)",transition:"all .2s"}}>
                   <span style={{fontSize:18}}>📵</span> End call
                 </button>
               )}
@@ -3073,6 +3693,18 @@ function PageMenu({ user, agentName, bizName }) {
   const [showAddCat, setShowAddCat] = useState(false);
   const [newCatName, setNewCatName] = useState('');
   const [addingCat, setAddingCat] = useState(false);
+
+  // FAQ modal
+  const [showFaq, setShowFaq] = useState(false);
+  const [faqs, setFaqs] = useState([]);
+  const [faqLoading, setFaqLoading] = useState(false);
+  const [faqQuestion, setFaqQuestion] = useState('');
+  const [faqAnswer, setFaqAnswer] = useState('');
+  const [addingFaq, setAddingFaq] = useState(false);
+  const [editingFaqId, setEditingFaqId] = useState(null);
+  const [editingFaqQ, setEditingFaqQ] = useState('');
+  const [editingFaqA, setEditingFaqA] = useState('');
+  const [savingFaq, setSavingFaq] = useState(false);
 
   useEffect(() => {
     const h = () => setIsMobile(window.innerWidth <= 768);
@@ -3189,6 +3821,40 @@ function PageMenu({ user, agentName, bizName }) {
     setAddingCat(false);
   };
 
+  const openFaq = async () => {
+    setShowFaq(true);
+    setFaqLoading(true);
+    try { setFaqs(await api.faq.list()); } catch {}
+    setFaqLoading(false);
+  };
+  const handleAddFaq = async () => {
+    if (!faqQuestion.trim() || !faqAnswer.trim()) return;
+    setAddingFaq(true);
+    try {
+      const created = await api.faq.create({ question: faqQuestion.trim(), answer: faqAnswer.trim() });
+      setFaqs(prev => [...prev, created]);
+      setFaqQuestion(''); setFaqAnswer('');
+    } catch {}
+    setAddingFaq(false);
+  };
+  const handleDeleteFaq = async (id) => {
+    try {
+      await api.faq.delete(id);
+      setFaqs(prev => prev.filter(f => f.id !== id));
+    } catch {}
+  };
+  const startEditFaq = (faq) => { setEditingFaqId(faq.id); setEditingFaqQ(faq.question); setEditingFaqA(faq.answer); };
+  const cancelEditFaq = () => { setEditingFaqId(null); setEditingFaqQ(''); setEditingFaqA(''); };
+  const handleSaveFaq = async (id) => {
+    setSavingFaq(true);
+    try {
+      const updated = await api.faq.update(id, { question: editingFaqQ.trim(), answer: editingFaqA.trim() });
+      setFaqs(prev => prev.map(f => f.id === id ? updated : f));
+      cancelEditFaq();
+    } catch {}
+    setSavingFaq(false);
+  };
+
   const inputStyle = { width:"100%", padding:"12px 16px", border:`1.5px solid ${T.line}`, borderRadius:12, background:T.paper, color:T.ink, fontSize:14, fontFamily:"'Outfit',sans-serif", outline:"none", boxSizing:"border-box" };
   const modalOverlay = { position:"fixed", inset:0, zIndex:9999, display:"flex", alignItems:"center", justifyContent:"center", padding:24 };
   const modalBox = { position:"relative", width:"100%", background:T.white, border:`1.5px solid ${T.line}`, borderRadius:22, boxShadow:`0 24px 80px rgba(134,87,255,.18)`, animation:"fadeUp .3s ease both" };
@@ -3198,6 +3864,7 @@ function PageMenu({ user, agentName, bizName }) {
       <TopBar title={<>Menu <strong>Manager</strong></>} subtitle={`Items ${displayAgent} knows and can take orders for`} user={user} agentName={agentName}>
         <button className="btn-secondary" style={{fontSize:13,padding:"8px 16px"}} onClick={()=>{ setImportTab('url'); setShowImport(true); }}>Import from URL</button>
         <button className="btn-secondary" style={{fontSize:13,padding:"8px 16px"}} onClick={()=>{ setImportTab('file'); setShowImport(true); }}>Upload files</button>
+        <button className="btn-secondary" style={{fontSize:13,padding:"8px 16px"}} onClick={openFaq}>💬 FAQ</button>
         <button className="btn-primary" style={{fontSize:13,padding:"9px 18px"}} onClick={()=>{ setNewItemCatId(activeCatId); setShowAddItem(true); }}>+ Add item</button>
       </TopBar>
 
@@ -3438,6 +4105,98 @@ function PageMenu({ user, agentName, bizName }) {
           </div>
         </div>
       )}
+
+      {/* ── FAQ Modal ── */}
+      {showFaq && (
+        <div style={modalOverlay} onClick={()=>{ setShowFaq(false); cancelEditFaq(); }}>
+          <div style={{position:"absolute",inset:0,background:"rgba(19,13,46,.45)",backdropFilter:"blur(6px)"}}/>
+          <div onClick={e=>e.stopPropagation()} style={{...modalBox, maxWidth:600, maxHeight:"88vh", display:"flex", flexDirection:"column"}}>
+            {/* Header */}
+            <div style={{padding:"24px 28px 18px",borderBottom:`1px solid ${T.line}`,display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
+              <div>
+                <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:900,color:T.ink,margin:0}}>💬 FAQ Manager</h3>
+                <p style={{margin:"4px 0 0",fontSize:12,color:T.soft}}>Questions your agent will answer automatically on every call</p>
+              </div>
+              <button onClick={()=>{ setShowFaq(false); cancelEditFaq(); }} style={{width:32,height:32,borderRadius:"50%",border:`1.5px solid ${T.line}`,background:T.paper,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:T.mid,flexShrink:0}}>✕</button>
+            </div>
+
+            {/* Scrollable content */}
+            <div style={{flex:1,overflowY:"auto",padding:"20px 28px"}}>
+
+              {/* Existing FAQs */}
+              {faqLoading ? (
+                <div style={{textAlign:"center",padding:"32px",color:T.soft,fontSize:13}}>Loading FAQs…</div>
+              ) : faqs.length === 0 ? (
+                <div style={{textAlign:"center",padding:"28px 0",color:T.soft,fontSize:13}}>No FAQs yet — add your first one below.</div>
+              ) : (
+                <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:20}}>
+                  {faqs.map((faq,idx)=>(
+                    <div key={faq.id} style={{background:T.paper,border:`1.5px solid ${editingFaqId===faq.id?T.p300:T.line}`,borderRadius:14,padding:"14px 16px",transition:"border-color .2s"}}>
+                      {editingFaqId === faq.id ? (
+                        /* Inline edit form */
+                        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                          <input value={editingFaqQ} onChange={e=>setEditingFaqQ(e.target.value)} placeholder="Question" style={{...inputStyle,padding:"9px 12px",fontSize:13,background:T.white}}/>
+                          <textarea rows={3} value={editingFaqA} onChange={e=>setEditingFaqA(e.target.value)} placeholder="Answer" style={{...inputStyle,padding:"9px 12px",fontSize:13,resize:"vertical",lineHeight:1.5,background:T.white}}/>
+                          <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
+                            <button onClick={cancelEditFaq} style={{padding:"6px 14px",borderRadius:9,border:`1.5px solid ${T.line}`,background:"transparent",color:T.mid,fontSize:12.5,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>Cancel</button>
+                            <button onClick={()=>handleSaveFaq(faq.id)} disabled={savingFaq||!editingFaqQ.trim()||!editingFaqA.trim()} style={{padding:"6px 14px",borderRadius:9,border:"none",background:T.p600,color:"white",fontSize:12.5,fontWeight:700,cursor:savingFaq?"not-allowed":"pointer",fontFamily:"'Outfit',sans-serif",opacity:savingFaq?0.7:1}}>
+                              {savingFaq?"Saving…":"Save"}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        /* Display row */
+                        <div>
+                          <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:10}}>
+                            <div style={{display:"flex",alignItems:"flex-start",gap:10,flex:1}}>
+                              <span style={{fontSize:11,fontWeight:800,color:T.p500,background:T.p50,border:`1.5px solid ${T.p100}`,borderRadius:6,padding:"2px 7px",marginTop:1,flexShrink:0}}>Q{idx+1}</span>
+                              <div>
+                                <div style={{fontSize:13.5,fontWeight:700,color:T.ink,marginBottom:5}}>{faq.question}</div>
+                                <div style={{fontSize:13,color:T.mid,lineHeight:1.6}}>{faq.answer}</div>
+                              </div>
+                            </div>
+                            <div style={{display:"flex",gap:6,flexShrink:0}}>
+                              <button onClick={()=>startEditFaq(faq)} style={{padding:"5px 12px",borderRadius:8,border:`1.5px solid ${T.line}`,background:T.white,color:T.mid,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>Edit</button>
+                              <button onClick={()=>handleDeleteFaq(faq.id)} style={{padding:"5px 12px",borderRadius:8,border:"none",background:"#FEE2E2",color:T.red,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>Remove</button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Add new FAQ form */}
+              <div style={{background:T.paper,border:`1.5px dashed ${T.p200}`,borderRadius:14,padding:"16px"}}>
+                <div style={{fontSize:12,fontWeight:700,color:T.p600,marginBottom:10,textTransform:"uppercase",letterSpacing:".4px"}}>+ Add new FAQ</div>
+                <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  <input
+                    value={faqQuestion}
+                    onChange={e=>setFaqQuestion(e.target.value)}
+                    placeholder="e.g. Do you offer gluten-free options?"
+                    style={{...inputStyle,padding:"10px 14px",fontSize:13,background:T.white}}
+                  />
+                  <textarea
+                    rows={3}
+                    value={faqAnswer}
+                    onChange={e=>setFaqAnswer(e.target.value)}
+                    placeholder="e.g. Yes! Several of our dishes are gluten-free. Ask your server for our allergen menu."
+                    style={{...inputStyle,padding:"10px 14px",fontSize:13,resize:"vertical",lineHeight:1.5,background:T.white}}
+                  />
+                  <button
+                    onClick={handleAddFaq}
+                    disabled={addingFaq||!faqQuestion.trim()||!faqAnswer.trim()}
+                    style={{alignSelf:"flex-end",padding:"9px 22px",borderRadius:10,border:"none",background:T.p600,color:"white",fontSize:13,fontWeight:700,cursor:addingFaq||!faqQuestion.trim()||!faqAnswer.trim()?"not-allowed":"pointer",fontFamily:"'Outfit',sans-serif",opacity:addingFaq||!faqQuestion.trim()||!faqAnswer.trim()?0.6:1,transition:"opacity .2s"}}
+                  >
+                    {addingFaq?"Adding…":"Add FAQ"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
@@ -3445,151 +4204,174 @@ function PageMenu({ user, agentName, bizName }) {
 /* ═══════════════════════════════════════════
    PAGE 8 — INTEGRATIONS
 ═══════════════════════════════════════════ */
-const INTEGRATION_META = {
-  "resOS":          { logo: "📅", desc: "Manage and sync reservations directly through resOS", configFields: [{ key: "apiKey", label: "API Key", placeholder: "res_live_..." }] },
-  "Square":         { logo: "🟦", desc: "Send orders to your Square POS in real-time", configFields: [{ key: "accessToken", label: "Access Token", placeholder: "EAAAl..." }, { key: "locationId", label: "Location ID", placeholder: "LXXXXXXXXXXXXXXXX" }] },
-  "Clover":         { logo: "🍀", desc: "Full order and inventory sync with Clover POS", configFields: [{ key: "accessToken", label: "Access Token", placeholder: "..." }, { key: "merchantId", label: "Merchant ID", placeholder: "XXXXXXXXXXXXXXXX" }] },
-  "Square KDS":     { logo: "🖥️", desc: "Route orders to Square Kitchen Display System automatically", configFields: [{ key: "deviceId", label: "Device ID", placeholder: "device:..." }] },
-  "Clover KDS":     { logo: "📟", desc: "Display tickets on Clover KDS as orders come in", configFields: [{ key: "deviceId", label: "Device ID", placeholder: "..." }] },
-  "Fresh KDS":      { logo: "🍳", desc: "Third-party kitchen display — works with any POS", configFields: [{ key: "apiKey", label: "API Key", placeholder: "fkds_..." }, { key: "webhookUrl", label: "Webhook URL", placeholder: "https://..." }] },
-  "Resend":         { logo: "✉️", desc: "Send booking confirmations & order receipts via email", configFields: [{ key: "apiKey", label: "API Key", placeholder: "re_..." }] },
-  "Stripe Connect": { logo: "💳", desc: "Collect deposits and order payments from customers", configFields: [{ key: "accountId", label: "Stripe Account ID", placeholder: "acct_..." }, { key: "publishableKey", label: "Publishable Key", placeholder: "pk_live_..." }] },
-  "Google OAuth":   { logo: "🔵", desc: "Allow business owners to sign in with their Google account", configFields: [{ key: "clientId", label: "Client ID", placeholder: "...apps.googleusercontent.com" }, { key: "clientSecret", label: "Client Secret", placeholder: "GOCSPX-..." }] },
-};
+const AVAILABLE_INTEGRATIONS = [
+  {
+    name: "Square",
+    icon: "🟦",
+    category: "ordering",
+    desc: "Connect Square POS to accept orders and sync your menu in real-time",
+    fields: [
+      { key: "accessToken", label: "Access Token", placeholder: "EAAAl..." },
+      { key: "locationId",  label: "Location ID",  placeholder: "LXXXXXXXXXXXXXXXX" },
+    ],
+  },
+  {
+    name: "Clover",
+    icon: "🍀",
+    category: "ordering",
+    desc: "Full order and inventory sync with Clover POS",
+    fields: [
+      { key: "accessToken", label: "Access Token", placeholder: "..." },
+      { key: "merchantId",  label: "Merchant ID",  placeholder: "XXXXXXXXXXXXXXXX" },
+    ],
+  },
+  {
+    name: "renOS",
+    icon: "📅",
+    category: "reservation",
+    desc: "Manage table reservations and sync bookings through renOS",
+    fields: [
+      { key: "apiKey",      label: "API Key",      placeholder: "rn_live_..." },
+      { key: "propertyId",  label: "Property ID",  placeholder: "PROP-XXXXXXXX" },
+    ],
+  },
+];
+const TOTAL_INTEGRATIONS = AVAILABLE_INTEGRATIONS.length; // 3
 
-function PageIntegrations({ user, agentName }) {
-  const [integrations, setIntegrations] = useState([]);
+function PageIntegrations({ user, agentName, bizName }) {
+  const displayBiz = bizName || "your business";
+
+  const [connected, setConnected] = useState([]);   // integrations from DB (status=CONNECTED)
   const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(null);
-  const [cat, setCat] = useState("All");
-  const [statusFilter, setStatusFilter] = useState("All");
-  const [configModal, setConfigModal] = useState(null); // { integration } | null
+  const [disconnecting, setDisconnecting] = useState(null); // id being disconnected
+
+  // Connect modal
+  const [showConnectModal, setShowConnectModal] = useState(false);
+  const [pickedIntegration, setPickedIntegration] = useState(null); // one of AVAILABLE_INTEGRATIONS
   const [configValues, setConfigValues] = useState({});
   const [configError, setConfigError] = useState("");
+  const [connecting, setConnecting] = useState(false);
 
-  const fetchIntegrations = async () => {
-    try {
-      const data = await api.integrations.list();
-      setIntegrations(data);
-    } catch (e) { console.error("Failed to load integrations", e); }
+  const fetchConnected = async () => {
+    try { setConnected(await api.integrations.list()); }
+    catch {}
     setLoading(false);
   };
 
-  useEffect(() => { fetchIntegrations(); }, []);
+  useEffect(() => { fetchConnected(); }, []);
 
-  const openConfigModal = (integration) => {
-    const fields = INTEGRATION_META[integration.name]?.configFields || [];
-    const initial = {};
-    fields.forEach(f => { initial[f.key] = ""; });
-    setConfigValues(initial);
+  const openModal = () => {
+    setPickedIntegration(null);
+    setConfigValues({});
     setConfigError("");
-    setConfigModal(integration);
+    setShowConnectModal(true);
   };
 
-  const handleConnect = async (id, config = {}) => {
-    setActionLoading(id);
-    try { await api.integrations.connect(id, config); await fetchIntegrations(); }
-    catch (e) { console.error("Connect failed", e); }
-    setActionLoading(null);
+  const pickIntegration = (intg) => {
+    setPickedIntegration(intg);
+    const vals = {};
+    intg.fields.forEach(f => { vals[f.key] = ""; });
+    setConfigValues(vals);
+    setConfigError("");
   };
 
-  const handleConfigSubmit = async () => {
-    if (!configModal) return;
-    const fields = INTEGRATION_META[configModal.name]?.configFields || [];
-    const missing = fields.find(f => !configValues[f.key]?.trim());
+  const handleConnect = async () => {
+    if (!pickedIntegration) return;
+    const missing = pickedIntegration.fields.find(f => !configValues[f.key]?.trim());
     if (missing) { setConfigError(`${missing.label} is required`); return; }
-    setConfigModal(null);
-    await handleConnect(configModal.id, configValues);
+    setConnecting(true);
+    try {
+      await api.integrations.connect(pickedIntegration.name, pickedIntegration.category, configValues);
+      await fetchConnected();
+      setShowConnectModal(false);
+      setPickedIntegration(null);
+    } catch (e) {
+      setConfigError(e?.message || "Connection failed. Check your credentials.");
+    }
+    setConnecting(false);
   };
 
   const handleDisconnect = async (id) => {
-    setActionLoading(id);
-    try { await api.integrations.disconnect(id); await fetchIntegrations(); }
-    catch (e) { console.error("Disconnect failed", e); }
-    setActionLoading(null);
+    setDisconnecting(id);
+    try { await api.integrations.disconnect(id); await fetchConnected(); }
+    catch {}
+    setDisconnecting(null);
   };
 
-  const categories = ["All", ...Array.from(new Set(integrations.map(i => i.category)))];
-  const filtered = integrations
-    .filter(i => cat === "All" || i.category === cat)
-    .filter(i => statusFilter === "All" || (statusFilter === "Connected" ? i.status === "CONNECTED" : i.status !== "CONNECTED"));
+  const connectedCount = connected.length;
+  const remaining = TOTAL_INTEGRATIONS - connectedCount;
 
-  const connectedCount = integrations.filter(i => i.status === "CONNECTED").length;
+  // Which integrations are not yet connected (by name)
+  const connectedNames = new Set(connected.map(c => c.name));
+  const notConnected = AVAILABLE_INTEGRATIONS.filter(i => !connectedNames.has(i.name));
+
+  const intgIcon = (name) => AVAILABLE_INTEGRATIONS.find(i => i.name === name)?.icon || "🔌";
+  const intgDesc = (name) => AVAILABLE_INTEGRATIONS.find(i => i.name === name)?.desc || "";
+
+  const modalOverlay = { position:"fixed", inset:0, zIndex:9999, display:"flex", alignItems:"center", justifyContent:"center", padding:24 };
 
   return (
     <>
-      <TopBar title={<>Integrations</>} subtitle="Connect Talkativ to the services you use" user={user} agentName={agentName} />
+      <TopBar title={<>Integrations</>} subtitle={`Connect ${displayBiz} to the services you use`} user={user} agentName={agentName}>
+        <button className="btn-primary" style={{fontSize:13,padding:"9px 18px"}} onClick={openModal}>+ Connect integration</button>
+      </TopBar>
 
       {/* KPI summary */}
-      <div className="kpi-row" style={{gridTemplateColumns:"repeat(3, 1fr)", marginBottom:24}}>
+      <div className="kpi-row" style={{gridTemplateColumns:"repeat(3, 1fr)", marginBottom:28}}>
         {[
-          {l:"Total integrations", v:String(integrations.length), d:"Available to connect"},
-          {l:"Connected", v:String(connectedCount), d:connectedCount > 0 ? "Active right now" : "Connect one to get started"},
-          {l:"Available", v:String(integrations.length - connectedCount), d:"Ready to connect"},
+          { l:"Available",          v:String(TOTAL_INTEGRATIONS), d:"Ready to connect"          },
+          { l:"Connected",          v:String(connectedCount),     d:connectedCount > 0 ? "Active right now" : "Connect one to get started" },
+          { l:"Total integrations", v:String(remaining),          d:"Available to connect"      },
         ].map(k=>(
-          <div className="kpi-card" key={k.l}><div className="kpi-label">{k.l}</div><div className="kpi-value">{k.v}</div><div className="kpi-delta">{k.d}</div></div>
+          <div className="kpi-card" key={k.l}>
+            <div className="kpi-label">{k.l}</div>
+            <div className="kpi-value">{k.v}</div>
+            <div className="kpi-delta">{k.d}</div>
+          </div>
         ))}
       </div>
 
-      {/* Filters */}
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:22,flexWrap:"wrap",gap:10}}>
-        <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-          {categories.map(c=>(
-            <button key={c} onClick={()=>setCat(c)} style={{padding:"7px 16px",borderRadius:50,border:`1.5px solid ${cat===c?T.p500:T.line}`,background:cat===c?T.p50:"transparent",color:cat===c?T.p700:T.mid,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif",transition:"all .18s"}}>{c}</button>
-          ))}
-        </div>
-        <select value={statusFilter} onChange={e=>setStatusFilter(e.target.value)} style={{padding:"8px 16px",fontSize:13,border:`1.5px solid ${T.line}`,borderRadius:50,background:T.white,color:T.ink,fontFamily:"'Outfit',sans-serif",fontWeight:600,cursor:"pointer",outline:"none",transition:"border-color .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)"}}>
-          <option>All</option><option>Connected</option><option>Available</option>
-        </select>
-      </div>
-
-      {/* Loading / Empty */}
+      {/* Connected integrations */}
       {loading ? (
         <div style={{textAlign:"center",padding:"60px 20px"}}>
           <div style={{fontSize:36,marginBottom:12}}>⏳</div>
           <div style={{fontSize:15,fontWeight:600,color:T.ink}}>Loading integrations…</div>
         </div>
-      ) : filtered.length === 0 ? (
-        <div style={{textAlign:"center",padding:"60px 20px"}}>
-          <div style={{fontSize:36,marginBottom:12}}>🔌</div>
-          <div style={{fontSize:15,fontWeight:600,color:T.ink,marginBottom:6}}>No integrations found</div>
-          <div style={{fontSize:13,color:T.soft}}>Try adjusting your filters</div>
+      ) : connectedCount === 0 ? (
+        <div className="card" style={{textAlign:"center",padding:"64px 32px"}}>
+          <div style={{fontSize:48,marginBottom:16}}>🔌</div>
+          <div style={{fontSize:18,fontWeight:700,color:T.ink,marginBottom:8}}>No integrations connected yet</div>
+          <div style={{fontSize:14,color:T.soft,marginBottom:28,lineHeight:1.6,maxWidth:420,margin:"0 auto 28px"}}>
+            Connect Square or Clover to take orders, or renOS to manage reservations.<br/>
+            Your agent will use these to serve customers on every call.
+          </div>
+          <button className="btn-primary" style={{fontSize:13,padding:"11px 28px"}} onClick={openModal}>+ Connect your first integration</button>
         </div>
       ) : (
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(300px, 1fr))",gap:20}}>
-          {filtered.map(int => {
-            const meta = INTEGRATION_META[int.name] || { logo: "🔌", desc: int.name };
-            const isConnected = int.status === "CONNECTED";
-            const isBusy = actionLoading === int.id;
+          {connected.map(int => {
+            const isBusy = disconnecting === int.id;
             return (
-              <div key={int.id} style={{background:T.white,border:`1.5px solid ${isConnected ? T.greenBd : T.line}`,borderRadius:18,padding:26,display:"flex",flexDirection:"column",transition:"all .22s"}} onMouseEnter={e=>{e.currentTarget.style.borderColor=isConnected?T.green:T.p300;e.currentTarget.style.boxShadow=`0 8px 28px ${isConnected?'rgba(34,197,94,.1)':'rgba(112,53,245,.08)'}`}} onMouseLeave={e=>{e.currentTarget.style.borderColor=isConnected?T.greenBd:T.line;e.currentTarget.style.boxShadow="none"}}>
+              <div key={int.id} style={{background:T.white,border:`1.5px solid ${T.greenBd}`,borderRadius:18,padding:26,display:"flex",flexDirection:"column",transition:"box-shadow .2s"}} onMouseEnter={e=>e.currentTarget.style.boxShadow="0 8px 28px rgba(34,197,94,.1)"} onMouseLeave={e=>e.currentTarget.style.boxShadow="none"}>
                 {/* Header */}
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:18}}>
-                  <div style={{width:56,height:56,borderRadius:16,background:isConnected?T.greenBg:T.paper,border:`1.5px solid ${isConnected?T.greenBd:T.line}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,transition:"all .2s"}}>{meta.logo}</div>
+                  <div style={{width:56,height:56,borderRadius:16,background:T.greenBg,border:`1.5px solid ${T.greenBd}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:28}}>{intgIcon(int.name)}</div>
                   <span style={{padding:"4px 11px",borderRadius:50,fontSize:10.5,fontWeight:700,letterSpacing:".3px",textTransform:"uppercase",background:T.p50,color:T.p700,border:`1px solid ${T.p100}`}}>{int.category}</span>
                 </div>
-                {/* Name + desc */}
                 <div style={{fontSize:17,fontWeight:700,color:T.ink,marginBottom:6}}>{int.name}</div>
-                <div style={{fontSize:13,color:T.soft,lineHeight:1.55,flex:1}}>{meta.desc}</div>
-                {/* Last synced */}
-                {isConnected && int.lastSynced && (
-                  <div style={{fontSize:11.5,color:T.soft,marginTop:10}}>Last synced: {new Date(int.lastSynced).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
+                <div style={{fontSize:13,color:T.soft,lineHeight:1.55,flex:1}}>{intgDesc(int.name)}</div>
+                {int.lastSynced && (
+                  <div style={{fontSize:11.5,color:T.soft,marginTop:10}}>
+                    Connected: {new Date(int.lastSynced).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })}
+                  </div>
                 )}
-                {/* Action */}
                 <div style={{marginTop:20,paddingTop:18,borderTop:`1px solid ${T.paper}`,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                  {isConnected ? (
-                    <>
-                      <span style={{display:"inline-flex",alignItems:"center",gap:5,padding:"5px 12px",borderRadius:50,fontSize:12,fontWeight:700,background:T.greenBg,color:T.green,border:`1px solid ${T.greenBd}`}}>
-                        <span style={{width:6,height:6,borderRadius:"50%",background:T.green,display:"inline-block"}}/>Connected
-                      </span>
-                      <button disabled={isBusy} onClick={()=>handleDisconnect(int.id)} style={{padding:"7px 16px",borderRadius:50,border:`1.5px solid ${T.red}22`,background:T.redBg,color:T.red,fontSize:12,fontWeight:700,cursor:isBusy?"not-allowed":"pointer",fontFamily:"'Outfit',sans-serif",opacity:isBusy?.6:1,transition:"all .18s"}}>{isBusy?"Disconnecting…":"Disconnect"}</button>
-                    </>
-                  ) : (
-                    <>
-                      <span style={{fontSize:12,color:T.faint,fontWeight:500}}>Not connected</span>
-                      <button disabled={isBusy} onClick={()=>openConfigModal(int)} className="btn-primary" style={{fontSize:12,padding:"7px 18px",opacity:isBusy?.6:1}}>{isBusy?"Connecting…":"Connect"}</button>
-                    </>
-                  )}
+                  <span style={{display:"inline-flex",alignItems:"center",gap:5,padding:"5px 12px",borderRadius:50,fontSize:12,fontWeight:700,background:T.greenBg,color:T.green,border:`1px solid ${T.greenBd}`}}>
+                    <span style={{width:6,height:6,borderRadius:"50%",background:T.green,display:"inline-block"}}/>Connected
+                  </span>
+                  <button disabled={isBusy} onClick={()=>handleDisconnect(int.id)} style={{padding:"7px 16px",borderRadius:50,border:`1.5px solid ${T.red}33`,background:"#FEF2F2",color:T.red,fontSize:12,fontWeight:700,cursor:isBusy?"not-allowed":"pointer",fontFamily:"'Outfit',sans-serif",opacity:isBusy?0.6:1,transition:"all .18s"}}>
+                    {isBusy?"Disconnecting…":"Disconnect"}
+                  </button>
                 </div>
               </div>
             );
@@ -3597,32 +4379,86 @@ function PageIntegrations({ user, agentName }) {
         </div>
       )}
 
-      {/* ── Config Modal ── */}
-      {configModal && (
-        <div style={{position:"fixed",inset:0,zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:24,background:"rgba(0,0,0,.35)"}} onClick={()=>setConfigModal(null)}>
-          <div onClick={e=>e.stopPropagation()} style={{position:"relative",width:"100%",maxWidth:440,background:T.white,border:`1.5px solid ${T.line}`,borderRadius:22,boxShadow:`0 24px 80px rgba(134,87,255,.18)`,animation:"fadeUp .3s ease both",padding:32}}>
-            <button onClick={()=>setConfigModal(null)} style={{position:"absolute",top:16,right:16,width:32,height:32,borderRadius:"50%",border:`1.5px solid ${T.line}`,background:T.paper,cursor:"pointer",fontSize:16,color:T.soft,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
-            <div style={{fontSize:32,marginBottom:12}}>{INTEGRATION_META[configModal.name]?.logo || "🔌"}</div>
-            <div style={{fontSize:18,fontWeight:700,color:T.ink,marginBottom:4}}>Connect {configModal.name}</div>
-            <div style={{fontSize:13,color:T.soft,marginBottom:24}}>{INTEGRATION_META[configModal.name]?.desc}</div>
-            {(INTEGRATION_META[configModal.name]?.configFields || []).map(f => (
-              <div key={f.key} style={{marginBottom:16}}>
-                <label style={{display:"block",fontSize:12,fontWeight:700,color:T.ink,marginBottom:6,textTransform:"uppercase",letterSpacing:".4px"}}>{f.label}</label>
-                <input
-                  type="text"
-                  value={configValues[f.key] || ""}
-                  onChange={e => { setConfigValues(v => ({...v, [f.key]: e.target.value})); setConfigError(""); }}
-                  placeholder={f.placeholder}
-                  style={{width:"100%",padding:"10px 14px",borderRadius:10,border:`1.5px solid ${T.line}`,fontSize:13,fontFamily:"'Outfit',sans-serif",outline:"none",boxSizing:"border-box",background:T.paper,color:T.ink}}
-                  onFocus={e=>e.target.style.borderColor=T.p400}
-                  onBlur={e=>e.target.style.borderColor=T.line}
-                />
+      {/* ── Connect Integration Modal ── */}
+      {showConnectModal && (
+        <div style={modalOverlay} onClick={()=>{ if(!connecting){ setShowConnectModal(false); setPickedIntegration(null); } }}>
+          <div style={{position:"absolute",inset:0,background:"rgba(19,13,46,.45)",backdropFilter:"blur(6px)"}}/>
+          <div onClick={e=>e.stopPropagation()} style={{position:"relative",width:"100%",maxWidth:500,background:T.white,border:`1.5px solid ${T.line}`,borderRadius:22,boxShadow:`0 24px 80px rgba(134,87,255,.18)`,animation:"fadeUp .3s ease both",overflow:"hidden"}}>
+
+            {/* Modal header */}
+            <div style={{padding:"24px 28px 18px",borderBottom:`1px solid ${T.line}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div>
+                <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:900,color:T.ink,margin:0}}>
+                  {pickedIntegration ? `Configure ${pickedIntegration.name}` : "Connect an integration"}
+                </h3>
+                <p style={{margin:"4px 0 0",fontSize:12,color:T.soft}}>
+                  {pickedIntegration ? pickedIntegration.desc : "Choose a service to connect to your account"}
+                </p>
               </div>
-            ))}
-            {configError && <div style={{fontSize:12,color:T.red,marginBottom:12}}>{configError}</div>}
-            <div style={{display:"flex",gap:10,marginTop:8}}>
-              <button onClick={()=>setConfigModal(null)} style={{flex:1,padding:"10px",borderRadius:50,border:`1.5px solid ${T.line}`,background:"transparent",color:T.mid,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>Cancel</button>
-              <button onClick={handleConfigSubmit} className="btn-primary" style={{flex:2,fontSize:13,padding:"10px"}}>Connect</button>
+              <button onClick={()=>{ if(!connecting){ setShowConnectModal(false); setPickedIntegration(null); } }} style={{width:32,height:32,borderRadius:"50%",border:`1.5px solid ${T.line}`,background:T.paper,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:T.mid,flexShrink:0}}>✕</button>
+            </div>
+
+            <div style={{padding:"22px 28px 28px"}}>
+              {!pickedIntegration ? (
+                /* Integration picker */
+                <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                  {AVAILABLE_INTEGRATIONS.map(intg => {
+                    const alreadyConnected = connectedNames.has(intg.name);
+                    return (
+                      <div
+                        key={intg.name}
+                        onClick={()=>!alreadyConnected && pickIntegration(intg)}
+                        style={{display:"flex",alignItems:"center",gap:14,padding:"16px 18px",borderRadius:14,border:`1.5px solid ${alreadyConnected ? T.greenBd : T.line}`,background:alreadyConnected ? T.greenBg : T.paper,cursor:alreadyConnected?"default":"pointer",transition:"all .18s"}}
+                        onMouseEnter={e=>{ if(!alreadyConnected) { e.currentTarget.style.borderColor=T.p300; e.currentTarget.style.background=T.p50; } }}
+                        onMouseLeave={e=>{ if(!alreadyConnected) { e.currentTarget.style.borderColor=T.line; e.currentTarget.style.background=T.paper; } }}
+                      >
+                        <div style={{width:46,height:46,borderRadius:12,background:alreadyConnected?T.greenBg:T.white,border:`1.5px solid ${alreadyConnected?T.greenBd:T.line}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{intg.icon}</div>
+                        <div style={{flex:1}}>
+                          <div style={{fontSize:14,fontWeight:700,color:T.ink}}>{intg.name}</div>
+                          <div style={{fontSize:12,color:T.soft,marginTop:1}}>{intg.desc}</div>
+                        </div>
+                        {alreadyConnected ? (
+                          <span style={{fontSize:11,fontWeight:700,color:T.green,background:T.greenBg,border:`1px solid ${T.greenBd}`,borderRadius:50,padding:"3px 10px",flexShrink:0}}>Connected</span>
+                        ) : (
+                          <span style={{fontSize:11,fontWeight:700,color:T.p600,background:T.p50,border:`1px solid ${T.p100}`,borderRadius:50,padding:"3px 10px",flexShrink:0}}>Configure →</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                /* Config form */
+                <div>
+                  <button onClick={()=>{ setPickedIntegration(null); setConfigError(""); }} style={{display:"inline-flex",alignItems:"center",gap:5,fontSize:12,color:T.mid,background:"none",border:"none",cursor:"pointer",fontFamily:"'Outfit',sans-serif",marginBottom:18,padding:0}}>
+                    ← Back to integrations
+                  </button>
+                  <div style={{display:"flex",flexDirection:"column",gap:12}}>
+                    {pickedIntegration.fields.map(f=>(
+                      <div key={f.key}>
+                        <label style={{display:"block",fontSize:11,fontWeight:700,color:T.mid,marginBottom:5,textTransform:"uppercase",letterSpacing:".4px"}}>{f.label}</label>
+                        <input
+                          type="text"
+                          value={configValues[f.key]||""}
+                          onChange={e=>{ setConfigValues(v=>({...v,[f.key]:e.target.value})); setConfigError(""); }}
+                          placeholder={f.placeholder}
+                          style={{width:"100%",padding:"11px 14px",borderRadius:10,border:`1.5px solid ${T.line}`,fontSize:13,fontFamily:"'Outfit',sans-serif",outline:"none",boxSizing:"border-box",background:T.paper,color:T.ink,transition:"border-color .2s"}}
+                          onFocus={e=>e.target.style.borderColor=T.p400}
+                          onBlur={e=>e.target.style.borderColor=T.line}
+                        />
+                      </div>
+                    ))}
+                    {configError && (
+                      <div style={{background:"#FEF2F2",border:"1.5px solid #FECACA",borderRadius:9,padding:"9px 13px",fontSize:13,color:T.red}}>{configError}</div>
+                    )}
+                    <div style={{display:"flex",gap:10,marginTop:4}}>
+                      <button onClick={()=>{ setShowConnectModal(false); setPickedIntegration(null); }} style={{flex:1,padding:"11px",borderRadius:50,border:`1.5px solid ${T.line}`,background:"transparent",color:T.mid,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>Cancel</button>
+                      <button onClick={handleConnect} disabled={connecting} className="btn-primary" style={{flex:2,fontSize:13,padding:"11px",opacity:connecting?0.7:1,cursor:connecting?"not-allowed":"pointer"}}>
+                        {connecting ? "Connecting…" : `Connect ${pickedIntegration.name}`}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -3721,6 +4557,9 @@ function PageSettings({ user, agentName, bizData, onBizNameChange }) {
   const [bizPhone, setBizPhone] = useState('');
   const [bizEmail, setBizEmail] = useState('');
   const [savingBiz, setSavingBiz] = useState(false);
+  // Business schedule
+  const [biz24h,   setBiz24h]   = useState(false);
+  const [bizSched, setBizSched] = useState(makeDefaultSchedule());
 
   // ── Ordering ──────────────────────────────────────────────────────────────
   const [deliveryRadius, setDeliveryRadius] = useState(5);
@@ -3784,6 +4623,10 @@ function PageSettings({ user, agentName, bizData, onBizNameChange }) {
       setBizAddress(bizData.address || '');
       setBizPhone(bizData.phone || '');
       setBizEmail(bizData.email || user?.email || '');
+      if (bizData.openingHours) {
+        if (bizData.openingHours.is24h === "true") setBiz24h(true);
+        else { setBiz24h(false); setBizSched(parseSchedule(bizData.openingHours)); }
+      }
     } else if (user?.email) {
       setBizEmail(user.email);
     }
@@ -3803,6 +4646,10 @@ function PageSettings({ user, agentName, bizData, onBizNameChange }) {
         setBizAddress(d.address || '');
         setBizPhone(d.phone || '');
         setBizEmail(d.email || user?.email || '');
+        if (d.openingHours) {
+          if (d.openingHours.is24h === "true") setBiz24h(true);
+          else { setBiz24h(false); setBizSched(parseSchedule(d.openingHours)); }
+        }
       }).catch(() => {});
     } else if (section === 'Ordering') {
       api.settings.getOrderingPolicy().then(d => {
@@ -3843,7 +4690,10 @@ function PageSettings({ user, agentName, bizData, onBizNameChange }) {
   const saveBiz = async () => {
     setSavingBiz(true);
     try {
-      await api.settings.updateBusiness({ name: bizName, type: bizType, address: bizAddress, phone: bizPhone, email: bizEmail });
+      await api.settings.updateBusiness({
+        name: bizName, type: bizType, address: bizAddress, phone: bizPhone, email: bizEmail,
+        openingHours: buildHours(biz24h, bizSched),
+      });
       if (onBizNameChange) onBizNameChange(bizName);
     } catch (e) {} finally { setSavingBiz(false); }
   };
@@ -4022,17 +4872,32 @@ function PageSettings({ user, agentName, bizData, onBizNameChange }) {
 
         <div>
           {section==="Business" && (
-            <div className="card">
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-                <div className="card-head" style={{margin:0}}>Business details</div>
-                <button className="btn-primary" style={{fontSize:13,padding:"9px 20px"}} onClick={saveBiz} disabled={savingBiz}>{savingBiz?"Saving...":"Save changes"}</button>
+            <div style={{display:"flex",flexDirection:"column",gap:16}}>
+              {/* Business details card */}
+              <div className="card">
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+                  <div className="card-head" style={{margin:0}}>Business details</div>
+                  <button className="btn-primary" style={{fontSize:13,padding:"9px 20px"}} onClick={saveBiz} disabled={savingBiz}>{savingBiz?"Saving…":"Save changes"}</button>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+                  <div style={fw}><label style={lb}>Business name</label><input style={fi} value={bizName} onChange={e=>setBizName(e.target.value)}/></div>
+                  <div style={fw}><label style={lb}>Business type</label><input style={fi} value={bizType} onChange={e=>setBizType(e.target.value)} placeholder="e.g. Pizza Restaurant"/></div>
+                  <div style={{...fw,gridColumn:"1 / -1"}}><label style={lb}>Address</label><input style={fi} value={bizAddress} onChange={e=>setBizAddress(e.target.value)}/></div>
+                  <div style={fw}><label style={lb}>Business phone number</label><input style={fi} value={bizPhone} onChange={e=>setBizPhone(e.target.value)} placeholder="e.g. +44 161 234 5678"/></div>
+                  <div style={fw}><label style={lb}>Email</label><input style={fi} value={bizEmail} onChange={e=>setBizEmail(e.target.value)} type="email"/></div>
+                </div>
               </div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
-                <div style={fw}><label style={lb}>Business name</label><input style={fi} value={bizName} onChange={e=>setBizName(e.target.value)}/></div>
-                <div style={fw}><label style={lb}>Business type</label><input style={fi} value={bizType} onChange={e=>setBizType(e.target.value)} placeholder="e.g. Pizza Restaurant"/></div>
-                <div style={{...fw,gridColumn:"1 / -1"}}><label style={lb}>Address</label><input style={fi} value={bizAddress} onChange={e=>setBizAddress(e.target.value)}/></div>
-                <div style={fw}><label style={lb}>Phone number</label><input style={fi} value={bizPhone} onChange={e=>setBizPhone(e.target.value)}/></div>
-                <div style={fw}><label style={lb}>Email</label><input style={fi} value={bizEmail} onChange={e=>setBizEmail(e.target.value)} type="email"/></div>
+
+              {/* Business Working Schedule card */}
+              <div className="card">
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+                  <div>
+                    <div className="card-head" style={{margin:0}}>Business Working Schedule</div>
+                    <p style={{margin:"4px 0 0",fontSize:12,color:T.soft}}>Set when your business is open — your AI agent uses this to handle calls correctly</p>
+                  </div>
+                  <button className="btn-primary" style={{fontSize:13,padding:"9px 20px"}} onClick={saveBiz} disabled={savingBiz}>{savingBiz?"Saving…":"Save changes"}</button>
+                </div>
+                <ScheduleInlineEditor is24h={biz24h} setIs24h={setBiz24h} schedule={bizSched} setSchedule={setBizSched}/>
               </div>
             </div>
           )}
