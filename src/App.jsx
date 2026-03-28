@@ -892,7 +892,7 @@ textarea.form-input { resize: none; line-height: 1.6; }
 
 /* ── MEDIA QUERIES ── */
 
-/* TABLET (max 1024px) */
+/* TABLET (max 1440px) */
 @media (max-width: 1024px) {
   .bento-stack { margin-top: 32px; }
   .bento-main { position: relative; }
