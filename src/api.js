@@ -58,7 +58,7 @@ async function refreshAccessToken() {
     if (res.ok) {
       const data = await res.json();
       accessToken = data.accessToken;
-      return true;
+      return data; // truthy; includes fresh user data if available
     }
   } catch (err) {
     console.error('Token refresh failed:', err);
