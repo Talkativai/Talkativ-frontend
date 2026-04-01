@@ -1,0 +1,88 @@
+import { createContext, useContext, useState, useEffect } from "react";
+import { api, setAccessToken } from "../api.js";
+
+const AuthContext = createContext(null);
+
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+  const [authChecked, setAuthChecked] = useState(false);
+
+  // Auth init: handle OAuth callbacks + token refresh on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+
+    // Google register callback: pre-fill the form, don't log in yet
+    if (params.get('google_signup') === 'true') {
+      sessionStorage.setItem('talkativ_google_profile', JSON.stringify({
+        email: decodeURIComponent(params.get('google_email') || ''),
+        firstName: decodeURIComponent(params.get('google_firstName') || ''),
+        lastName: decodeURIComponent(params.get('google_lastName') || ''),
+      }));
+      window.history.replaceState({}, '', window.location.pathname);
+      // Redirect handled by LoginScreen/Step1 reading sessionStorage
+      setAuthChecked(true);
+      return;
+    }
+
+    // Google login callback: issue token and go to dashboard
+    const authToken = params.get('auth_token');
+    if (authToken) {
+      setAccessToken(authToken);
+      const userData = {
+        id: params.get('user_id'),
+        email: decodeURIComponent(params.get('user_email') || ''),
+        role: params.get('user_role'),
+        firstName: decodeURIComponent(params.get('user_firstName') || ''),
+        lastName: decodeURIComponent(params.get('user_lastName') || ''),
+      };
+      setUser(userData);
+      try { localStorage.setItem('talkativ_user', JSON.stringify(userData)); } catch {}
+      window.history.replaceState({}, '', window.location.pathname);
+      setAuthChecked(true);
+      return;
+    }
+
+    // Try to refresh token on mount (only for returning users who have a stored session)
+    const storedUser = localStorage.getItem('talkativ_user');
+    if (storedUser) {
+      const tryRefresh = async () => {
+        const refreshed = await api.auth.refreshToken();
+        if (refreshed) {
+          try {
+            // Prefer fresh user data from server over possibly stale localStorage
+            const freshUser = refreshed.user || JSON.parse(storedUser);
+            setUser(freshUser);
+            if (refreshed.user) {
+              try { localStorage.setItem('talkativ_user', JSON.stringify(freshUser)); } catch {}
+            }
+          } catch {}
+        } else {
+          try { localStorage.removeItem('talkativ_user'); } catch {}
+        }
+        setAuthChecked(true);
+      };
+      tryRefresh();
+    } else {
+      setAuthChecked(true);
+    }
+  }, []);
+
+  const handleLogin = (userData) => {
+    setUser(userData);
+    try { localStorage.setItem('talkativ_user', JSON.stringify(userData)); } catch {}
+  };
+
+  const handleLogout = async () => {
+    await api.auth.logout();
+    setUser(null);
+    try { localStorage.removeItem('talkativ_user'); } catch {}
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, setUser, authChecked, handleLogin, handleLogout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export const useAuth = () => useContext(AuthContext);
