@@ -28,6 +28,9 @@ export default function LoginScreen() {
   const [staffBusiness, setStaffBusiness] = useState("");
   const [staffUsername, setStaffUsername] = useState("");
   const [staffPassword, setStaffPassword] = useState("");
+  // Forgot password form state
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotSent, setForgotSent] = useState(false);
 
   const handleOwnerLogin = async () => {
     if (!ownerEmail || !ownerPassword) { setAlert({ type: "error", message: "Please fill in all fields." }); return; }
@@ -57,6 +60,19 @@ export default function LoginScreen() {
     setLoading(false);
   };
 
+  const handleForgotPassword = async () => {
+    if (!forgotEmail) { setAlert({ type: "error", message: "Please enter your email." }); return; }
+    setLoading(true); setAlert(null);
+    try {
+      await api.auth.forgotPassword(forgotEmail);
+      setForgotSent(true);
+      setAlert({ type: "success", message: "If that email exists, a reset link has been sent." });
+    } catch (err) {
+      setAlert({ type: "error", message: "Failed to send reset link. Please try again later." });
+    }
+    setLoading(false);
+  };
+
   const handleGoogleLogin = () => {
     window.location.href = api.auth.googleLoginUrl();
   };
@@ -75,11 +91,13 @@ export default function LoginScreen() {
         </div>
 
         {/* Mode Toggle */}
-        <div style={{display:"flex",background:T.white,border:`1.5px solid ${T.line}`,borderRadius:14,padding:4,marginBottom:24}}>
-          {["owner","staff"].map(m=>(
-            <button key={m} onClick={()=>{setMode(m);setAlert(null);}} style={{flex:1,padding:"11px 0",borderRadius:10,border:"none",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif",transition:"all .2s",background:mode===m?T.ink:"transparent",color:mode===m?"white":T.mid}}>{m==="owner"?"Owner":"Staff"}</button>
-          ))}
-        </div>
+        {mode !== "forgot" && (
+          <div style={{display:"flex",background:T.white,border:`1.5px solid ${T.line}`,borderRadius:14,padding:4,marginBottom:24}}>
+            {["owner","staff"].map(m=>(
+              <button key={m} onClick={()=>{setMode(m);setAlert(null);}} style={{flex:1,padding:"11px 0",borderRadius:10,border:"none",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif",transition:"all .2s",background:mode===m?T.ink:"transparent",color:mode===m?"white":T.mid}}>{m==="owner"?"Owner":"Staff"}</button>
+            ))}
+          </div>
+        )}
 
         {/* Alert */}
         {alert && (
@@ -103,7 +121,7 @@ export default function LoginScreen() {
               <div className="form-group"><label className="form-label">Email address</label><input className="form-input" placeholder="you@restaurant.com" type="email" value={ownerEmail} onChange={e=>setOwnerEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleOwnerLogin()}/></div>
               <div className="form-group"><label className="form-label">Password</label><input className="form-input" placeholder="Enter your password" type="password" value={ownerPassword} onChange={e=>setOwnerPassword(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleOwnerLogin()}/></div>
               <div style={{display:"flex",justifyContent:"flex-end",marginBottom:18}}>
-                <span style={{fontSize:12.5,color:T.p600,cursor:"pointer",fontWeight:500}}>Forgot password?</span>
+                <span onClick={() => { setMode("forgot"); setAlert(null); setForgotSent(false); }} style={{fontSize:12.5,color:T.p600,cursor:"pointer",fontWeight:500}}>Forgot password?</span>
               </div>
               <button disabled={loading} onClick={handleOwnerLogin} style={{width:"100%",padding:"14px",background:loading?T.soft:T.ink,color:"white",border:"none",borderRadius:12,fontSize:14.5,fontWeight:600,cursor:loading?"not-allowed":"pointer",fontFamily:"'Outfit',sans-serif",boxShadow:`0 4px 20px rgba(19,13,46,.2)`,transition:"all .22s"}}>{loading?"Signing in...":"Sign in →"}</button>
             </div>
@@ -120,10 +138,38 @@ export default function LoginScreen() {
           </div>
         )}
 
-        <div style={{textAlign:"center",marginTop:24}}>
-          <span style={{fontSize:13,color:T.soft}}>Don't have an account? </span>
-          <span style={{fontSize:13,color:T.p600,cursor:"pointer",fontWeight:600}} onClick={() => navigate('/onboarding/0')}>Create one free →</span>
-        </div>
+        {/* Forgot Password */}
+        {mode==="forgot" && (
+          <div style={{background:T.white,border:`1.5px solid ${T.line}`,borderRadius:20,padding:28,boxShadow:`0 8px 32px rgba(134,87,255,.06)`}}>
+            {forgotSent ? (
+              <div style={{textAlign:"center",padding:"20px 0"}}>
+                <div style={{width:56,height:56,borderRadius:"50%",background:`linear-gradient(135deg,${T.p50},${T.p100})`,border:`1.5px solid ${T.p200}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,margin:"0 auto 16px"}}>✉️</div>
+                <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:800,color:T.ink,marginBottom:8}}>Check your email</h3>
+                <p style={{fontSize:13.5,color:T.mid,marginBottom:24,lineHeight:1.6}}>We've sent password reset instructions to <strong>{forgotEmail}</strong>.</p>
+                <button onClick={() => { setMode("owner"); setForgotSent(false); setAlert(null); }} style={{width:"100%",padding:"14px",background:T.white,color:T.ink,border:`1.5px solid ${T.line}`,borderRadius:12,fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif",transition:"all .2s",boxShadow:`0 2px 10px rgba(19,13,46,.03)`}}>← Back to login</button>
+              </div>
+            ) : (
+              <>
+                <div style={{marginBottom: 20}}>
+                  <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:800,color:T.ink,margin:0}}>Forgot Password</h3>
+                  <p style={{fontSize:13,color:T.soft,marginTop:6,marginBottom:0}}>Enter your email address and we'll send you a link to reset your password.</p>
+                </div>
+                <div className="form-group"><label className="form-label">Email address</label><input className="form-input" placeholder="you@restaurant.com" type="email" value={forgotEmail} onChange={e=>setForgotEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleForgotPassword()}/></div>
+                <button disabled={loading} onClick={handleForgotPassword} style={{width:"100%",padding:"14px",background:loading?T.soft:T.ink,color:"white",border:"none",borderRadius:12,fontSize:14.5,fontWeight:600,cursor:loading?"not-allowed":"pointer",fontFamily:"'Outfit',sans-serif",boxShadow:`0 4px 20px rgba(19,13,46,.2)`,transition:"all .22s",marginBottom:12}}>{loading?"Sending...":"Send reset link"}</button>
+                <div style={{textAlign:"center"}}>
+                  <span onClick={() => { setMode("owner"); setAlert(null); }} style={{fontSize:13,color:T.mid,cursor:"pointer",fontWeight:500}}>← Back to login</span>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {mode !== "forgot" && (
+          <div style={{textAlign:"center",marginTop:24}}>
+            <span style={{fontSize:13,color:T.soft}}>Don't have an account? </span>
+            <span style={{fontSize:13,color:T.p600,cursor:"pointer",fontWeight:600}} onClick={() => navigate('/onboarding/0')}>Create one free →</span>
+          </div>
+        )}
       </div>
     </div>
   );

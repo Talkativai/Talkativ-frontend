@@ -3,6 +3,7 @@ import { Routes, Route, useNavigate } from "react-router-dom";
 import { api } from "./api.js";
 import { AuthProvider, useAuth } from "./context/AuthContext.jsx";
 import LoginScreenExternal from "./components/auth/LoginScreen.jsx";
+import ResetPasswordScreen from "./components/auth/ResetPasswordScreen.jsx";
 import RequireAuth from "./components/auth/RequireAuth.jsx";
 import Landing from "./components/landing/Landing.jsx";
 import Step0 from "./components/onboarding/Step0.jsx";
@@ -1057,6 +1058,7 @@ function AppRoutes() {
       <Routes>
         <Route path="/" element={<Landing onCTA={() => navigate('/onboarding/0')} onLogin={() => navigate('/login')} />} />
         <Route path="/login" element={<LoginScreenExternal />} />
+        <Route path="/reset-password" element={<ResetPasswordScreen />} />
         <Route path="/onboarding/0" element={<Step0 onNext={() => goOb(1)} onBack={() => navigate('/')} />} />
         <Route path="/onboarding/1" element={<Step1 onNext={() => goOb(2)} onBack={() => goOb(0)} onPhoneChange={setObPhone} onRegister={(userData) => handleLogin(userData)} />} />
         <Route path="/onboarding/2" element={<Step2 onNext={() => goOb(3)} onBack={() => goOb(1)} onBizNameChange={setObBizName} />} />

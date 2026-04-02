@@ -171,6 +171,10 @@ export const api = {
     async forgotPassword(email) {
       return post('/auth/forgot-password', { email });
     },
+
+    async resetPassword(token, newPassword) {
+      return post('/auth/reset-password', { token, newPassword });
+    },
   },
 
   // ─── Dashboard ──────────────────────────────
