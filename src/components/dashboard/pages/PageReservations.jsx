@@ -1,15 +1,33 @@
 import { useState, useEffect } from "react";
 import { T } from "../../../utils/tokens";
 import TopBar from "../TopBar";
+import { api } from "../../../api";
 
 export default function PageReservations({ user, agentName, bizName }) {
   const [page, setPage] = useState(1);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   useEffect(()=>{ const h=()=>setIsMobile(window.innerWidth<=768); window.addEventListener('resize',h); return ()=>window.removeEventListener('resize',h); },[]);
-  const reservations = [];
+
+  const [reservations, setReservations] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [total, setTotal] = useState(0);
+
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([
+      api.reservations.list(`page=${page}`),
+      api.reservations.getStats(),
+    ]).then(([data, s]) => {
+      setReservations(data.reservations || []);
+      setTotal(data.total || 0);
+      setStats(s);
+    }).catch(() => {}).finally(() => setLoading(false));
+  }, [page]);
+
   const perPage = 5;
-  const totalPages = Math.ceil(reservations.length / perPage);
-  const paginated = reservations.slice((page-1)*perPage, page*perPage);
+  const totalPages = Math.ceil(total / perPage);
+  const paginated = reservations;
   return (
     <>
       <TopBar title={<>Reservations</>} subtitle={`Bookings taken by ${agentName || 'your agent'} via phone`} user={user} agentName={agentName}>
@@ -17,7 +35,12 @@ export default function PageReservations({ user, agentName, bizName }) {
       </TopBar>
 
       <div className="kpi-row">
-        {[{l:"Today's covers",v:"0",d:"No bookings yet"},{l:"This week",v:"0",d:"—"},{l:"Avg. party size",v:"—",d:"—"},{l:"No-show rate",v:"—",d:"Connect a number to start"}].map(k=>(
+        {[
+          {l:"Today's covers", v: stats?.todayCovers ?? "0", d: "—"},
+          {l:"This week", v: stats?.weeklyReservations ?? "0", d: "—"},
+          {l:"Avg. party size", v: stats?.avgPartySize ?? "—", d: "—"},
+          {l:"No-show rate", v: stats?.noShowRate ? `${stats.noShowRate}%` : "—", d: "—"},
+        ].map(k=>(
           <div className="kpi-card" key={k.l}><div className="kpi-label">{k.l}</div><div className="kpi-value">{k.v}</div><div className="kpi-delta">{k.d}</div></div>
         ))}
       </div>
@@ -85,7 +108,7 @@ export default function PageReservations({ user, agentName, bizName }) {
         )}
         {totalPages > 1 && (
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:16,marginTop:10,borderTop:`1px solid ${T.paper}`}}>
-            <div style={{fontSize:13,color:T.soft}}>Showing {(page-1)*perPage + 1} to {Math.min(page*perPage, reservations.length)} of {reservations.length} reservations</div>
+            <div style={{fontSize:13,color:T.soft}}>Showing {(page-1)*perPage + 1} to {Math.min(page*perPage, total)} of {total} reservations</div>
             <div style={{display:"flex",gap:8}}>
               <button disabled={page === 1} onClick={() => setPage(p => Math.max(1, p-1))} style={{padding:"6px 14px",borderRadius:50,border:`1.5px solid ${T.line}`,background:page===1?"transparent":T.white,color:page===1?T.faint:T.mid,fontSize:13,fontWeight:600,cursor:page===1?"default":"pointer",transition:"all .18s"}}>Previous</button>
               <button disabled={page === totalPages} onClick={() => setPage(p => Math.min(totalPages, p+1))} style={{padding:"6px 14px",borderRadius:50,border:`1.5px solid ${T.line}`,background:page===totalPages?"transparent":T.white,color:page===totalPages?T.faint:T.mid,fontSize:13,fontWeight:600,cursor:page===totalPages?"default":"pointer",transition:"all .18s"}}>Next</button>

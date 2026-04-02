@@ -56,6 +56,7 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
   const [savingNotifs, setSavingNotifs] = useState(false);
 
   // ── Phone ─────────────────────────────────────────────────────────────────
+  const [assignedNumber, setAssignedNumber] = useState('');
   const [forwardNumber, setForwardNumber] = useState('');
   const [ringsBeforeAi, setRingsBeforeAi] = useState(0);
   const [callRecording, setCallRecording] = useState(true);
@@ -162,6 +163,7 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
       api.settings.getNotifications().then(d => setNotifs(prev => ({ ...prev, ...d }))).catch(() => {});
     } else if (section === 'Phone') {
       api.settings.getPhone().then(d => {
+        setAssignedNumber(d.assignedNumber || '');
         setForwardNumber(d.forwardNumber || '');
         setRingsBeforeAi(d.ringsBeforeAi ?? 0);
         setCallRecording(d.callRecording ?? true);
@@ -218,7 +220,7 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
 
   const savePhone = async () => {
     setSavingPhone(true);
-    try { await api.settings.updatePhone({ forwardNumber: forwardNumber || null, ringsBeforeAi: parseInt(ringsBeforeAi), callRecording, voicemailFallback }); }
+    try { await api.settings.updatePhone({ assignedNumber: assignedNumber || null, forwardNumber: forwardNumber || null, ringsBeforeAi: parseInt(ringsBeforeAi), callRecording, voicemailFallback }); }
     catch (e) {} finally { setSavingPhone(false); }
   };
 
@@ -499,9 +501,17 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
               </div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:20,alignItems:"stretch"}}>
                 <div style={{...fw,display:"flex",flexDirection:"column"}}>
+                  <label style={lb}>Forwarding number (optional)</label>
+                  <input value={assignedNumber} onChange={e=>setAssignedNumber(e.target.value)} placeholder="Assigned when you connect a number" style={{...fi,flex:1}}/>
+                  <span style={{fontSize:11,color:T.soft,marginTop:4}}>The Talkativ number calls are forwarded to. Set during onboarding.</span>
+                </div>
+                <div style={{...fw,display:"flex",flexDirection:"column"}}>
                   <label style={lb}>Backup number (optional)</label>
                   <input value={forwardNumber} onChange={e=>setForwardNumber(e.target.value)} placeholder="e.g. +44 161 234 5678" style={{...fi,flex:1}}/>
+                  <span style={{fontSize:11,color:T.soft,marginTop:4}}>Fallback number if the agent can't handle a call.</span>
                 </div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:20,alignItems:"stretch"}}>
                 <div style={{...fw,display:"flex",flexDirection:"column"}}>
                   <label style={lb}>Rings before agent answers</label>
                   <select value={ringsBeforeAi} onChange={e=>setRingsBeforeAi(e.target.value)} style={{...fi,flex:1,cursor:"pointer"}}>

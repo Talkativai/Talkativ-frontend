@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { T } from "../../../utils/tokens";
 import TopBar from "../TopBar";
 import { getCurrencySymbol } from "../../../utils/countries";
+import { api } from "../../../api";
 
 export default function PageOrders({ user, agentName, bizName, bizData }) {
   const currencySymbol = getCurrencySymbol(bizData?.currency);
@@ -11,13 +12,27 @@ export default function PageOrders({ user, agentName, bizName, bizData }) {
   const [page, setPage] = useState(1);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   useEffect(()=>{ const h=()=>setIsMobile(window.innerWidth<=768); window.addEventListener('resize',h); return ()=>window.removeEventListener('resize',h); },[]);
-  const orders = [];
-  const timeFiltered = tab==="Today"?orders.filter(o=>o.time.includes("pm")||o.time.includes("am")||o.time==="Now"):tab==="Yesterday"?orders.filter(o=>o.time==="Yesterday"):orders;
-  const typeFilteredOrders = typeFilter==="All types"?timeFiltered:timeFiltered.filter(o=>o.type===typeFilter);
-  const statusFilteredOrders = statusFilter==="All statuses"?typeFilteredOrders:statusFilter==="Completed"?typeFilteredOrders.filter(o=>o.status==="completed"):typeFilteredOrders.filter(o=>o.status==="live");
+
+  const [orders, setOrders] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [total, setTotal] = useState(0);
+
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([
+      api.orders.list(`type=${typeFilter === 'All types' ? '' : typeFilter}&status=${statusFilter === 'All statuses' ? '' : statusFilter}&page=${page}`),
+      api.orders.getStats(),
+    ]).then(([data, s]) => {
+      setOrders(data.orders || []);
+      setTotal(data.total || 0);
+      setStats(s);
+    }).catch(() => {}).finally(() => setLoading(false));
+  }, [tab, typeFilter, statusFilter, page]);
+
   const perPage = 5;
-  const totalPages = Math.ceil(statusFilteredOrders.length / perPage);
-  const paginated = statusFilteredOrders.slice((page-1)*perPage, page*perPage);
+  const totalPages = Math.ceil(total / perPage);
+  const paginated = orders;
   const statusColor = { completed:"order", live:"purple" };
   return (
     <>
@@ -26,7 +41,12 @@ export default function PageOrders({ user, agentName, bizName, bizData }) {
       </TopBar>
 
       <div className="kpi-row">
-        {[{l:"Orders today",v:"0",d:"No orders yet"},{l:"Revenue today",v:`${currencySymbol}0`,d:"—"},{l:"Avg. order value",v:`${currencySymbol}0`,d:"—"},{l:"Delivery rate",v:"—",d:"Connect a number to start"}].map(k=>(
+        {[
+          {l:"Orders today", v: stats?.ordersToday ?? "0", d: "—"},
+          {l:"Revenue today", v: `${currencySymbol}${stats?.revenue ?? "0"}`, d: "—"},
+          {l:"Avg. order value", v: `${currencySymbol}${stats?.avgOrderValue ?? "0"}`, d: "—"},
+          {l:"Delivery rate", v: stats?.deliveryRate ? `${stats.deliveryRate}%` : "—", d: "—"},
+        ].map(k=>(
           <div className="kpi-card" key={k.l}><div className="kpi-label">{k.l}</div><div className="kpi-value">{k.v}</div><div className="kpi-delta">{k.d}</div></div>
         ))}
       </div>
@@ -97,7 +117,7 @@ export default function PageOrders({ user, agentName, bizName, bizData }) {
         )}
         {totalPages > 1 && (
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:16,marginTop:10,borderTop:`1px solid ${T.paper}`}}>
-            <div style={{fontSize:13,color:T.soft}}>Showing {(page-1)*perPage + 1} to {Math.min(page*perPage, statusFilteredOrders.length)} of {statusFilteredOrders.length} orders</div>
+            <div style={{fontSize:13,color:T.soft}}>Showing {(page-1)*perPage + 1} to {Math.min(page*perPage, total)} of {total} orders</div>
             <div style={{display:"flex",gap:8}}>
               <button disabled={page === 1} onClick={() => setPage(p => Math.max(1, p-1))} style={{padding:"6px 14px",borderRadius:50,border:`1.5px solid ${T.line}`,background:page===1?"transparent":T.white,color:page===1?T.faint:T.mid,fontSize:13,fontWeight:600,cursor:page===1?"default":"pointer",transition:"all .18s"}}>Previous</button>
               <button disabled={page === totalPages} onClick={() => setPage(p => Math.min(totalPages, p+1))} style={{padding:"6px 14px",borderRadius:50,border:`1.5px solid ${T.line}`,background:page===totalPages?"transparent":T.white,color:page===totalPages?T.faint:T.mid,fontSize:13,fontWeight:600,cursor:page===totalPages?"default":"pointer",transition:"all .18s"}}>Next</button>

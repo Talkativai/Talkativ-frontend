@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { T } from "../../../utils/tokens";
 import TopBar from "../TopBar";
+import { api } from "../../../api";
 
 export default function PageCalls({ user, agentName, bizName }) {
   const [filter, setFilter] = useState("All");
@@ -8,13 +9,28 @@ export default function PageCalls({ user, agentName, bizName }) {
   const [page, setPage] = useState(1);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   useEffect(()=>{ const h=()=>setIsMobile(window.innerWidth<=768); window.addEventListener('resize',h); return ()=>window.removeEventListener('resize',h); },[]);
-  const calls = [];
+
+  const [calls, setCalls] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [total, setTotal] = useState(0);
+
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([
+      api.calls.list(`filter=${filter}&date=${timeFilter.toLowerCase().replace(' ', '_')}&page=${page}`),
+      api.calls.getStats(),
+    ]).then(([data, s]) => {
+      setCalls(data.calls || []);
+      setTotal(data.total || 0);
+      setStats(s);
+    }).catch(() => {}).finally(() => setLoading(false));
+  }, [filter, timeFilter, page]);
+
   const tabs = ["All","Orders","Enquiries","Missed"];
-  const timeFiltered = timeFilter==="Today"?calls.filter(c=>c.time.includes("Today")||c.time==="Live now"):timeFilter==="Yesterday"?calls.filter(c=>c.time.includes("Yesterday")):calls;
-  const filtered = filter==="All"?timeFiltered:filter==="Orders"?timeFiltered.filter(c=>c.b==="order"):filter==="Missed"?timeFiltered.filter(c=>c.b==="missed"):timeFiltered.filter(c=>c.b==="info");
   const perPage = 5;
-  const totalPages = Math.ceil(filtered.length / perPage);
-  const paginated = filtered.slice((page-1)*perPage, page*perPage);
+  const totalPages = Math.ceil(total / perPage);
+  const paginated = calls;
   return (
     <>
       <TopBar title={<>All <strong>Calls</strong></>} subtitle="Every call routed through Talkativ with full transcripts" user={user} agentName={agentName}>
@@ -22,7 +38,12 @@ export default function PageCalls({ user, agentName, bizName }) {
       </TopBar>
 
       <div className="kpi-row">
-        {[{l:"Total today",v:"0",d:"No calls yet"},{l:"Answered",v:"0",d:"—"},{l:"Avg. duration",v:"0:00",d:"—"},{l:"Orders taken",v:"0",d:"Connect a number to start"}].map(k=>(
+        {[
+          {l:"Total today", v: stats?.total ?? "0", d: "calls handled"},
+          {l:"Answered", v: stats?.answered ?? "0", d: "—"},
+          {l:"Avg. duration", v: stats?.avgDuration ? `${Math.floor(stats.avgDuration/60)}:${String(stats.avgDuration%60).padStart(2,'0')}` : "0:00", d: "—"},
+          {l:"Orders taken", v: stats?.ordersTaken ?? "0", d: "—"},
+        ].map(k=>(
           <div className="kpi-card" key={k.l}><div className="kpi-label">{k.l}</div><div className="kpi-value">{k.v}</div><div className="kpi-delta">{k.d}</div></div>
         ))}
       </div>

@@ -306,6 +306,7 @@ export const api = {
     update: (data) => put('/api/business', data),
     updateOnboarding: (data) => put('/api/business/onboarding', data),
     completeOnboarding: (data = {}) => post('/api/business/complete-onboarding', data),
+    setupPhone: (mode, countryCode) => post('/api/business/setup-phone', { mode, countryCode }),
   },
 
   // ─── Upload ─────────────────────────────────
@@ -326,6 +327,15 @@ export const api = {
     async searchBusiness(query) {
       const res = await fetch(`${API_URL}/api/public/search-business?q=${encodeURIComponent(query)}`);
       if (!res.ok) return { results: [] };
+      return res.json();
+    },
+    async demoCall(phoneNumber) {
+      const res = await fetch(`${API_URL}/api/public/demo-call`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phoneNumber }),
+      });
+      if (!res.ok) throw await buildError(res);
       return res.json();
     },
   },
