@@ -19,8 +19,8 @@ export function AuthProvider({ children }) {
         lastName: decodeURIComponent(params.get('google_lastName') || ''),
       }));
       window.history.replaceState({}, '', window.location.pathname);
-      // Redirect handled by LoginScreen/Step1 reading sessionStorage
       setAuthChecked(true);
+      window.location.href = '/#/onboarding/1';
       return;
     }
 
@@ -39,6 +39,7 @@ export function AuthProvider({ children }) {
       try { localStorage.setItem('talkativ_user', JSON.stringify(userData)); } catch {}
       window.history.replaceState({}, '', window.location.pathname);
       setAuthChecked(true);
+      window.location.href = '/#/dashboard';
       return;
     }
 
