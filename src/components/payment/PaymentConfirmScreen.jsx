@@ -109,7 +109,7 @@ export default function PaymentConfirmScreen({ onBack, data, type }) {
           Back to home →
         </button>
 
-        {data?.customerEmail && (
+        {(data?.customerEmail || data?.guestEmail) && (
           <p style={{fontSize:12,color:T.faint,marginTop:20}}>
             Confirmation sent to {data.customerEmail || data.guestEmail}
           </p>

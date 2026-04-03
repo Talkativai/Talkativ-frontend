@@ -11,8 +11,10 @@ export default function PaymentLinkScreen({ onBack }) {
   const [error, setError] = useState("");
   const [processing, setProcessing] = useState(false);
 
-  // Read params from URL
-  const params = new URLSearchParams(window.location.search);
+  // Read params from URL — hash routing puts params after the # (e.g. /#/pay?pi=...)
+  const hash = window.location.hash;
+  const queryString = hash.includes('?') ? hash.split('?')[1] : '';
+  const params = new URLSearchParams(queryString);
   const pi = params.get('pi');
   const orderId = params.get('order_id');
   const reservationId = params.get('reservation_id');
