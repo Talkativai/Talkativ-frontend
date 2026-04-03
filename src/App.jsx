@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { Routes, Route, useNavigate } from "react-router-dom";
 import { api } from "./api.js";
 import { AuthProvider, useAuth } from "./context/AuthContext.jsx";
@@ -6,18 +6,19 @@ import LoginScreenExternal from "./components/auth/LoginScreen.jsx";
 import ResetPasswordScreen from "./components/auth/ResetPasswordScreen.jsx";
 import RequireAuth from "./components/auth/RequireAuth.jsx";
 import Landing from "./components/landing/Landing.jsx";
-import Step0 from "./components/onboarding/Step0.jsx";
-import Step1 from "./components/onboarding/Step1.jsx";
-import Step2 from "./components/onboarding/Step2.jsx";
-import Step3 from "./components/onboarding/Step3.jsx";
-import Step4 from "./components/onboarding/Step4.jsx";
-import Step5 from "./components/onboarding/Step5.jsx";
-import Step6 from "./components/onboarding/Step6.jsx";
-import Step7 from "./components/onboarding/Step7.jsx";
-import SuccessScreen from "./components/success/SuccessScreen.jsx";
-import DashboardApp from "./components/dashboard/DashboardApp.jsx";
-import PaymentLinkScreen from "./components/payment/PaymentLinkScreen.jsx";
-import PaymentConfirmScreen from "./components/payment/PaymentConfirmScreen.jsx";
+
+const Step0 = lazy(() => import("./components/onboarding/Step0.jsx"));
+const Step1 = lazy(() => import("./components/onboarding/Step1.jsx"));
+const Step2 = lazy(() => import("./components/onboarding/Step2.jsx"));
+const Step3 = lazy(() => import("./components/onboarding/Step3.jsx"));
+const Step4 = lazy(() => import("./components/onboarding/Step4.jsx"));
+const Step5 = lazy(() => import("./components/onboarding/Step5.jsx"));
+const Step6 = lazy(() => import("./components/onboarding/Step6.jsx"));
+const Step7 = lazy(() => import("./components/onboarding/Step7.jsx"));
+const SuccessScreen = lazy(() => import("./components/success/SuccessScreen.jsx"));
+const DashboardApp = lazy(() => import("./components/dashboard/DashboardApp.jsx"));
+const PaymentLinkScreen = lazy(() => import("./components/payment/PaymentLinkScreen.jsx"));
+const PaymentConfirmScreen = lazy(() => import("./components/payment/PaymentConfirmScreen.jsx"));
 
 
 /* ═══════════════════════════════════════════
@@ -57,8 +58,6 @@ const T = {
    GLOBAL STYLES
 ═══════════════════════════════════════════ */
 const G = `
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Outfit:wght@300;400;500;600&display=swap');
-
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body, #root {
@@ -1055,23 +1054,25 @@ function AppRoutes() {
   return (
     <>
       <style>{G}</style>
-      <Routes>
-        <Route path="/" element={<Landing onCTA={() => navigate('/onboarding/0')} onLogin={() => navigate('/login')} />} />
-        <Route path="/login" element={<LoginScreenExternal />} />
-        <Route path="/reset-password" element={<ResetPasswordScreen />} />
-        <Route path="/onboarding/0" element={<Step0 onNext={() => goOb(1)} onBack={() => navigate('/')} />} />
-        <Route path="/onboarding/1" element={<Step1 onNext={() => goOb(2)} onBack={() => goOb(0)} onPhoneChange={setObPhone} onRegister={(userData) => handleLogin(userData)} />} />
-        <Route path="/onboarding/2" element={<Step2 onNext={() => goOb(3)} onBack={() => goOb(1)} onBizNameChange={setObBizName} />} />
-        <Route path="/onboarding/3" element={<Step3 onNext={() => goOb(4)} onBack={() => goOb(2)} />} />
-        <Route path="/onboarding/4" element={<Step4 onNext={() => goOb(5)} onBack={() => goOb(3)} bizName={obBizName} bizPhone={obPhone} onAgentNameChange={setObAgentName} />} />
-        <Route path="/onboarding/5" element={<Step5 onNext={() => goOb(6)} onBack={() => goOb(4)} />} />
-        <Route path="/onboarding/6" element={<Step6 onNext={() => goOb(7)} onBack={() => goOb(5)} agentName={obAgentName} />} />
-        <Route path="/onboarding/7" element={<Step7 onNext={async () => { try { await api.business.completeOnboarding(); } catch (e) { console.error('completeOnboarding failed:', e); } navigate('/success'); }} onBack={() => goOb(6)} />} />
-        <Route path="/success" element={<SuccessScreen onDashboard={() => navigate('/dashboard')} agentName={obAgentName} bizName={obBizName} />} />
-        <Route path="/dashboard" element={<RequireAuth><DashboardApp /></RequireAuth>} />
-        <Route path="/pay" element={<PaymentLinkScreen onBack={() => navigate('/')} />} />
-        <Route path="/pay/confirm" element={<PaymentConfirmScreen onBack={() => navigate('/')} />} />
-      </Routes>
+      <Suspense fallback={null}>
+        <Routes>
+          <Route path="/" element={<Landing onCTA={() => navigate('/onboarding/0')} onLogin={() => navigate('/login')} />} />
+          <Route path="/login" element={<LoginScreenExternal />} />
+          <Route path="/reset-password" element={<ResetPasswordScreen />} />
+          <Route path="/onboarding/0" element={<Step0 onNext={() => goOb(1)} onBack={() => navigate('/')} />} />
+          <Route path="/onboarding/1" element={<Step1 onNext={() => goOb(2)} onBack={() => goOb(0)} onPhoneChange={setObPhone} onRegister={(userData) => handleLogin(userData)} />} />
+          <Route path="/onboarding/2" element={<Step2 onNext={() => goOb(3)} onBack={() => goOb(1)} onBizNameChange={setObBizName} />} />
+          <Route path="/onboarding/3" element={<Step3 onNext={() => goOb(4)} onBack={() => goOb(2)} />} />
+          <Route path="/onboarding/4" element={<Step4 onNext={() => goOb(5)} onBack={() => goOb(3)} bizName={obBizName} bizPhone={obPhone} onAgentNameChange={setObAgentName} />} />
+          <Route path="/onboarding/5" element={<Step5 onNext={() => goOb(6)} onBack={() => goOb(4)} />} />
+          <Route path="/onboarding/6" element={<Step6 onNext={() => goOb(7)} onBack={() => goOb(5)} agentName={obAgentName} />} />
+          <Route path="/onboarding/7" element={<Step7 onNext={async () => { try { await api.business.completeOnboarding(); } catch (e) { console.error('completeOnboarding failed:', e); } navigate('/success'); }} onBack={() => goOb(6)} />} />
+          <Route path="/success" element={<SuccessScreen onDashboard={() => navigate('/dashboard')} agentName={obAgentName} bizName={obBizName} />} />
+          <Route path="/dashboard" element={<RequireAuth><DashboardApp /></RequireAuth>} />
+          <Route path="/pay" element={<PaymentLinkScreen onBack={() => navigate('/')} />} />
+          <Route path="/pay/confirm" element={<PaymentConfirmScreen onBack={() => navigate('/')} />} />
+        </Routes>
+      </Suspense>
     </>
   );
 }

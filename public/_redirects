@@ -1,0 +1,4 @@
+/api/*        https://talkativ-backend.onrender.com/api/:splat        200
+/auth/*       https://talkativ-backend.onrender.com/auth/:splat       200
+/webhooks/*   https://talkativ-backend.onrender.com/webhooks/:splat   200
+/*            /index.html                                              200
