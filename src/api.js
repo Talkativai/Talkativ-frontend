@@ -3,7 +3,7 @@
 //  Centralized API communication layer
 // ═══════════════════════════════════════════
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL || '';
 const LOGIN_HASH = import.meta.env.VITE_AUTH_LOGIN_HASH;
 const REGISTER_HASH = import.meta.env.VITE_AUTH_REGISTER_HASH;
 
