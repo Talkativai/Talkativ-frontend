@@ -8,7 +8,6 @@ export default function Step1({ onNext, onBack, onPhoneChange, onRegister }) {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [googlePrefilled, setGooglePrefilled] = useState(false);
@@ -30,8 +29,8 @@ export default function Step1({ onNext, onBack, onPhoneChange, onRegister }) {
 
   const handleRegister = async () => {
     setError(null);
-    if (!firstName.trim() || !email.trim() || !password.trim() || !phone.trim()) {
-      setError("Please fill in your first name, email, password, and business phone number.");
+    if (!firstName.trim() || !email.trim() || !password.trim()) {
+      setError("Please fill in your first name, email, and password.");
       return;
     }
     if (password.length < 8) {
@@ -40,8 +39,7 @@ export default function Step1({ onNext, onBack, onPhoneChange, onRegister }) {
     }
     setLoading(true);
     try {
-      const data = await api.auth.register(email.trim(), password, firstName.trim(), lastName.trim(), phone.trim());
-      if (onPhoneChange) onPhoneChange(phone.trim());
+      const data = await api.auth.register(email.trim(), password, firstName.trim(), lastName.trim());
       if (onRegister) onRegister(data.user || { firstName: firstName.trim(), lastName: lastName.trim(), email: email.trim() });
       onNext();
     } catch (err) {
@@ -99,11 +97,6 @@ export default function Step1({ onNext, onBack, onPhoneChange, onRegister }) {
         {googlePrefilled && <div style={{ fontSize: 11.5, color: T.soft, marginTop: 4 }}>Email confirmed via Google</div>}
       </div>
       <div className="form-group"><label className="form-label">Password</label><input className="form-input" placeholder="At least 8 characters" type="password" value={password} onChange={e => setPassword(e.target.value)} /></div>
-      <div className="form-group">
-        <label className="form-label">Business phone number</label>
-        <input className="form-input" placeholder="+1 (555) 000-0000" type="tel" value={phone} onChange={e => setPhone(e.target.value)} onKeyDown={e => e.key === "Enter" && handleRegister()} />
-        <div style={{ fontSize: 11.5, color: T.soft, marginTop: 4 }}>This will be your managed business number for calls &amp; texts.</div>
-      </div>
       <p style={{ fontSize: 12.5, color: T.soft, marginTop: 6 }}>By continuing you agree to our <span style={{ color: T.p600, cursor: "pointer" }}>Terms of Service</span> and <span style={{ color: T.p600, cursor: "pointer" }}>Privacy Policy</span>.</p>
     </ObShell>
   );

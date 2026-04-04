@@ -1,10 +1,22 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import "react-phone-number-input/style.css";
+import PhoneInput from "react-phone-number-input";
 import { T } from "../../utils/tokens";
 import ObShell from "./ObShell";
 import { api } from "../../api";
 
 export default function Step0({ onNext, onBack }) {
   const [ph, setPh] = useState("");
+  const [defaultCountry, setDefaultCountry] = useState("GB");
+
+  useEffect(() => {
+    fetch("https://ipapi.co/json/")
+      .then(res => res.json())
+      .then(data => {
+        if (data.country_code) setDefaultCountry(data.country_code);
+      })
+      .catch(err => console.error("Failed to fetch IP details", err));
+  }, []);
   const [calling, setCalling] = useState(false);
   const [error, setError] = useState("");
   const [called, setCalled] = useState(false);
@@ -33,14 +45,30 @@ export default function Step0({ onNext, onBack }) {
 
       <div className="form-group">
         <label className="form-label">Your mobile number</label>
-        <input
+        <PhoneInput
           className="form-input"
-          placeholder="+44 7700 000 000"
+          international
+          defaultCountry={defaultCountry}
           value={ph}
-          onChange={e => { setPh(e.target.value); setError(""); }}
-          style={{ fontSize: 18, padding: "16px 20px" }}
+          onChange={val => { setPh(val || ""); setError(""); }}
+          style={{ fontSize: 18, padding: "10px 20px", display: "flex", alignItems: "center" }}
           disabled={calling || called}
         />
+        <style>{`
+          .PhoneInputInput {
+            flex: 1;
+            min-width: 0;
+            border: none;
+            background: transparent;
+            font-size: 18px;
+            outline: none;
+            color: inherit;
+            padding-left: 10px;
+          }
+          .PhoneInputCountry {
+            margin-right: 8px;
+          }
+        `}</style>
       </div>
 
       {error && (
