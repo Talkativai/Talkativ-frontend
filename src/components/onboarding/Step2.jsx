@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { T } from "../../utils/tokens";
 import { api } from "../../api.js";
 import ObShell from "./ObShell";
@@ -24,10 +24,31 @@ export default function Step2({ onNext, onBack, onBizNameChange }) {
   const [bizCategory, setBizCategory] = useState("");
   const [editing, setEditing] = useState(false);
 
-  // Country & currency (auto-detected from Foursquare result)
+  // Country & currency (auto-detected from Foursquare result or IP)
   const [country, setCountry] = useState("");
   const [currency, setCurrency] = useState("");
   const [currencySymbol, setCurrencySymbol] = useState("");
+
+  // IP-based country detection
+  const [ipCallingCode, setIpCallingCode] = useState("");
+  const [ipCountryCode, setIpCountryCode] = useState("");
+
+  useEffect(() => {
+    fetch("https://ipapi.co/json/")
+      .then(res => res.json())
+      .then(data => {
+        if (data.country_code) setIpCountryCode(data.country_code);
+        if (data.country_calling_code) setIpCallingCode(data.country_calling_code);
+        if (data.country_name) {
+          const found = COUNTRIES.find(c => c.code === data.country_code);
+          if (found && !country) {
+            // Pre-load for manual entry — don't override a Foursquare-detected country
+            setIpCountryCode(found.code);
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Schedule state
   const [is24h, setIs24h] = useState(false);
@@ -333,7 +354,19 @@ export default function Step2({ onNext, onBack, onBizNameChange }) {
             <div style={{ fontSize: 14, fontWeight: 600, color: T.ink, marginBottom: 4 }}>No results found</div>
             <div style={{ fontSize: 13, color: T.soft }}>Try a different search or fill in the details manually below.</div>
             <button
-              onClick={() => { setSelected({ manual: true }); setBizName(searchQuery); setEditing(true); setView('confirmed'); }}
+              onClick={() => {
+                setSelected({ manual: true });
+                setBizName(searchQuery);
+                setEditing(true);
+                setView('confirmed');
+                // Pre-fill phone with IP calling code
+                if (ipCallingCode && !bizPhone) setBizPhone(`+${ipCallingCode.replace('+','')} `);
+                // Pre-fill country from IP
+                if (ipCountryCode && !country) {
+                  const found = COUNTRIES.find(c => c.code === ipCountryCode);
+                  if (found) { setCountry(found.name); setCurrency(found.currency); setCurrencySymbol(found.currencySymbol); }
+                }
+              }}
               style={{ marginTop: 12, background: T.p600, color: "white", border: "none", borderRadius: 10, padding: "8px 18px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'Outfit',sans-serif" }}
             >
               Fill in manually →
@@ -404,6 +437,24 @@ export default function Step2({ onNext, onBack, onBizNameChange }) {
                 <div className="form-group"><label className="form-label">Address</label><input className="form-input" value={bizAddress} onChange={e => setBizAddress(e.target.value)} /></div>
                 <div className="form-group"><label className="form-label">Phone</label><input className="form-input" value={bizPhone} onChange={e => setBizPhone(e.target.value)} placeholder="+1 234 567 8900" /></div>
                 <div className="form-group"><label className="form-label">Category</label><input className="form-input" value={bizCategory} onChange={e => setBizCategory(e.target.value)} placeholder="e.g. Pizza Restaurant" /></div>
+                <div className="form-group">
+                  <label className="form-label">Country</label>
+                  <input
+                    className="form-input"
+                    value={country}
+                    placeholder="e.g. United Kingdom"
+                    onChange={e => {
+                      setCountry(e.target.value);
+                      const found = COUNTRIES.find(c => c.name.toLowerCase() === e.target.value.toLowerCase());
+                      if (found) { setCurrency(found.currency); setCurrencySymbol(found.currencySymbol); }
+                    }}
+                  />
+                  {country && currency && (
+                    <div style={{ fontSize: 11.5, color: T.p600, marginTop: 4, fontWeight: 600 }}>
+                      {currencySymbol} {currency} detected
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
