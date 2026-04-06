@@ -230,6 +230,7 @@ export const api = {
     updateCallRules: (data) => put('/api/agent/call-rules', data),
     previewVoice: (data) => post('/api/agent/preview-voice', data),
     getSignedUrl: () => get('/api/agent/signed-url'),
+    rebuildPrompt: () => post('/api/agent/rebuild-prompt', {}),
   },
 
   // ─── Voices ─────────────────────────────────
