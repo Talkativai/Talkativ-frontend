@@ -9,7 +9,7 @@ import COUNTRIES, { getFlag } from "../../utils/countries.js";
 // Required fields for the business details form
 const REQUIRED = ["bizName", "bizAddress", "bizPhone", "bizCategory", "country"];
 
-export default function Step2({ onNext, onBack, onBizNameChange }) {
+export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChange }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searching, setSearching] = useState(false);
   const [results, setResults] = useState([]);
@@ -35,14 +35,18 @@ export default function Step2({ onNext, onBack, onBizNameChange }) {
   const [currency, setCurrency] = useState("");
   const [currencySymbol, setCurrencySymbol] = useState("");
 
-  // IP-based detection
+  // IP-based detection — used as initial country for the phone flag
   const [ipCountryCode, setIpCountryCode] = useState("US"); // 2-letter ISO for PhoneInput
+  const [phoneCountry, setPhoneCountry] = useState("US"); // controlled country for PhoneInput flag
 
   useEffect(() => {
     fetch("https://ipapi.co/json/")
       .then(res => res.json())
       .then(data => {
-        if (data.country_code) setIpCountryCode(data.country_code);
+        if (data.country_code) {
+          setIpCountryCode(data.country_code);
+          setPhoneCountry(data.country_code);
+        }
       })
       .catch(() => {});
   }, []);
@@ -244,6 +248,7 @@ export default function Step2({ onNext, onBack, onBizNameChange }) {
       });
     } catch {}
     if (onBizNameChange) onBizNameChange(bizName);
+    if (onBizPhoneChange) onBizPhoneChange(bizPhone);
     onNext();
   };
 
@@ -537,7 +542,8 @@ export default function Step2({ onNext, onBack, onBizNameChange }) {
                 <PhoneInput
                   className="form-input"
                   international
-                  defaultCountry={ipCountryCode || "US"}
+                  country={phoneCountry}
+                  onCountryChange={c => setPhoneCountry(c || "US")}
                   value={bizPhone}
                   onChange={val => setBizPhone(val || "")}
                   style={{ fontSize: 15, padding: "10px 14px", display: "flex", alignItems: "center", borderColor: !bizPhone?.trim() ? "#fca5a5" : undefined }}

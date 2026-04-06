@@ -86,10 +86,12 @@ export default function Step4({ onNext, onBack, bizName, bizPhone, onAgentNameCh
         voiceId: voices[vc].id,
         voiceName: voices[vc].n,
         voiceDescription: voices[vc].d,
-        transferNumber: fallbackAction === "transfer" ? (bizPhone || null) : null,
+        transferNumber: (fallbackAction === "transfer" && bizPhone) ? bizPhone : null,
         agentSchedule: buildHours(agentIs24h, agentSchedule),
       });
-    } catch {}
+    } catch (err) {
+      console.error("Failed to save agent settings:", err?.message || err);
+    }
     onNext();
   };
 

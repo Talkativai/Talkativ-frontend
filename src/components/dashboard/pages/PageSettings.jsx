@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
+import "react-phone-number-input/style.css";
+import PhoneInput, { parsePhoneNumber } from 'react-phone-number-input';
 import T from '../../../utils/tokens';
 import { api } from '../../../api.js';
 import { makeDefaultSchedule, buildHours, parseSchedule, VS_DAY_KEYS, VS_DAY_LABELS } from '../../../utils/schedule';
@@ -8,6 +10,16 @@ import COUNTRIES, { getCurrencySymbol, getFlag } from '../../../utils/countries'
 
 export default function PageSettings({ user, agentName, bizData, onBizNameChange }) {
   const [section, setSection] = useState("Business");
+
+  // ── Phone country detection (IP-based, for flag display) ─────────────────
+  const [bizPhoneCountry, setBizPhoneCountry] = useState('US');
+  const [fwdPhoneCountry, setFwdPhoneCountry] = useState('US');
+  useEffect(() => {
+    fetch("https://ipapi.co/json/")
+      .then(r => r.json())
+      .then(d => { if (d.country_code) { setBizPhoneCountry(d.country_code); setFwdPhoneCountry(d.country_code); } })
+      .catch(() => {});
+  }, []);
 
   // ── Business ──────────────────────────────────────────────────────────────
   const [bizName, setBizName] = useState('');
@@ -95,7 +107,9 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
       setBizName(bizData.name || '');
       setBizType(bizData.type || bizData.category || '');
       setBizAddress(bizData.address || '');
-      setBizPhone(bizData.phone || '');
+      const phone = bizData.phone || '';
+      setBizPhone(phone);
+      if (phone) { try { const p = parsePhoneNumber(phone); if (p?.country) setBizPhoneCountry(p.country); } catch {} }
       setBizEmail(bizData.email || user?.email || '');
       setBizCountry(bizData.country || '');
       setBizCurrency(bizData.currency || '');
@@ -164,7 +178,9 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
     } else if (section === 'Phone') {
       api.settings.getPhone().then(d => {
         setAssignedNumber(d.assignedNumber || '');
-        setForwardNumber(d.forwardNumber || '');
+        const fwd = d.forwardNumber || '';
+        setForwardNumber(fwd);
+        if (fwd) { try { const p = parsePhoneNumber(fwd); if (p?.country) setFwdPhoneCountry(p.country); } catch {} }
         setRingsBeforeAi(d.ringsBeforeAi ?? 0);
         setCallRecording(d.callRecording ?? true);
         setVoicemailFallback(d.voicemailFallback ?? false);
@@ -292,6 +308,14 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
 
   return (
     <>
+      <style>{`
+        .settings-page .PhoneInputInput {
+          flex: 1; min-width: 0; border: none; background: transparent;
+          font-size: 14px; outline: none; color: inherit; padding-left: 8px;
+          font-family: inherit;
+        }
+        .settings-page .PhoneInputCountry { margin-right: 4px; }
+      `}</style>
       <TopBar title={<>Settings</>} subtitle="Manage your account and business preferences" user={user} agentName={agentName}/>
 
       {/* New staff credentials modal */}
@@ -385,7 +409,7 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
         </div>
       )}
 
-      <div className="resp-grid-sidebar-left">
+      <div className="resp-grid-sidebar-left settings-page">
         <div className="card" style={{padding:16,height:"fit-content"}}>
           {sections.map(s=>(
             <div key={s} onClick={()=>setSection(s)} style={{padding:"10px 12px",borderRadius:10,cursor:"pointer",fontSize:13.5,fontWeight:500,color:section===s?T.p700:T.mid,background:section===s?T.p50:"transparent",border:`1.5px solid ${section===s?T.p100:"transparent"}`,marginBottom:2,transition:"all .18s"}}>{s}</div>
@@ -405,7 +429,16 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
                   <div style={fw}><label style={lb}>Business name</label><input style={fi} value={bizName} onChange={e=>setBizName(e.target.value)}/></div>
                   <div style={fw}><label style={lb}>Business type</label><input style={fi} value={bizType} onChange={e=>setBizType(e.target.value)} placeholder="e.g. Pizza Restaurant"/></div>
                   <div style={{...fw,gridColumn:"1 / -1"}}><label style={lb}>Address</label><input style={fi} value={bizAddress} onChange={e=>setBizAddress(e.target.value)}/></div>
-                  <div style={fw}><label style={lb}>Business phone number</label><input style={fi} value={bizPhone} onChange={e=>setBizPhone(e.target.value)} placeholder="e.g. +44 161 234 5678"/></div>
+                  <div style={fw}><label style={lb}>Business phone number</label>
+                    <PhoneInput
+                      international
+                      country={bizPhoneCountry}
+                      onCountryChange={c => setBizPhoneCountry(c || 'US')}
+                      value={bizPhone}
+                      onChange={val => setBizPhone(val || '')}
+                      style={{...fi, display:'flex', alignItems:'center', padding:'10px 14px'}}
+                    />
+                  </div>
                   <div style={fw}><label style={lb}>Email</label><input style={fi} value={bizEmail} onChange={e=>setBizEmail(e.target.value)} type="email"/></div>
                   <div style={{...fw,gridColumn:"1 / -1"}} ref={countryRef}>
                     <label style={lb}>Country</label>
@@ -507,7 +540,14 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
                 </div>
                 <div style={{...fw,display:"flex",flexDirection:"column"}}>
                   <label style={lb}>Backup number (optional)</label>
-                  <input value={forwardNumber} onChange={e=>setForwardNumber(e.target.value)} placeholder="e.g. +44 161 234 5678" style={{...fi,flex:1}}/>
+                  <PhoneInput
+                    international
+                    country={fwdPhoneCountry}
+                    onCountryChange={c => setFwdPhoneCountry(c || 'US')}
+                    value={forwardNumber}
+                    onChange={val => setForwardNumber(val || '')}
+                    style={{...fi, display:'flex', alignItems:'center', padding:'10px 14px', flex:1}}
+                  />
                   <span style={{fontSize:11,color:T.soft,marginTop:4}}>Fallback number if the agent can't handle a call.</span>
                 </div>
               </div>

@@ -7,13 +7,13 @@ import { api } from "../../api";
 
 export default function Step0({ onNext, onBack }) {
   const [ph, setPh] = useState("");
-  const [defaultCountry, setDefaultCountry] = useState("GB");
+  const [phoneCountry, setPhoneCountry] = useState("GB");
 
   useEffect(() => {
     fetch("https://ipapi.co/json/")
       .then(res => res.json())
       .then(data => {
-        if (data.country_code) setDefaultCountry(data.country_code);
+        if (data.country_code) setPhoneCountry(data.country_code);
       })
       .catch(err => console.error("Failed to fetch IP details", err));
   }, []);
@@ -48,7 +48,8 @@ export default function Step0({ onNext, onBack }) {
         <PhoneInput
           className="form-input"
           international
-          defaultCountry={defaultCountry}
+          country={phoneCountry}
+          onCountryChange={c => setPhoneCountry(c || "GB")}
           value={ph}
           onChange={val => { setPh(val || ""); setError(""); }}
           style={{ fontSize: 18, padding: "10px 20px", display: "flex", alignItems: "center" }}

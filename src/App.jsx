@@ -1060,8 +1060,8 @@ function AppRoutes() {
           <Route path="/login" element={<LoginScreenExternal />} />
           <Route path="/reset-password" element={<ResetPasswordScreen />} />
           <Route path="/onboarding/0" element={<Step0 onNext={() => goOb(1)} onBack={() => navigate('/')} />} />
-          <Route path="/onboarding/1" element={<Step1 onNext={() => goOb(2)} onBack={() => goOb(0)} onPhoneChange={setObPhone} onRegister={(userData) => handleLogin(userData)} />} />
-          <Route path="/onboarding/2" element={<Step2 onNext={() => goOb(3)} onBack={() => goOb(1)} onBizNameChange={setObBizName} />} />
+          <Route path="/onboarding/1" element={<Step1 onNext={() => goOb(2)} onBack={() => goOb(0)} onRegister={(userData) => handleLogin(userData)} />} />
+          <Route path="/onboarding/2" element={<Step2 onNext={() => goOb(3)} onBack={() => goOb(1)} onBizNameChange={setObBizName} onBizPhoneChange={setObPhone} />} />
           <Route path="/onboarding/3" element={<Step3 onNext={() => goOb(4)} onBack={() => goOb(2)} />} />
           <Route path="/onboarding/4" element={<Step4 onNext={() => goOb(5)} onBack={() => goOb(3)} bizName={obBizName} bizPhone={obPhone} onAgentNameChange={setObAgentName} />} />
           <Route path="/onboarding/5" element={<Step5 onNext={() => goOb(6)} onBack={() => goOb(4)} />} />
