@@ -16,13 +16,18 @@ export const clearAccessToken = () => { accessToken = null; };
 
 // ─── Auth Fetch (with auto-refresh) ─────────────────────────────────────────
 async function authFetch(url, options = {}) {
-  const isAuthPath = window.location.hash.includes('/onboarding') || 
-                     window.location.hash.includes('/login') ||
-                     window.location.hash.includes('/register') ||
-                     window.location.hash.includes('/reset-password');
+  // Skip auth handling only for actual auth endpoints (login, register, etc.)
+  // NOT for the page URL — onboarding pages still make authenticated API calls.
+  const isAuthEndpoint = url.includes('/auth/login') ||
+                         url.includes('/auth/register') ||
+                         url.includes('/auth/refresh') ||
+                         url.includes('/auth/forgot-password') ||
+                         url.includes('/auth/reset-password') ||
+                         url.includes('/auth/google') ||
+                         url.includes('/auth/staff-login');
 
-  // If no token in memory, try refresh first
-  if (!accessToken && !isAuthPath) {
+  // If no token in memory, try to restore it from the refresh cookie
+  if (!accessToken && !isAuthEndpoint) {
     await refreshAccessToken();
   }
 
@@ -42,8 +47,8 @@ async function authFetch(url, options = {}) {
 
   let res = await fetch(`${API_URL}${url}`, { ...options, headers, credentials: 'include' });
 
-  // On 401, try to refresh token
-  if (res.status === 401 && !isAuthPath) {
+  // On 401, try once to refresh and retry (works during onboarding too)
+  if (res.status === 401 && !isAuthEndpoint) {
     const refreshed = await refreshAccessToken();
     if (refreshed) {
       headers['Authorization'] = `Bearer ${accessToken}`;

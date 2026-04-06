@@ -248,7 +248,7 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
     }
     try {
       const result = await api.settings.createStaff({ firstName: staffFn, lastName: staffLn, email: emailVal || undefined, role: staffRole });
-      setNewStaffCreds({ username: result.username, password: result.plainPassword, emailSent: !!emailVal });
+      setNewStaffCreds({ username: result.username, password: result.plainPassword, emailSent: result.emailSent === true });
       setStaffList(prev => [...prev, result]);
       setStaffFn(''); setStaffLn(''); setStaffEmail(''); setStaffRole('STAFF'); setStaffAddErr('');
       setShowAddStaff(false);

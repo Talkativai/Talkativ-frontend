@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import "react-phone-number-input/style.css";
 import PhoneInput from "react-phone-number-input";
 import { T } from "../../utils/tokens";
@@ -175,7 +175,38 @@ export default function Step2({ onNext, onBack, onBizNameChange }) {
     setFormError(null);
   };
 
-  // Change country + auto-update currency
+  // Country autocomplete state
+  const [countryQuery, setCountryQuery] = useState("");
+  const [countryDropdown, setCountryDropdown] = useState([]);
+  const countryInputRef = useRef(null);
+
+  // Sync the text input with the confirmed country value
+  useEffect(() => { setCountryQuery(country); }, [country]);
+
+  const handleCountryInput = (val) => {
+    setCountryQuery(val);
+    if (val.trim().length < 1) {
+      setCountryDropdown([]);
+      setCountry("");
+      setCurrency("");
+      setCurrencySymbol("");
+      return;
+    }
+    const lower = val.toLowerCase();
+    setCountryDropdown(
+      COUNTRIES.filter(c => c.name.toLowerCase().startsWith(lower) || c.name.toLowerCase().includes(lower)).slice(0, 8)
+    );
+  };
+
+  const selectCountry = (c) => {
+    setCountry(c.name);
+    setCurrency(c.currency);
+    setCurrencySymbol(c.currencySymbol);
+    setCountryQuery(c.name);
+    setCountryDropdown([]);
+  };
+
+  // Change country + auto-update currency (legacy helper, kept for applyCountry)
   const handleCountryChange = (val) => {
     setCountry(val);
     const found = COUNTRIES.find(c => c.name.toLowerCase() === val.toLowerCase());
@@ -521,21 +552,41 @@ export default function Step2({ onNext, onBack, onBizNameChange }) {
                 <input className="form-input" value={bizCategory} onChange={e => setBizCategory(e.target.value)} placeholder="e.g. Pizza Restaurant" style={{ borderColor: !bizCategory.trim() ? "#fca5a5" : undefined }} />
               </div>
 
-              <div className="form-group">
+              <div className="form-group" style={{ position: "relative" }}>
                 <label className="form-label">Country <span style={{ color: T.red }}>*</span></label>
                 <input
+                  ref={countryInputRef}
                   className="form-input"
-                  value={country}
+                  value={countryQuery}
                   placeholder="e.g. United Kingdom"
-                  onChange={e => handleCountryChange(e.target.value)}
+                  onChange={e => handleCountryInput(e.target.value)}
+                  onBlur={() => setTimeout(() => setCountryDropdown([]), 150)}
                   style={{ borderColor: !country.trim() ? "#fca5a5" : undefined }}
+                  autoComplete="off"
                 />
+                {/* Country dropdown */}
+                {countryDropdown.length > 0 && (
+                  <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: T.white, border: `1.5px solid ${T.p200}`, borderRadius: 12, zIndex: 100, boxShadow: "0 8px 24px rgba(134,87,255,.12)", overflow: "hidden", marginTop: 4 }}>
+                    {countryDropdown.map(c => (
+                      <div
+                        key={c.code}
+                        onMouseDown={() => selectCountry(c)}
+                        style={{ padding: "10px 14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 13, borderBottom: `1px solid ${T.line}`, transition: "background .12s" }}
+                        onMouseEnter={e => e.currentTarget.style.background = T.paper}
+                        onMouseLeave={e => e.currentTarget.style.background = T.white}
+                      >
+                        <span style={{ fontWeight: 600, color: T.ink }}>{c.name}</span>
+                        <span style={{ fontSize: 11.5, color: T.soft, fontWeight: 500 }}>{c.currencySymbol} {c.currency}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 {country && currency ? (
                   <div style={{ fontSize: 11.5, color: T.p600, marginTop: 4, fontWeight: 600 }}>
                     {currencySymbol} {currency} detected
                   </div>
-                ) : country ? (
-                  <div style={{ fontSize: 11.5, color: T.soft, marginTop: 4 }}>Type a country name to auto-detect currency</div>
+                ) : countryQuery && !country ? (
+                  <div style={{ fontSize: 11.5, color: T.soft, marginTop: 4 }}>Select a country from the list</div>
                 ) : (
                   <div style={{ fontSize: 11.5, color: "#d97706", marginTop: 4, fontWeight: 500 }}>Required — enter your country</div>
                 )}
