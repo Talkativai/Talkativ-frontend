@@ -1,8 +1,13 @@
 import { useState, useRef, useEffect } from "react";
+import "react-phone-number-input/style.css";
+import PhoneInput from "react-phone-number-input";
 import { T } from "../../utils/tokens";
 import { api } from "../../api.js";
 import ObShell from "./ObShell";
 import COUNTRIES, { getFlag } from "../../utils/countries.js";
+
+// Required fields for the business details form
+const REQUIRED = ["bizName", "bizAddress", "bizPhone", "bizCategory", "country"];
 
 export default function Step2({ onNext, onBack, onBizNameChange }) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -23,26 +28,21 @@ export default function Step2({ onNext, onBack, onBizNameChange }) {
   const [bizPhone, setBizPhone] = useState("");
   const [bizCategory, setBizCategory] = useState("");
   const [editing, setEditing] = useState(false);
+  const [formError, setFormError] = useState(null);
 
-  // Country & currency (auto-detected from result or IP)
+  // Country & currency
   const [country, setCountry] = useState("");
   const [currency, setCurrency] = useState("");
   const [currencySymbol, setCurrencySymbol] = useState("");
 
-  // IP-based country detection
-  const [ipCallingCode, setIpCallingCode] = useState("");
-  const [ipCountryCode, setIpCountryCode] = useState("");
+  // IP-based detection
+  const [ipCountryCode, setIpCountryCode] = useState("US"); // 2-letter ISO for PhoneInput
 
   useEffect(() => {
     fetch("https://ipapi.co/json/")
       .then(res => res.json())
       .then(data => {
         if (data.country_code) setIpCountryCode(data.country_code);
-        if (data.country_calling_code) setIpCallingCode(data.country_calling_code);
-        if (data.country_name) {
-          const found = COUNTRIES.find(c => c.code === data.country_code);
-          if (found && !country) setIpCountryCode(found.code);
-        }
       })
       .catch(() => {});
   }, []);
@@ -71,15 +71,23 @@ export default function Step2({ onNext, onBack, onBizNameChange }) {
     return result;
   };
 
-  const detectCountry = (biz) => {
-    let found = null;
-    if (biz.countryCode) found = COUNTRIES.find(c => c.code === biz.countryCode.toUpperCase());
-    if (!found && biz.country) found = COUNTRIES.find(c => c.name.toLowerCase() === biz.country.toLowerCase());
+  // Try to set country+currency from a biz result. Returns true if country was found.
+  const applyCountry = (nameOrCode, isCode = false) => {
+    const found = isCode
+      ? COUNTRIES.find(c => c.code === nameOrCode.toUpperCase())
+      : COUNTRIES.find(c => c.name.toLowerCase() === nameOrCode.toLowerCase());
     if (found) {
       setCountry(found.name);
       setCurrency(found.currency);
       setCurrencySymbol(found.currencySymbol);
+      return true;
     }
+    return false;
+  };
+
+  // Apply country from IP as fallback
+  const applyCountryFromIp = () => {
+    if (ipCountryCode) applyCountry(ipCountryCode, true);
   };
 
   const handleSearch = async (query) => {
@@ -108,54 +116,104 @@ export default function Step2({ onNext, onBack, onBizNameChange }) {
     setShowResults(false);
     setView('search');
     setPendingBiz(null);
+    setFormError(null);
     if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
     if (val.trim().length >= 2) {
       searchTimerRef.current = setTimeout(() => handleSearch(val), 600);
     }
   };
 
-  // User clicks a result → show inline map
   const handleResultClick = (biz) => {
     setPendingBiz(biz);
     setShowResults(false);
     setView('map');
   };
 
-  // User confirms on inline map
   const handleConfirm = () => {
     const biz = pendingBiz;
+
+    // Set all fields from result
     setSelected(biz);
-    setBizName(biz.name);
-    setBizAddress(biz.address);
-    setBizHours(biz.hours);
-    setBizPhone(biz.phone);
-    setBizCategory(biz.category);
-    detectCountry(biz);
-    setEditing(false);
+    setBizName(biz.name || "");
+    setBizAddress(biz.address || "");
+    setBizHours(biz.hours || "");
+    setBizPhone(biz.phone || "");
+    setBizCategory(biz.category || "");
+
+    // Detect country from biz result, fall back to IP
+    let countryFound = false;
+    if (biz.countryCode) countryFound = applyCountry(biz.countryCode, true);
+    if (!countryFound && biz.country) countryFound = applyCountry(biz.country, false);
+    if (!countryFound) applyCountryFromIp(); // auto-fill from IP
+
     setView('confirmed');
     setPendingBiz(null);
+
+    // Auto-open edit if any required field is missing
+    const needsEdit = !biz.phone || !biz.category || (!biz.countryCode && !biz.country);
+    setEditing(needsEdit);
+    setFormError(null);
   };
 
-  // User rejects → back to search results
   const handleNotMine = () => {
     setView('search');
     setShowResults(true);
     setPendingBiz(null);
   };
 
-  // Switch to manual entry
   const enterManual = () => {
     setSelected({ manual: true });
     setBizName(searchQuery);
+    setBizAddress("");
+    setBizPhone("");
+    setBizCategory("");
+    applyCountryFromIp();
     setEditing(true);
     setView('confirmed');
     setShowResults(false);
     setPendingBiz(null);
-    if (ipCallingCode && !bizPhone) setBizPhone(`+${ipCallingCode.replace('+', '')} `);
-    if (ipCountryCode && !country) {
-      const found = COUNTRIES.find(c => c.code === ipCountryCode);
-      if (found) { setCountry(found.name); setCurrency(found.currency); setCurrencySymbol(found.currencySymbol); }
+    setFormError(null);
+  };
+
+  // Change country + auto-update currency
+  const handleCountryChange = (val) => {
+    setCountry(val);
+    const found = COUNTRIES.find(c => c.name.toLowerCase() === val.toLowerCase());
+    if (found) {
+      setCurrency(found.currency);
+      setCurrencySymbol(found.currencySymbol);
     }
+  };
+
+  // Validate & proceed
+  const handleNext = async () => {
+    const missing = [];
+    if (!bizName.trim()) missing.push("Business name");
+    if (!bizAddress.trim()) missing.push("Address");
+    if (!bizPhone || !bizPhone.trim()) missing.push("Phone number");
+    if (!bizCategory.trim()) missing.push("Category");
+    if (!country.trim()) missing.push("Country");
+
+    if (missing.length > 0) {
+      setFormError(`Please fill in: ${missing.join(", ")}`);
+      if (view === 'confirmed') setEditing(true);
+      return;
+    }
+
+    setFormError(null);
+    try {
+      await api.settings.updateBusiness({
+        name: bizName,
+        type: bizCategory,
+        address: bizAddress,
+        phone: bizPhone,
+        country: country,
+        currency: currency,
+        openingHours: buildOpeningHours(),
+      });
+    } catch {}
+    if (onBizNameChange) onBizNameChange(bizName);
+    onNext();
   };
 
   const emojiForCategory = (cat) => {
@@ -173,7 +231,6 @@ export default function Step2({ onNext, onBack, onBizNameChange }) {
     return "🍽️";
   };
 
-  // Build OSM embed URL from lat/lng
   const osmEmbedUrl = (lat, lng) => {
     if (!lat && !lng) return null;
     const delta = 0.004;
@@ -181,23 +238,17 @@ export default function Step2({ onNext, onBack, onBizNameChange }) {
     return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lng}`;
   };
 
+  // Which fields are still missing (for the incomplete banner)
+  const missingFields = view === 'confirmed' && selected ? [
+    !bizName.trim() && "Business name",
+    !bizAddress.trim() && "Address",
+    !bizPhone?.trim() && "Phone number",
+    !bizCategory.trim() && "Category",
+    !country.trim() && "Country",
+  ].filter(Boolean) : [];
+
   return (
-    <ObShell step={2} onNext={async () => {
-      if (!bizName.trim()) return;
-      try {
-        await api.settings.updateBusiness({
-          name: bizName,
-          type: bizCategory,
-          address: bizAddress,
-          phone: bizPhone,
-          country: country,
-          currency: currency,
-          openingHours: buildOpeningHours(),
-        });
-      } catch {}
-      if (onBizNameChange) onBizNameChange(bizName);
-      onNext();
-    }} onBack={onBack} nextLabel="Looks good →">
+    <ObShell step={2} onNext={handleNext} onBack={onBack} nextLabel="Looks good →">
       <div className="ob-step-label">Step 3 · Business profile</div>
       <h1 className="ob-heading">Tell us about<br /><em>your business</em></h1>
       <p className="ob-subheading">Search your business name and we'll pull your address and details automatically.</p>
@@ -219,7 +270,6 @@ export default function Step2({ onNext, onBack, onBizNameChange }) {
             </div>
           )}
         </div>
-        {/* Can't find it link — visible once a search has been done */}
         {(showResults || view === 'map') && view !== 'confirmed' && (
           <button
             onClick={enterManual}
@@ -275,7 +325,6 @@ export default function Step2({ onNext, onBack, onBizNameChange }) {
       {/* ── Inline Map Confirmation ──────────────────────────────────────── */}
       {view === 'map' && pendingBiz && (
         <div style={{ marginBottom: 20, animation: "fadeUp .25s ease both" }}>
-          {/* Business name header */}
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
             <div style={{ width: 40, height: 40, background: `linear-gradient(135deg,${T.p400},${T.p700})`, borderRadius: 11, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
               {emojiForCategory(pendingBiz.category)}
@@ -286,7 +335,6 @@ export default function Step2({ onNext, onBack, onBizNameChange }) {
             </div>
           </div>
 
-          {/* Small inline map */}
           <div style={{ borderRadius: 14, overflow: "hidden", border: `1.5px solid ${T.line}`, height: 200, marginBottom: 12, background: T.paper }}>
             {pendingBiz.lat && pendingBiz.lng ? (
               <iframe
@@ -303,7 +351,6 @@ export default function Step2({ onNext, onBack, onBizNameChange }) {
             )}
           </div>
 
-          {/* Category + phone chips */}
           {(pendingBiz.category || pendingBiz.phone) && (
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
               {pendingBiz.category && (
@@ -319,24 +366,22 @@ export default function Step2({ onNext, onBack, onBizNameChange }) {
             </div>
           )}
 
-          {/* Confirm / reject buttons */}
+          {/* Missing data notice */}
+          {(!pendingBiz.phone || !pendingBiz.category) && (
+            <div style={{ background: "#fffbeb", border: "1.5px solid #fde68a", borderRadius: 10, padding: "10px 14px", marginBottom: 12, fontSize: 12, color: "#92400e", fontWeight: 500 }}>
+              ⚠️ Some details weren't found — you'll fill them in after confirming.
+            </div>
+          )}
+
           <button
             onClick={handleConfirm}
-            style={{
-              width: "100%", padding: "14px", background: `linear-gradient(135deg,${T.p500},${T.p700})`,
-              color: "white", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 700,
-              cursor: "pointer", fontFamily: "'Outfit',sans-serif", marginBottom: 8,
-            }}
+            style={{ width: "100%", padding: "14px", background: `linear-gradient(135deg,${T.p500},${T.p700})`, color: "white", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Outfit',sans-serif", marginBottom: 8 }}
           >
             ✓ This is my business
           </button>
           <button
             onClick={handleNotMine}
-            style={{
-              width: "100%", padding: "10px", background: "transparent",
-              color: T.soft, border: `1.5px solid ${T.line}`, borderRadius: 12,
-              fontSize: 13, cursor: "pointer", fontFamily: "'Outfit',sans-serif", fontWeight: 500,
-            }}
+            style={{ width: "100%", padding: "10px", background: "transparent", color: T.soft, border: `1.5px solid ${T.line}`, borderRadius: 12, fontSize: 13, cursor: "pointer", fontFamily: "'Outfit',sans-serif", fontWeight: 500 }}
           >
             Not my business — go back
           </button>
@@ -346,6 +391,22 @@ export default function Step2({ onNext, onBack, onBizNameChange }) {
       {/* ── Confirmed Business Card ──────────────────────────────────────── */}
       {view === 'confirmed' && selected && (
         <div className="info-block" style={{ animation: "fadeUp .3s ease both" }}>
+
+          {/* Incomplete fields banner */}
+          {missingFields.length > 0 && !editing && (
+            <div style={{ background: "#fffbeb", border: "1.5px solid #fde68a", borderRadius: 10, padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#92400e", fontWeight: 500, display: "flex", alignItems: "center", gap: 8 }}>
+              <span>⚠️</span>
+              <span>Missing: <strong>{missingFields.join(", ")}</strong> — please edit to complete.</span>
+            </div>
+          )}
+
+          {/* Form error */}
+          {formError && (
+            <div style={{ background: "#fef2f2", border: "1.5px solid #fecaca", borderRadius: 10, padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#991b1b", fontWeight: 500 }}>
+              ⚠️ {formError}
+            </div>
+          )}
+
           <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
             <div style={{ width: 46, height: 46, background: `linear-gradient(135deg,${T.p400},${T.p700})`, borderRadius: 13, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>
               {emojiForCategory(bizCategory)}
@@ -358,34 +419,43 @@ export default function Step2({ onNext, onBack, onBizNameChange }) {
                 </>
               ) : (
                 <div style={{ fontWeight: 600, fontSize: 14.5, color: T.ink }}>
-                  {selected.manual ? "Enter your details" : "Edit your details"}
+                  {selected.manual ? "Enter your details" : "Complete your details"}
                 </div>
               )}
             </div>
             {!editing ? (
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <div style={{ background: T.greenBg, border: `1px solid ${T.greenBd}`, borderRadius: 8, padding: "4px 11px", fontSize: 11, fontWeight: 700, color: T.green }}>
-                  {selected.manual ? "✎ Manual" : "✓ Found"}
-                </div>
-                <div onClick={() => setEditing(true)} style={{ fontSize: 12, color: T.p600, cursor: "pointer", fontWeight: 600 }}>Edit ✏️</div>
+                {missingFields.length === 0
+                  ? <div style={{ background: T.greenBg, border: `1px solid ${T.greenBd}`, borderRadius: 8, padding: "4px 11px", fontSize: 11, fontWeight: 700, color: T.green }}>{selected.manual ? "✎ Manual" : "✓ Found"}</div>
+                  : <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 8, padding: "4px 11px", fontSize: 11, fontWeight: 700, color: "#92400e" }}>⚠ Incomplete</div>
+                }
+                <div onClick={() => { setEditing(true); setFormError(null); }} style={{ fontSize: 12, color: T.p600, cursor: "pointer", fontWeight: 600 }}>Edit ✏️</div>
               </div>
             ) : (
               <div onClick={() => setEditing(false)} style={{ fontSize: 12, color: T.green, cursor: "pointer", fontWeight: 600 }}>Done ✓</div>
             )}
           </div>
 
+          {/* ── Read-only view ── */}
           {!editing ? (
             <>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 11 }}>
                 {[
                   ["📍", "Address", bizAddress],
-                  ["📞", "Phone", bizPhone || "Not found"],
-                  ["🌐", "Category", bizCategory || "Not found"],
-                  ["🗺️", "Country", country || "Not detected"],
+                  ["📞", "Phone", bizPhone || null],
+                  ["🌐", "Category", bizCategory || null],
+                  ["🗺️", "Country", country || null],
                 ].map(([ic, l, v]) => (
-                  <div key={l} style={{ background: T.white, border: `1.5px solid ${T.line}`, borderRadius: 11, padding: "10px 14px" }}>
+                  <div
+                    key={l}
+                    onClick={() => { setEditing(true); setFormError(null); }}
+                    style={{ background: T.white, border: `1.5px solid ${v ? T.line : "#fde68a"}`, borderRadius: 11, padding: "10px 14px", cursor: !v ? "pointer" : "default", position: "relative" }}
+                  >
                     <div style={{ fontSize: 11, color: T.soft, marginBottom: 3 }}>{ic} {l}</div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: T.ink }}>{v || "—"}</div>
+                    {v
+                      ? <div style={{ fontSize: 13, fontWeight: 600, color: T.ink }}>{v}</div>
+                      : <div style={{ fontSize: 12, fontWeight: 600, color: "#d97706" }}>Required — tap to add</div>
+                    }
                   </div>
                 ))}
               </div>
@@ -404,31 +474,81 @@ export default function Step2({ onNext, onBack, onBizNameChange }) {
               )}
             </>
           ) : (
+            /* ── Edit form ── */
             <div>
-              <div className="form-group"><label className="form-label">Business name</label><input className="form-input" value={bizName} onChange={e => setBizName(e.target.value)} /></div>
-              <div className="form-group"><label className="form-label">Address</label><input className="form-input" value={bizAddress} onChange={e => setBizAddress(e.target.value)} /></div>
-              <div className="form-group"><label className="form-label">Phone</label><input className="form-input" value={bizPhone} onChange={e => setBizPhone(e.target.value)} placeholder="+1 234 567 8900" /></div>
-              <div className="form-group"><label className="form-label">Category</label><input className="form-input" value={bizCategory} onChange={e => setBizCategory(e.target.value)} placeholder="e.g. Pizza Restaurant" /></div>
+              <style>{`
+                .PhoneInputInput {
+                  flex: 1;
+                  min-width: 0;
+                  border: none;
+                  background: transparent;
+                  font-size: 15px;
+                  outline: none;
+                  color: inherit;
+                  padding-left: 8px;
+                  font-family: 'Outfit', sans-serif;
+                }
+                .PhoneInputCountry { margin-right: 4px; }
+              `}</style>
+
               <div className="form-group">
-                <label className="form-label">Country</label>
+                <label className="form-label">Business name <span style={{ color: T.red }}>*</span></label>
+                <input className="form-input" value={bizName} onChange={e => setBizName(e.target.value)} placeholder="e.g. Tony's Pizzeria" style={{ borderColor: !bizName.trim() ? "#fca5a5" : undefined }} />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Address <span style={{ color: T.red }}>*</span></label>
+                <input className="form-input" value={bizAddress} onChange={e => setBizAddress(e.target.value)} placeholder="123 Main St, City, Country" style={{ borderColor: !bizAddress.trim() ? "#fca5a5" : undefined }} />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Phone number <span style={{ color: T.red }}>*</span></label>
+                <PhoneInput
+                  className="form-input"
+                  international
+                  defaultCountry={ipCountryCode || "US"}
+                  value={bizPhone}
+                  onChange={val => setBizPhone(val || "")}
+                  style={{ fontSize: 15, padding: "10px 14px", display: "flex", alignItems: "center", borderColor: !bizPhone?.trim() ? "#fca5a5" : undefined }}
+                />
+                {!bizPhone?.trim() && (
+                  <div style={{ fontSize: 11.5, color: "#d97706", marginTop: 4, fontWeight: 500 }}>Required — enter your business phone</div>
+                )}
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Category <span style={{ color: T.red }}>*</span></label>
+                <input className="form-input" value={bizCategory} onChange={e => setBizCategory(e.target.value)} placeholder="e.g. Pizza Restaurant" style={{ borderColor: !bizCategory.trim() ? "#fca5a5" : undefined }} />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Country <span style={{ color: T.red }}>*</span></label>
                 <input
                   className="form-input"
                   value={country}
                   placeholder="e.g. United Kingdom"
-                  onChange={e => {
-                    setCountry(e.target.value);
-                    const found = COUNTRIES.find(c => c.name.toLowerCase() === e.target.value.toLowerCase());
-                    if (found) { setCurrency(found.currency); setCurrencySymbol(found.currencySymbol); }
-                  }}
+                  onChange={e => handleCountryChange(e.target.value)}
+                  style={{ borderColor: !country.trim() ? "#fca5a5" : undefined }}
                 />
-                {country && currency && (
+                {country && currency ? (
                   <div style={{ fontSize: 11.5, color: T.p600, marginTop: 4, fontWeight: 600 }}>
                     {currencySymbol} {currency} detected
                   </div>
+                ) : country ? (
+                  <div style={{ fontSize: 11.5, color: T.soft, marginTop: 4 }}>Type a country name to auto-detect currency</div>
+                ) : (
+                  <div style={{ fontSize: 11.5, color: "#d97706", marginTop: 4, fontWeight: 500 }}>Required — enter your country</div>
                 )}
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── Validation error (shown below the card too) ──────────────────── */}
+      {formError && view === 'confirmed' && !editing && (
+        <div style={{ background: "#fef2f2", border: "1.5px solid #fecaca", borderRadius: 10, padding: "10px 14px", marginTop: 8, fontSize: 12, color: "#991b1b", fontWeight: 500 }}>
+          ⚠️ {formError}
         </div>
       )}
 
