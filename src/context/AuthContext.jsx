@@ -45,7 +45,12 @@ export function AuthProvider({ children }) {
 
     // Try to refresh token on mount (only for returning users who have a stored session)
     const storedUser = localStorage.getItem('talkativ_user');
-    if (storedUser) {
+    const isAuthPath = window.location.hash.includes('/onboarding') || 
+                       window.location.hash.includes('/login') ||
+                       window.location.hash.includes('/register') ||
+                       window.location.hash.includes('/reset-password');
+                       
+    if (storedUser && !isAuthPath) {
       const tryRefresh = async () => {
         const refreshed = await api.auth.refreshToken();
         if (refreshed) {

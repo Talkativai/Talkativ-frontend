@@ -1,5 +1,6 @@
 import { T } from "../../utils/tokens";
 import { NAV } from "../../utils/constants";
+import { api } from "../../api";
 
 export default function Sidebar({ active, onNav, user, bizName }) {
   const initials = `${(user?.firstName?.[0] || '').toUpperCase()}${(user?.lastName?.[0] || '').toUpperCase()}` || '?';
@@ -28,9 +29,29 @@ export default function Sidebar({ active, onNav, user, bizName }) {
         </div>
       ))}
       <div style={{ marginTop:"auto", paddingTop:18, borderTop:`1.5px solid ${T.line}` }}>
-        <div className="dash-nav-item">
-          <div style={{ width:28,height:28,borderRadius:"50%",background:`linear-gradient(135deg,${T.p400},${T.p700})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"white" }}>{initials}</div>
-          {bizName || user?.firstName || 'My Business'}
+        <div
+          className="dash-nav-item"
+          onClick={() => window.open('mailto:support@talkativ.com')}
+          style={{ marginBottom: 4 }}
+        >
+          <span className="dash-nav-icon">🎧</span>Customer Support
+        </div>
+        <div
+          className="dash-nav-item"
+          onClick={async () => {
+            await api.auth.logout();
+            window.location.hash = '/login';
+          }}
+          style={{ marginBottom: 16, color: T.red }}
+        >
+          <span className="dash-nav-icon">🚪</span>Log Out
+        </div>
+        
+        <div className="dash-nav-item" style={{ cursor: "default", background: "transparent", border: "none" }}>
+          <div style={{ width:28,height:28,borderRadius:"50%",background:`linear-gradient(135deg,${T.p400},${T.p700})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"white", flexShrink: 0 }}>{initials}</div>
+          <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            {bizName || user?.firstName || 'My Business'}
+          </span>
         </div>
       </div>
     </aside>

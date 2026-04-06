@@ -16,8 +16,13 @@ export const clearAccessToken = () => { accessToken = null; };
 
 // ─── Auth Fetch (with auto-refresh) ─────────────────────────────────────────
 async function authFetch(url, options = {}) {
+  const isAuthPath = window.location.hash.includes('/onboarding') || 
+                     window.location.hash.includes('/login') ||
+                     window.location.hash.includes('/register') ||
+                     window.location.hash.includes('/reset-password');
+
   // If no token in memory, try refresh first
-  if (!accessToken) {
+  if (!accessToken && !isAuthPath) {
     await refreshAccessToken();
   }
 
@@ -38,7 +43,7 @@ async function authFetch(url, options = {}) {
   let res = await fetch(`${API_URL}${url}`, { ...options, headers, credentials: 'include' });
 
   // On 401, try to refresh token
-  if (res.status === 401) {
+  if (res.status === 401 && !isAuthPath) {
     const refreshed = await refreshAccessToken();
     if (refreshed) {
       headers['Authorization'] = `Bearer ${accessToken}`;
