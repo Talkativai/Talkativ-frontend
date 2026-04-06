@@ -53,7 +53,7 @@ export default function Step1({ onNext, onBack, onPhoneChange, onRegister }) {
   };
 
   return (
-    <ObShell step={1} onNext={handleRegister} onBack={onBack} nextLabel={loading ? "Creating account…" : "Create account →"}>
+    <ObShell step={1} onNext={handleRegister} onBack={onBack} nextLabel={loading ? "Creating account…" : "Create account →"} loading={loading}>
       <div className="ob-step-label">Step 2 · Account</div>
       <h1 className="ob-heading">Create your<br /><em>account</em></h1>
       <p className="ob-subheading">No credit card required. 14-day free trial on all plans — cancel any time.</p>

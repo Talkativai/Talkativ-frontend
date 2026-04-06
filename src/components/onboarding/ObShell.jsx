@@ -2,7 +2,7 @@ import { useState } from "react";
 import { T } from "../../utils/tokens";
 import { STEPS } from "../../utils/constants";
 
-export default function ObShell({ step, children, onNext, onBack, nextLabel = "Continue →" }) {
+export default function ObShell({ step, children, onNext, onBack, nextLabel = "Continue →", loading = false }) {
   const pct = ((step + 1) / STEPS.length) * 100;
   const [obOpen, setObOpen] = useState(false);
   return (
@@ -54,8 +54,8 @@ export default function ObShell({ step, children, onNext, onBack, nextLabel = "C
         </div>
         <div style={{ flex: 1, marginTop: 8 }}>{children}</div>
         <div className="ob-footer">
-          <button className="btn-back" onClick={onBack}>← Back</button>
-          <button className="btn-next" onClick={onNext}>{nextLabel}</button>
+          <button className="btn-back" onClick={onBack} disabled={loading}>← Back</button>
+          <button className="btn-next" onClick={onNext} disabled={loading} style={{ opacity: loading ? 0.7 : 1, pointerEvents: loading ? "none" : "auto" }}>{nextLabel}</button>
         </div>
       </div>
     </div>
