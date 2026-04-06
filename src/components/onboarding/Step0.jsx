@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import "react-phone-number-input/style.css";
-import PhoneInput from "react-phone-number-input";
+import PhoneInput, { getCountryCallingCode } from "react-phone-number-input";
 import { T } from "../../utils/tokens";
 import ObShell from "./ObShell";
 import { api } from "../../api";
@@ -13,7 +13,14 @@ export default function Step0({ onNext, onBack }) {
     fetch("https://ipapi.co/json/")
       .then(res => res.json())
       .then(data => {
-        if (data.country_code) setPhoneCountry(data.country_code);
+        if (data.country_code) {
+          setPhoneCountry(data.country_code);
+          // Pre-fill the calling code so user sees e.g. "+234" immediately
+          try {
+            const code = getCountryCallingCode(data.country_code);
+            setPh(prev => prev ? prev : `+${code}`);
+          } catch {}
+        }
       })
       .catch(err => console.error("Failed to fetch IP details", err));
   }, []);

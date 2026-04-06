@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import "react-phone-number-input/style.css";
-import PhoneInput from "react-phone-number-input";
+import PhoneInput, { getCountryCallingCode } from "react-phone-number-input";
 import { T } from "../../utils/tokens";
 import { api } from "../../api.js";
 import ObShell from "./ObShell";
@@ -46,6 +46,11 @@ export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChang
         if (data.country_code) {
           setIpCountryCode(data.country_code);
           setPhoneCountry(data.country_code);
+          // Pre-fill the calling code so user sees e.g. "+234" immediately (only if empty)
+          try {
+            const code = getCountryCallingCode(data.country_code);
+            setBizPhone(prev => prev ? prev : `+${code}`);
+          } catch {}
         }
       })
       .catch(() => {});
@@ -143,6 +148,10 @@ export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChang
     setBizHours(biz.hours || "");
     setBizPhone(biz.phone || "");
     setBizCategory(biz.category || "");
+
+    // Sync phone flag country with business country
+    if (biz.countryCode) setPhoneCountry(biz.countryCode);
+    else if (ipCountryCode) setPhoneCountry(ipCountryCode);
 
     // Detect country from biz result, fall back to IP
     let countryFound = false;

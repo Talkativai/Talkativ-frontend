@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import "react-phone-number-input/style.css";
-import PhoneInput, { parsePhoneNumber } from 'react-phone-number-input';
+import PhoneInput, { parsePhoneNumber, getCountryCallingCode } from 'react-phone-number-input';
 import T from '../../../utils/tokens';
 import { api } from '../../../api.js';
 import { makeDefaultSchedule, buildHours, parseSchedule, VS_DAY_KEYS, VS_DAY_LABELS } from '../../../utils/schedule';
@@ -17,7 +17,18 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
   useEffect(() => {
     fetch("https://ipapi.co/json/")
       .then(r => r.json())
-      .then(d => { if (d.country_code) { setBizPhoneCountry(d.country_code); setFwdPhoneCountry(d.country_code); } })
+      .then(d => {
+        if (d.country_code) {
+          setBizPhoneCountry(d.country_code);
+          setFwdPhoneCountry(d.country_code);
+          // Pre-fill calling codes if fields are still empty
+          try {
+            const code = getCountryCallingCode(d.country_code);
+            setBizPhone(prev => prev ? prev : `+${code}`);
+            setForwardNumber(prev => prev ? prev : `+${code}`);
+          } catch {}
+        }
+      })
       .catch(() => {});
   }, []);
 
