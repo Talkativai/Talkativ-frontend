@@ -422,7 +422,7 @@ export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChang
           </div>
 
           {/* Map + Photos side by side (Google Maps style) */}
-          <div style={{ display: "grid", gridTemplateColumns: pendingBiz.photos?.length > 0 ? "1fr 1fr" : "1fr", gap: 0, marginBottom: 12, borderRadius: 14, overflow: "hidden", border: `1.5px solid ${T.line}` }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 0, marginBottom: 12, borderRadius: 14, overflow: "hidden", border: `1.5px solid ${T.line}` }}>
             {/* Map panel */}
             <div style={{ height: 200, background: T.paper, position: "relative" }}>
               {pendingBiz.lat && pendingBiz.lng ? (
@@ -438,7 +438,6 @@ export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChang
                   <span style={{ fontSize: 13 }}>Map not available</span>
                 </div>
               )}
-              {/* Expand icon overlay (decorative) */}
               {pendingBiz.lat && pendingBiz.lng && (
                 <div style={{ position: "absolute", top: 8, right: 8, width: 28, height: 28, borderRadius: 6, background: "rgba(255,255,255,.85)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, boxShadow: "0 1px 4px rgba(0,0,0,.15)", cursor: "pointer" }}
                   onClick={() => window.open(`https://www.openstreetmap.org/?mlat=${pendingBiz.lat}&mlon=${pendingBiz.lng}#map=17/${pendingBiz.lat}/${pendingBiz.lng}`, '_blank')}
@@ -449,60 +448,57 @@ export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChang
               )}
             </div>
 
-            {/* Photos gallery panel */}
-            {pendingBiz.photos && pendingBiz.photos.length > 0 && (
-              <div style={{ height: 200, position: "relative", background: T.paper }}>
+            {/* Photos panel — gallery if photos exist, styled info card if not */}
+            {pendingBiz.photos && pendingBiz.photos.length > 0 ? (
+              <div style={{ height: 200, position: "relative", background: T.paper, borderLeft: `1px solid ${T.line}` }}>
                 <img
                   src={pendingBiz.photos[activePhotoIdx] || pendingBiz.photos[0]}
                   alt={`${pendingBiz.name} photo`}
                   style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                   onError={e => { e.target.style.display = "none"; }}
                 />
-                {/* Navigation arrows for multiple photos */}
                 {pendingBiz.photos.length > 1 && (
                   <>
                     <div
                       onClick={() => setActivePhotoIdx(p => p > 0 ? p - 1 : pendingBiz.photos.length - 1)}
-                      style={{ position: "absolute", left: 6, top: "50%", transform: "translateY(-50%)", width: 28, height: 28, borderRadius: "50%", background: "rgba(0,0,0,.45)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, cursor: "pointer", backdropFilter: "blur(4px)", transition: "background .15s" }}
-                      onMouseEnter={e => e.currentTarget.style.background = "rgba(0,0,0,.7)"}
-                      onMouseLeave={e => e.currentTarget.style.background = "rgba(0,0,0,.45)"}
-                    >
-                      ‹
-                    </div>
+                      style={{ position: "absolute", left: 6, top: "50%", transform: "translateY(-50%)", width: 28, height: 28, borderRadius: "50%", background: "rgba(0,0,0,.45)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, cursor: "pointer", backdropFilter: "blur(4px)" }}
+                    >‹</div>
                     <div
                       onClick={() => setActivePhotoIdx(p => p < pendingBiz.photos.length - 1 ? p + 1 : 0)}
-                      style={{ position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)", width: 28, height: 28, borderRadius: "50%", background: "rgba(0,0,0,.45)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, cursor: "pointer", backdropFilter: "blur(4px)", transition: "background .15s" }}
-                      onMouseEnter={e => e.currentTarget.style.background = "rgba(0,0,0,.7)"}
-                      onMouseLeave={e => e.currentTarget.style.background = "rgba(0,0,0,.45)"}
-                    >
-                      ›
+                      style={{ position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)", width: 28, height: 28, borderRadius: "50%", background: "rgba(0,0,0,.45)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, cursor: "pointer", backdropFilter: "blur(4px)" }}
+                    >›</div>
+                    <div style={{ position: "absolute", bottom: 8, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 5 }}>
+                      {pendingBiz.photos.map((_, idx) => (
+                        <div key={idx} onClick={() => setActivePhotoIdx(idx)}
+                          style={{ width: idx === activePhotoIdx ? 18 : 7, height: 7, borderRadius: 4, background: idx === activePhotoIdx ? "white" : "rgba(255,255,255,.5)", cursor: "pointer", transition: "all .2s", boxShadow: "0 1px 4px rgba(0,0,0,.3)" }} />
+                      ))}
                     </div>
                   </>
                 )}
-                {/* Photo dots */}
-                {pendingBiz.photos.length > 1 && (
-                  <div style={{ position: "absolute", bottom: 8, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 5 }}>
-                    {pendingBiz.photos.map((_, idx) => (
-                      <div
-                        key={idx}
-                        onClick={() => setActivePhotoIdx(idx)}
-                        style={{
-                          width: idx === activePhotoIdx ? 18 : 7,
-                          height: 7,
-                          borderRadius: 4,
-                          background: idx === activePhotoIdx ? "white" : "rgba(255,255,255,.5)",
-                          cursor: "pointer",
-                          transition: "all .2s",
-                          boxShadow: "0 1px 4px rgba(0,0,0,.3)",
-                        }}
-                      />
-                    ))}
+                <div style={{ position: "absolute", bottom: 8, right: 8, background: "rgba(0,0,0,.6)", color: "white", borderRadius: 6, padding: "4px 10px", fontSize: 11, fontWeight: 600, backdropFilter: "blur(4px)" }}>
+                  📷 {pendingBiz.photos.length} photo{pendingBiz.photos.length > 1 ? "s" : ""}
+                </div>
+              </div>
+            ) : (
+              /* No photos from this provider — show a styled business info card */
+              <div style={{ height: 200, borderLeft: `1px solid ${T.line}`, background: `linear-gradient(135deg, ${T.p50} 0%, #f3f0ff 100%)`, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, padding: "16px 12px", textAlign: "center" }}>
+                <div style={{ width: 56, height: 56, borderRadius: 16, background: `linear-gradient(135deg, ${T.p400}, ${T.p700})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, boxShadow: `0 4px 16px rgba(112,53,245,.3)` }}>
+                  {emojiForCategory(pendingBiz.category)}
+                </div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: T.ink, lineHeight: 1.3, marginBottom: 4 }}>{pendingBiz.name}</div>
+                  {pendingBiz.category && <div style={{ fontSize: 11, color: T.p600, fontWeight: 600, textTransform: "uppercase", letterSpacing: ".5px" }}>{pendingBiz.category}</div>}
+                </div>
+                {pendingBiz.phone && (
+                  <div style={{ fontSize: 11.5, color: T.mid, display: "flex", alignItems: "center", gap: 4 }}>
+                    <span>📞</span> {pendingBiz.phone}
                   </div>
                 )}
-                {/* See photos label */}
-                <div style={{ position: "absolute", bottom: 8, right: 8, background: "rgba(0,0,0,.6)", color: "white", borderRadius: 6, padding: "4px 10px", fontSize: 11, fontWeight: 600, backdropFilter: "blur(4px)", display: "flex", alignItems: "center", gap: 4 }}>
-                  📷 See photos
-                </div>
+                {pendingBiz.hours && (
+                  <div style={{ background: "#dcfce7", borderRadius: 8, padding: "3px 10px", fontSize: 10.5, fontWeight: 600, color: "#15803d" }}>
+                    ⏰ Hours found
+                  </div>
+                )}
               </div>
             )}
           </div>
