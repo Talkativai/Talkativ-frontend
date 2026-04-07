@@ -24,6 +24,8 @@ export const catEmoji = (name) => {
 export const formatSchedule = (schedule) => {
   if (!schedule) return null;
   if (schedule.is24h === "true") return "24/7";
+  // If hours were auto-found from a business search (Google Places / Claude)
+  if (schedule.searchHours) return schedule.searchHours;
   const days = ["mon","tue","wed","thu","fri","sat","sun"];
   const dayNames = { mon:"Mon", tue:"Tue", wed:"Wed", thu:"Thu", fri:"Fri", sat:"Sat", sun:"Sun" };
   const open = days.filter(d => schedule[d] && schedule[d] !== "closed");

@@ -10,10 +10,11 @@ function deriveMerchantId(bizId) {
 
 export default function PageDashboard({ onNav, user, agentName, bizName, agentData, bizData, integrations = [] }) {
   const [copied, setCopied] = useState(false);
-  const copyMid = (id) => {
-    navigator.clipboard.writeText(id).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+  const [phoneCopied, setPhoneCopied] = useState(false);
+  const copyToClipboard = (text, setter) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setter(true);
+      setTimeout(() => setter(false), 2000);
     }).catch(() => {});
   };
 
@@ -31,6 +32,7 @@ export default function PageDashboard({ onNav, user, agentName, bizName, agentDa
   const voiceDesc     = agentData?.voiceDescription || 'Warm & professional';
   const currencySymbol = getCurrencySymbol(bizData?.currency);
   const merchantId    = deriveMerchantId(bizData?.id);
+  const agentPhone    = agentData?.aiPhoneNumber || null;
 
   const fallbackLabels = { transfer: 'Transfer', voicemail: 'Voicemail', callback: 'Call back' };
   const callRulesLabel = fallbackLabels[agentData?.fallbackAction] || 'Transfer';
@@ -66,11 +68,33 @@ export default function PageDashboard({ onNav, user, agentName, bizName, agentDa
                   <div style={{ padding: "5px 8px", display: "flex", alignItems: "center", gap: 6 }}>
                     <span style={{ fontSize: 11.5, fontWeight: 700, color: T.ink, fontFamily: "monospace", letterSpacing: "1.5px" }}>{merchantId}</span>
                     <button
-                      onClick={() => copyMid(merchantId)}
+                      onClick={() => copyToClipboard(merchantId, setCopied)}
                       title={copied ? "Copied!" : "Copy Merchant ID"}
                       style={{ background: "none", border: "none", cursor: "pointer", padding: "2px 3px", borderRadius: 4, color: copied ? T.green : T.soft, display: "flex", alignItems: "center", transition: "color .2s", lineHeight: 1 }}
                     >
                       {copied ? (
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      ) : (
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+              {agentPhone && (
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 0, background: T.white, border: `1.5px solid ${T.p100}`, borderRadius: 9, overflow: "hidden", boxShadow: "0 1px 5px rgba(134,87,255,.08)" }}>
+                  <div style={{ background: `linear-gradient(135deg, ${T.p50}, ${T.mist})`, padding: "5px 10px", borderRight: `1.5px solid ${T.p100}`, display: "flex", alignItems: "center", gap: 5 }}>
+                    <span style={{ fontSize: 12 }}>📞</span>
+                    <span style={{ fontSize: 9.5, fontWeight: 700, color: T.p600, letterSpacing: ".7px", textTransform: "uppercase", whiteSpace: "nowrap" }}>Agent Phone</span>
+                  </div>
+                  <div style={{ padding: "5px 8px", display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ fontSize: 11.5, fontWeight: 700, color: T.ink, fontFamily: "monospace", letterSpacing: ".5px" }}>{agentPhone}</span>
+                    <button
+                      onClick={() => copyToClipboard(agentPhone, setPhoneCopied)}
+                      title={phoneCopied ? "Copied!" : "Copy Agent Phone"}
+                      style={{ background: "none", border: "none", cursor: "pointer", padding: "2px 3px", borderRadius: 4, color: phoneCopied ? T.green : T.soft, display: "flex", alignItems: "center", transition: "color .2s", lineHeight: 1 }}
+                    >
+                      {phoneCopied ? (
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                       ) : (
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>

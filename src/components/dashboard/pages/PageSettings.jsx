@@ -51,6 +51,7 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
   // Business schedule
   const [biz24h,   setBiz24h]   = useState(false);
   const [bizSched, setBizSched] = useState(makeDefaultSchedule());
+  const [bizSearchHours, setBizSearchHours] = useState(''); // auto-found from search
 
   // ── Ordering ──────────────────────────────────────────────────────────────
   const [deliveryRadius, setDeliveryRadius] = useState(5);
@@ -126,6 +127,7 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
       setBizCurrency(bizData.currency || '');
       setCountrySearch(bizData.country || '');
       if (bizData.openingHours) {
+        if (bizData.openingHours.searchHours) setBizSearchHours(bizData.openingHours.searchHours);
         if (bizData.openingHours.is24h === "true") setBiz24h(true);
         else { setBiz24h(false); setBizSched(parseSchedule(bizData.openingHours)); }
       }
@@ -158,6 +160,7 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
         setBizCurrency(d.currency || '');
         setCountrySearch(d.country || '');
         if (d.openingHours) {
+          if (d.openingHours.searchHours) setBizSearchHours(d.openingHours.searchHours);
           if (d.openingHours.is24h === "true") setBiz24h(true);
           else { setBiz24h(false); setBizSched(parseSchedule(d.openingHours)); }
         }
@@ -511,6 +514,15 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
                   </div>
                   <button className="btn-primary" style={{fontSize:13,padding:"9px 20px"}} onClick={saveBiz} disabled={savingBiz}>{savingBiz?"Saving…":"Save changes"}</button>
                 </div>
+                {bizSearchHours && (
+                  <div style={{background:`linear-gradient(135deg, #f0fdf4, #ecfdf5)`,border:`1.5px solid #bbf7d0`,borderRadius:14,padding:"14px 18px",marginTop:12,marginBottom:8,display:"flex",alignItems:"flex-start",gap:12}}>
+                    <div style={{width:36,height:36,borderRadius:10,background:"linear-gradient(135deg,#22c55e,#16a34a)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0,boxShadow:"0 3px 8px rgba(34,197,94,.2)"}}>⏰</div>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:12,fontWeight:700,color:"#16a34a",marginBottom:3}}>✓ Auto-found from business search</div>
+                      <div style={{fontSize:12,color:T.mid,lineHeight:1.5}}>{bizSearchHours}</div>
+                    </div>
+                  </div>
+                )}
                 <ScheduleInlineEditor is24h={biz24h} setIs24h={setBiz24h} schedule={bizSched} setSchedule={setBizSched}/>
               </div>
             </div>

@@ -68,6 +68,13 @@ export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChang
     sun: { open: false, openTime: "09:00", closeTime: "17:00" },
   });
 
+  // Whether hours were auto-found from search
+  const [hoursFromSearch, setHoursFromSearch] = useState(false);
+  const [showScheduleOverride, setShowScheduleOverride] = useState(false);
+
+  // Photo viewer state
+  const [activePhotoIdx, setActivePhotoIdx] = useState(0);
+
   const toggleDay = (day) => setSchedule(prev => ({ ...prev, [day]: { ...prev[day], open: !prev[day].open } }));
   const updateTime = (day, field, value) => setSchedule(prev => ({ ...prev, [day]: { ...prev[day], [field]: value } }));
 
@@ -128,7 +135,7 @@ export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChang
     setFormError(null);
     if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
     if (val.trim().length >= 2) {
-      searchTimerRef.current = setTimeout(() => handleSearch(val), 600);
+      searchTimerRef.current = setTimeout(() => handleSearch(val), 250);
     }
   };
 
@@ -136,6 +143,7 @@ export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChang
     setPendingBiz(biz);
     setShowResults(false);
     setView('map');
+    setActivePhotoIdx(0);
   };
 
   const handleConfirm = () => {
@@ -158,6 +166,14 @@ export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChang
     if (biz.countryCode) countryFound = applyCountry(biz.countryCode, true);
     if (!countryFound && biz.country) countryFound = applyCountry(biz.country, false);
     if (!countryFound) applyCountryFromIp(); // auto-fill from IP
+
+    // If hours were found from search, flag it
+    if (biz.hours && biz.hours.trim().length > 0) {
+      setHoursFromSearch(true);
+      setShowScheduleOverride(false);
+    } else {
+      setHoursFromSearch(false);
+    }
 
     setView('confirmed');
     setPendingBiz(null);
@@ -186,6 +202,7 @@ export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChang
     setShowResults(false);
     setPendingBiz(null);
     setFormError(null);
+    setHoursFromSearch(false);
   };
 
   // Country autocomplete state
@@ -245,6 +262,13 @@ export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChang
     }
 
     setFormError(null);
+
+    // Build the opening hours payload
+    // If hours were found from search and user didn't override, save the search hours as a string
+    const openingHoursPayload = hoursFromSearch && !showScheduleOverride
+      ? { searchHours: bizHours, is24h: "false" }
+      : buildOpeningHours();
+
     try {
       await api.settings.updateBusiness({
         name: bizName,
@@ -253,7 +277,7 @@ export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChang
         phone: bizPhone,
         country: country,
         currency: currency,
-        openingHours: buildOpeningHours(),
+        openingHours: openingHoursPayload,
       });
     } catch {}
     if (onBizNameChange) onBizNameChange(bizName);
@@ -310,8 +334,9 @@ export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChang
             style={{ paddingRight: searching ? 110 : undefined }}
           />
           {searching && (
-            <div style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", fontSize: 12, color: T.soft, fontWeight: 600, pointerEvents: "none" }}>
-              ⏳ Searching...
+            <div style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: T.soft, fontWeight: 600, pointerEvents: "none" }}>
+              <div style={{ width: 14, height: 14, border: `2px solid ${T.p300}`, borderTopColor: T.p600, borderRadius: "50%", animation: "spin .6s linear infinite" }} />
+              Searching…
             </div>
           )}
         </div>
@@ -325,7 +350,7 @@ export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChang
         )}
       </div>
 
-      {/* ── Search Results ───────────────────────────────────────────────── */}
+      {/* ── Search Results (autocomplete style) ──────────────────────────── */}
       {showResults && results.length > 0 && view === 'search' && (
         <div style={{ background: T.white, border: `1.5px solid ${T.line}`, borderRadius: 14, overflow: "hidden", marginBottom: 20, boxShadow: `0 8px 24px rgba(134,87,255,.08)` }}>
           <div style={{ padding: "10px 16px", borderBottom: `1px solid ${T.line}`, fontSize: 11, fontWeight: 600, color: T.soft, textTransform: "uppercase", letterSpacing: ".5px" }}>
@@ -339,9 +364,16 @@ export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChang
               onMouseEnter={e => e.currentTarget.style.background = T.paper}
               onMouseLeave={e => e.currentTarget.style.background = "transparent"}
             >
-              <div style={{ width: 40, height: 40, background: `linear-gradient(135deg,${T.p400},${T.p700})`, borderRadius: 11, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
-                {emojiForCategory(biz.category)}
-              </div>
+              {/* Thumbnail from photos or emoji fallback */}
+              {biz.photos && biz.photos.length > 0 ? (
+                <div style={{ width: 40, height: 40, borderRadius: 11, overflow: "hidden", flexShrink: 0 }}>
+                  <img src={biz.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => { e.target.style.display = "none"; e.target.parentElement.style.background = `linear-gradient(135deg,${T.p400},${T.p700})`; e.target.parentElement.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:18px">${emojiForCategory(biz.category)}</div>`; }} />
+                </div>
+              ) : (
+                <div style={{ width: 40, height: 40, background: `linear-gradient(135deg,${T.p400},${T.p700})`, borderRadius: 11, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
+                  {emojiForCategory(biz.category)}
+                </div>
+              )}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 600, fontSize: 14, color: T.ink, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{biz.name}</div>
                 <div style={{ fontSize: 12, color: T.soft, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{biz.category ? `${biz.category} · ` : ""}{biz.address}</div>
@@ -367,36 +399,144 @@ export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChang
         </div>
       )}
 
-      {/* ── Inline Map Confirmation ──────────────────────────────────────── */}
+      {/* ── Inline Map + Photos Confirmation ─────────────────────────────── */}
       {view === 'map' && pendingBiz && (
         <div style={{ marginBottom: 20, animation: "fadeUp .25s ease both" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-            <div style={{ width: 40, height: 40, background: `linear-gradient(135deg,${T.p400},${T.p700})`, borderRadius: 11, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
-              {emojiForCategory(pendingBiz.category)}
-            </div>
+            {/* Thumbnail photo or emoji */}
+            {pendingBiz.photos && pendingBiz.photos.length > 0 ? (
+              <div style={{ width: 40, height: 40, borderRadius: 11, overflow: "hidden", flexShrink: 0 }}>
+                <img src={pendingBiz.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              </div>
+            ) : (
+              <div style={{ width: 40, height: 40, background: `linear-gradient(135deg,${T.p400},${T.p700})`, borderRadius: 11, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
+                {emojiForCategory(pendingBiz.category)}
+              </div>
+            )}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 700, fontSize: 14.5, color: T.ink }}>{pendingBiz.name}</div>
               <div style={{ fontSize: 12, color: T.soft, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{pendingBiz.address}</div>
             </div>
           </div>
 
-          <div style={{ borderRadius: 14, overflow: "hidden", border: `1.5px solid ${T.line}`, height: 200, marginBottom: 12, background: T.paper }}>
-            {pendingBiz.lat && pendingBiz.lng ? (
-              <iframe
-                title="Business location"
-                src={osmEmbedUrl(pendingBiz.lat, pendingBiz.lng)}
-                style={{ width: "100%", height: "100%", border: "none" }}
-                loading="lazy"
-              />
-            ) : (
-              <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, color: T.soft }}>
-                <span style={{ fontSize: 28 }}>📍</span>
-                <span style={{ fontSize: 13 }}>Map not available for this location</span>
+          {/* Map + Photos side by side (Google Maps style) */}
+          <div style={{ display: "grid", gridTemplateColumns: pendingBiz.photos?.length > 0 ? "1fr 1fr" : "1fr", gap: 0, marginBottom: 12, borderRadius: 14, overflow: "hidden", border: `1.5px solid ${T.line}` }}>
+            {/* Map panel */}
+            <div style={{ height: 200, background: T.paper, position: "relative" }}>
+              {pendingBiz.lat && pendingBiz.lng ? (
+                <iframe
+                  title="Business location"
+                  src={osmEmbedUrl(pendingBiz.lat, pendingBiz.lng)}
+                  style={{ width: "100%", height: "100%", border: "none" }}
+                  loading="lazy"
+                />
+              ) : (
+                <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, color: T.soft }}>
+                  <span style={{ fontSize: 28 }}>📍</span>
+                  <span style={{ fontSize: 13 }}>Map not available</span>
+                </div>
+              )}
+              {/* Expand icon overlay (decorative) */}
+              {pendingBiz.lat && pendingBiz.lng && (
+                <div style={{ position: "absolute", top: 8, right: 8, width: 28, height: 28, borderRadius: 6, background: "rgba(255,255,255,.85)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, boxShadow: "0 1px 4px rgba(0,0,0,.15)", cursor: "pointer" }}
+                  onClick={() => window.open(`https://www.openstreetmap.org/?mlat=${pendingBiz.lat}&mlon=${pendingBiz.lng}#map=17/${pendingBiz.lat}/${pendingBiz.lng}`, '_blank')}
+                  title="Open in OpenStreetMap"
+                >
+                  ↗
+                </div>
+              )}
+            </div>
+
+            {/* Photos gallery panel */}
+            {pendingBiz.photos && pendingBiz.photos.length > 0 && (
+              <div style={{ height: 200, position: "relative", background: T.paper }}>
+                <img
+                  src={pendingBiz.photos[activePhotoIdx] || pendingBiz.photos[0]}
+                  alt={`${pendingBiz.name} photo`}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                  onError={e => { e.target.style.display = "none"; }}
+                />
+                {/* Navigation arrows for multiple photos */}
+                {pendingBiz.photos.length > 1 && (
+                  <>
+                    <div
+                      onClick={() => setActivePhotoIdx(p => p > 0 ? p - 1 : pendingBiz.photos.length - 1)}
+                      style={{ position: "absolute", left: 6, top: "50%", transform: "translateY(-50%)", width: 28, height: 28, borderRadius: "50%", background: "rgba(0,0,0,.45)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, cursor: "pointer", backdropFilter: "blur(4px)", transition: "background .15s" }}
+                      onMouseEnter={e => e.currentTarget.style.background = "rgba(0,0,0,.7)"}
+                      onMouseLeave={e => e.currentTarget.style.background = "rgba(0,0,0,.45)"}
+                    >
+                      ‹
+                    </div>
+                    <div
+                      onClick={() => setActivePhotoIdx(p => p < pendingBiz.photos.length - 1 ? p + 1 : 0)}
+                      style={{ position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)", width: 28, height: 28, borderRadius: "50%", background: "rgba(0,0,0,.45)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, cursor: "pointer", backdropFilter: "blur(4px)", transition: "background .15s" }}
+                      onMouseEnter={e => e.currentTarget.style.background = "rgba(0,0,0,.7)"}
+                      onMouseLeave={e => e.currentTarget.style.background = "rgba(0,0,0,.45)"}
+                    >
+                      ›
+                    </div>
+                  </>
+                )}
+                {/* Photo dots */}
+                {pendingBiz.photos.length > 1 && (
+                  <div style={{ position: "absolute", bottom: 8, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 5 }}>
+                    {pendingBiz.photos.map((_, idx) => (
+                      <div
+                        key={idx}
+                        onClick={() => setActivePhotoIdx(idx)}
+                        style={{
+                          width: idx === activePhotoIdx ? 18 : 7,
+                          height: 7,
+                          borderRadius: 4,
+                          background: idx === activePhotoIdx ? "white" : "rgba(255,255,255,.5)",
+                          cursor: "pointer",
+                          transition: "all .2s",
+                          boxShadow: "0 1px 4px rgba(0,0,0,.3)",
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+                {/* See photos label */}
+                <div style={{ position: "absolute", bottom: 8, right: 8, background: "rgba(0,0,0,.6)", color: "white", borderRadius: 6, padding: "4px 10px", fontSize: 11, fontWeight: 600, backdropFilter: "blur(4px)", display: "flex", alignItems: "center", gap: 4 }}>
+                  📷 See photos
+                </div>
               </div>
             )}
           </div>
 
-          {(pendingBiz.category || pendingBiz.phone) && (
+          {/* Bottom photo strip — shows small thumbnails like Google Maps "See photos" / "See outside" */}
+          {pendingBiz.photos && pendingBiz.photos.length > 1 && (
+            <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
+              {pendingBiz.photos.slice(0, 4).map((photo, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => setActivePhotoIdx(idx)}
+                  style={{
+                    flex: 1,
+                    height: 56,
+                    borderRadius: 8,
+                    overflow: "hidden",
+                    cursor: "pointer",
+                    border: `2px solid ${idx === activePhotoIdx ? T.p500 : "transparent"}`,
+                    transition: "border-color .15s",
+                    position: "relative",
+                  }}
+                >
+                  <img src={photo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} onError={e => { e.target.parentElement.style.display = "none"; }} />
+                  {idx === 0 && (
+                    <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "2px 6px", background: "rgba(0,0,0,.55)", fontSize: 9, fontWeight: 600, color: "white", textAlign: "center" }}>See photos</div>
+                  )}
+                  {idx === 1 && (
+                    <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "2px 6px", background: "rgba(0,0,0,.55)", fontSize: 9, fontWeight: 600, color: "white", textAlign: "center" }}>See outside</div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Tags: category, phone, hours */}
+          {(pendingBiz.category || pendingBiz.phone || pendingBiz.hours) && (
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
               {pendingBiz.category && (
                 <span style={{ background: T.paper, border: `1.5px solid ${T.line}`, color: T.mid, borderRadius: 20, padding: "4px 12px", fontSize: 12, fontWeight: 500 }}>
@@ -406,6 +546,11 @@ export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChang
               {pendingBiz.phone && (
                 <span style={{ background: T.paper, border: `1.5px solid ${T.line}`, color: T.mid, borderRadius: 20, padding: "4px 12px", fontSize: 12, fontWeight: 500 }}>
                   📞 {pendingBiz.phone}
+                </span>
+              )}
+              {pendingBiz.hours && (
+                <span style={{ background: T.greenBg || "#f0fdf4", border: `1.5px solid ${T.greenBd || "#bbf7d0"}`, color: T.green || "#16a34a", borderRadius: 20, padding: "4px 12px", fontSize: 12, fontWeight: 500 }}>
+                  ⏰ Hours found
                 </span>
               )}
             </div>
@@ -619,52 +764,115 @@ export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChang
       )}
 
       {/* ── Working Hours Schedule ───────────────────────────────────────── */}
-      <div style={{ marginTop: 28, animation: "fadeUp .3s ease both" }}>
-        <div style={{ fontSize: 13, color: T.soft, marginBottom: 4 }}>When are you open?</div>
-        <div style={{ fontSize: 16, fontWeight: 700, color: T.ink, marginBottom: 16 }}>Set your working schedule</div>
+      {/* When hours are found from search, show a compact confirmation banner.
+          The full manual schedule editor is in Step4 (Agent schedule).
+          Only show the manual editor here if NO hours were auto-detected. */}
+      {hoursFromSearch && !showScheduleOverride ? (
+        <div style={{ marginTop: 28, animation: "fadeUp .3s ease both" }}>
+          <div style={{
+            background: `linear-gradient(135deg, ${T.greenBg || "#f0fdf4"}, #ecfdf5)`,
+            border: `1.5px solid ${T.greenBd || "#bbf7d0"}`,
+            borderRadius: 16,
+            padding: "20px 22px",
+            position: "relative",
+            overflow: "hidden",
+          }}>
+            {/* Decorative corner */}
+            <div style={{ position: "absolute", top: -20, right: -20, width: 80, height: 80, borderRadius: "50%", background: "rgba(34,197,94,.08)" }} />
 
-        <label style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20, cursor: "pointer", userSelect: "none" }}
-          onClick={() => setIs24h(v => !v)}>
-          <div style={{ width: 20, height: 20, borderRadius: 5, border: `2px solid ${is24h ? T.p600 : T.line}`, background: is24h ? T.p600 : T.white, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all .15s" }}>
-            {is24h && <span style={{ color: "white", fontSize: 11, fontWeight: 800, lineHeight: 1 }}>✓</span>}
-          </div>
-          <span style={{ fontSize: 14, fontWeight: 600, color: T.ink }}>We operate 24/7</span>
-        </label>
-
-        {!is24h && (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 8 }}>
-            {[["mon","Mon"],["tue","Tue"],["wed","Wed"],["thu","Thu"],["fri","Fri"],["sat","Sat"],["sun","Sun"]].map(([key, label]) => {
-              const day = schedule[key];
-              return (
-                <div key={key} style={{ background: T.white, border: `1.5px solid ${day.open ? T.p400 : T.line}`, borderRadius: 12, padding: "12px 10px", display: "flex", flexDirection: "column", alignItems: "center", gap: 8, transition: "border-color .15s", minWidth: 0 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: day.open ? T.p700 : T.ink }}>{label}</div>
-                  <div onClick={() => toggleDay(key)} style={{ width: 22, height: 22, borderRadius: 6, border: `2px solid ${day.open ? T.p600 : T.line}`, background: day.open ? T.p600 : T.white, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, transition: "all .15s" }}>
-                    {day.open && <span style={{ color: "white", fontSize: 11, fontWeight: 800, lineHeight: 1 }}>✓</span>}
-                  </div>
-                  {day.open && (
-                    <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 6 }}>
-                      <div>
-                        <div style={{ fontSize: 9, color: T.soft, marginBottom: 2, textAlign: "center" }}>Open</div>
-                        <input type="time" value={day.openTime} onChange={e => updateTime(key, "openTime", e.target.value)} style={{ width: "100%", border: `1.5px solid ${T.line}`, borderRadius: 7, padding: "4px 4px", fontSize: 11, fontFamily: "'Outfit',sans-serif", color: T.ink, outline: "none", textAlign: "center", boxSizing: "border-box" }} />
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 9, color: T.soft, marginBottom: 2, textAlign: "center" }}>Close</div>
-                        <input type="time" value={day.closeTime} onChange={e => updateTime(key, "closeTime", e.target.value)} style={{ width: "100%", border: `1.5px solid ${T.line}`, borderRadius: 7, padding: "4px 4px", fontSize: 11, fontFamily: "'Outfit',sans-serif", color: T.ink, outline: "none", textAlign: "center", boxSizing: "border-box" }} />
-                      </div>
-                    </div>
-                  )}
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
+              <div style={{
+                width: 42, height: 42, borderRadius: 12,
+                background: `linear-gradient(135deg, #22c55e, #16a34a)`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 20, flexShrink: 0, boxShadow: "0 4px 12px rgba(34,197,94,.25)",
+              }}>
+                ⏰
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: T.ink, marginBottom: 4 }}>
+                  ✓ Business hours found automatically
                 </div>
-              );
-            })}
-          </div>
-        )}
+                <div style={{ fontSize: 12.5, color: T.mid, lineHeight: 1.5 }}>
+                  {bizHours}
+                </div>
+                <div style={{ fontSize: 11, color: T.soft, marginTop: 6, fontStyle: "italic" }}>
+                  These will be saved as your business working hours. You can set your AI agent's schedule on the next screen.
+                </div>
+              </div>
+            </div>
 
-        {is24h && (
-          <div style={{ background: T.greenBg, border: `1px solid ${T.greenBd}`, borderRadius: 12, padding: "14px 18px", fontSize: 13, color: T.green, fontWeight: 600 }}>
-            Your agent will let customers know you're available around the clock.
+            <button
+              onClick={() => {
+                setShowScheduleOverride(true);
+                setHoursFromSearch(false);
+              }}
+              style={{
+                marginTop: 14, background: "transparent", border: `1.5px solid ${T.greenBd || "#bbf7d0"}`,
+                borderRadius: 10, padding: "7px 16px", fontSize: 12, fontWeight: 600,
+                color: T.green || "#16a34a", cursor: "pointer", fontFamily: "'Outfit',sans-serif",
+                transition: "all .2s",
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = "rgba(34,197,94,.08)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
+            >
+              ✏️ Edit hours manually instead
+            </button>
           </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div style={{ marginTop: 28, animation: "fadeUp .3s ease both" }}>
+          <div style={{ fontSize: 13, color: T.soft, marginBottom: 4 }}>When are you open?</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: T.ink, marginBottom: 16 }}>Set your business working hours</div>
+
+          <label style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20, cursor: "pointer", userSelect: "none" }}
+            onClick={() => setIs24h(v => !v)}>
+            <div style={{ width: 20, height: 20, borderRadius: 5, border: `2px solid ${is24h ? T.p600 : T.line}`, background: is24h ? T.p600 : T.white, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all .15s" }}>
+              {is24h && <span style={{ color: "white", fontSize: 11, fontWeight: 800, lineHeight: 1 }}>✓</span>}
+            </div>
+            <span style={{ fontSize: 14, fontWeight: 600, color: T.ink }}>We operate 24/7</span>
+          </label>
+
+          {!is24h && (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 8 }}>
+              {[["mon","Mon"],["tue","Tue"],["wed","Wed"],["thu","Thu"],["fri","Fri"],["sat","Sat"],["sun","Sun"]].map(([key, label]) => {
+                const day = schedule[key];
+                return (
+                  <div key={key} style={{ background: T.white, border: `1.5px solid ${day.open ? T.p400 : T.line}`, borderRadius: 12, padding: "12px 10px", display: "flex", flexDirection: "column", alignItems: "center", gap: 8, transition: "border-color .15s", minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: day.open ? T.p700 : T.ink }}>{label}</div>
+                    <div onClick={() => toggleDay(key)} style={{ width: 22, height: 22, borderRadius: 6, border: `2px solid ${day.open ? T.p600 : T.line}`, background: day.open ? T.p600 : T.white, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, transition: "all .15s" }}>
+                      {day.open && <span style={{ color: "white", fontSize: 11, fontWeight: 800, lineHeight: 1 }}>✓</span>}
+                    </div>
+                    {day.open && (
+                      <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 6 }}>
+                        <div>
+                          <div style={{ fontSize: 9, color: T.soft, marginBottom: 2, textAlign: "center" }}>Open</div>
+                          <input type="time" value={day.openTime} onChange={e => updateTime(key, "openTime", e.target.value)} style={{ width: "100%", border: `1.5px solid ${T.line}`, borderRadius: 7, padding: "4px 4px", fontSize: 11, fontFamily: "'Outfit',sans-serif", color: T.ink, outline: "none", textAlign: "center", boxSizing: "border-box" }} />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 9, color: T.soft, marginBottom: 2, textAlign: "center" }}>Close</div>
+                          <input type="time" value={day.closeTime} onChange={e => updateTime(key, "closeTime", e.target.value)} style={{ width: "100%", border: `1.5px solid ${T.line}`, borderRadius: 7, padding: "4px 4px", fontSize: 11, fontFamily: "'Outfit',sans-serif", color: T.ink, outline: "none", textAlign: "center", boxSizing: "border-box" }} />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {is24h && (
+            <div style={{ background: T.greenBg, border: `1px solid ${T.greenBd}`, borderRadius: 12, padding: "14px 18px", fontSize: 13, color: T.green, fontWeight: 600 }}>
+              Your business will be marked as available around the clock.
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Spinner keyframe for search */}
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+      `}</style>
     </ObShell>
   );
 }

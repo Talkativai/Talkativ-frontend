@@ -286,6 +286,7 @@ export const api = {
   billing: {
     get: () => get('/api/billing'),
     getInvoices: () => get('/api/billing/invoices'),
+    createSetupIntent: () => post('/api/billing/create-setup-intent', {}),
     subscribe: (data) => post('/api/billing/subscribe', data),
     changePlan: (data) => put('/api/billing/plan', data),
     cancel: () => post('/api/billing/cancel', {}),

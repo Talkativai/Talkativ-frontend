@@ -18,9 +18,6 @@ export default function PageMyAgent({ user, agentName, bizName, agentData, bizDa
   const [acceptOrders, setAcceptOrders] = useState(true);
   const [takeReservations, setTakeReservations] = useState(true);
   const [answerAfterHours, setAnswerAfterHours] = useState(false);
-  const [rebuildState, setRebuildState] = useState("idle"); // idle | loading | success | error
-  const [rebuildMsg, setRebuildMsg] = useState("");
-
   useEffect(() => {
     if (agentData) {
       setAcceptOrders(agentData.acceptOrders ?? true);
@@ -31,20 +28,6 @@ export default function PageMyAgent({ user, agentName, bizName, agentData, bizDa
 
   const updateSetting = async (field, val) => {
     try { await api.agent.update({ [field]: val }); } catch {}
-  };
-
-  const handleRebuild = async () => {
-    setRebuildState("loading");
-    setRebuildMsg("");
-    try {
-      const result = await api.agent.rebuildPrompt();
-      setRebuildState("success");
-      setRebuildMsg(`Agent knowledge updated — ${result.menuItemCount ?? 0} menu items synced`);
-    } catch (err) {
-      setRebuildState("error");
-      setRebuildMsg(err?.message || "Failed to sync agent knowledge");
-    }
-    setTimeout(() => setRebuildState("idle"), 5000);
   };
 
   return (
@@ -111,26 +94,6 @@ export default function PageMyAgent({ user, agentName, bizName, agentData, bizDa
                       <div style={{fontSize:13.5,fontWeight:600,color:v ? T.ink : T.amber}}>{v || "Not set"}</div>
                     </div>
                   ))}
-                </div>
-
-                {/* Sync agent knowledge */}
-                <div style={{marginTop:16,background:T.paper,border:`1.5px solid ${T.line}`,borderRadius:12,padding:"14px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
-                  <div>
-                    <div style={{fontSize:13,fontWeight:700,color:T.ink,marginBottom:3}}>🔄 Agent knowledge</div>
-                    <div style={{fontSize:12,color:T.soft,lineHeight:1.4}}>Push your latest menu, hours & policies to the agent</div>
-                  </div>
-                  <div style={{display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
-                    {rebuildMsg && (
-                      <span style={{fontSize:12,color:rebuildState==="success"?T.green:T.red,fontWeight:600}}>{rebuildMsg}</span>
-                    )}
-                    <button
-                      onClick={handleRebuild}
-                      disabled={rebuildState==="loading"}
-                      style={{padding:"8px 18px",borderRadius:8,border:`1.5px solid ${T.p300}`,background:rebuildState==="loading"?T.p50:T.p500,color:rebuildState==="loading"?T.p400:"#fff",fontSize:13,fontWeight:600,cursor:rebuildState==="loading"?"not-allowed":"pointer",fontFamily:"'Outfit',sans-serif",transition:"all .15s"}}
-                    >
-                      {rebuildState==="loading" ? "Syncing…" : "Sync now"}
-                    </button>
-                  </div>
                 </div>
               </>
             )}

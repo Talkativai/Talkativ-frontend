@@ -897,7 +897,77 @@ textarea.form-input { resize: none; line-height: 1.6; }
 .qa-item:hover { border-color: ${T.p300}; background: ${T.p50}; transform: translateY(-2px); }
 .qa-icon { font-size: 18px; }
 .qa-label { font-size: 12.5px; font-weight: 500; color: ${T.mid}; }
-\n
+
+/* ── TRANSCRIPT PANEL ── */
+@keyframes slideDown {
+  from { max-height: 0; opacity: 0; }
+  to   { max-height: 600px; opacity: 1; }
+}
+.transcript-panel {
+  overflow: hidden;
+  animation: slideDown .35s ease forwards;
+  background: ${T.paper};
+  border: 1.5px solid ${T.line};
+  border-radius: 16px;
+  margin: 6px 0 10px;
+  padding: 20px;
+}
+.transcript-meta {
+  display: flex; gap: 20px; flex-wrap: wrap;
+  margin-bottom: 16px; padding-bottom: 14px;
+  border-bottom: 1px solid ${T.line};
+}
+.transcript-meta-item {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: ${T.mid};
+}
+.transcript-meta-item strong {
+  color: ${T.ink}; font-weight: 600;
+}
+.transcript-meta-icon { font-size: 14px; }
+.transcript-body {
+  max-height: 350px; overflow-y: auto;
+  padding-right: 8px;
+}
+.transcript-turn {
+  margin-bottom: 10px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.transcript-turn.agent {
+  background: ${T.p50}; border: 1px solid ${T.p100};
+  color: ${T.ink2};
+  margin-right: 40px;
+}
+.transcript-turn.caller {
+  background: ${T.white}; border: 1px solid ${T.line};
+  color: ${T.mid};
+  margin-left: 40px;
+}
+.transcript-turn-label {
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .5px;
+  margin-bottom: 4px; display: block;
+}
+.transcript-turn.agent .transcript-turn-label { color: ${T.p500}; }
+.transcript-turn.caller .transcript-turn-label { color: ${T.soft}; }
+.transcript-empty {
+  text-align: center; padding: 24px;
+  font-size: 13px; color: ${T.soft};
+}
+.transcript-toggle-btn {
+  background: none; border: none;
+  color: ${T.p600}; font-size: 12px;
+  font-weight: 600; cursor: pointer;
+  padding: 4px 10px; border-radius: 8px;
+  font-family: 'Outfit', sans-serif;
+  transition: all .15s;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.transcript-toggle-btn:hover { background: ${T.p50}; }
+
 /* ── RESPONSIVE CLASSES ── */
 .resp-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .resp-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
@@ -1066,7 +1136,7 @@ function AppRoutes() {
           <Route path="/onboarding/4" element={<Step4 onNext={() => goOb(5)} onBack={() => goOb(3)} bizName={obBizName} bizPhone={obPhone} onAgentNameChange={setObAgentName} />} />
           <Route path="/onboarding/5" element={<Step5 onNext={() => goOb(6)} onBack={() => goOb(4)} />} />
           <Route path="/onboarding/6" element={<Step6 onNext={() => goOb(7)} onBack={() => goOb(5)} agentName={obAgentName} />} />
-          <Route path="/onboarding/7" element={<Step7 onNext={async () => { try { await api.business.completeOnboarding(); } catch (e) { console.error('completeOnboarding failed:', e); } navigate('/success'); }} onBack={() => goOb(6)} />} />
+          <Route path="/onboarding/7" element={<Step7 onNext={() => navigate('/success')} onBack={() => goOb(6)} />} />
           <Route path="/success" element={<SuccessScreen onDashboard={() => navigate('/dashboard')} agentName={obAgentName} bizName={obBizName} />} />
           <Route path="/dashboard" element={<RequireAuth><DashboardApp /></RequireAuth>} />
           <Route path="/pay" element={<PaymentLinkScreen onBack={() => navigate('/')} />} />
