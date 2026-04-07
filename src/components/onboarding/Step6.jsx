@@ -51,7 +51,7 @@ export default function Step6({ onNext, onBack, agentName }) {
       <div className="ob-step-label">Step 7 · Test call</div>
       <h1 className="ob-heading">Test your agent<br />before <em>going live</em></h1>
       <p className="ob-subheading">
-        Call your new number to hear exactly what your customers will experience.
+        Call your number to hear your agent's voice and greeting — a live preview of how it sounds to callers.
       </p>
 
       <div className="test-call-card">
@@ -96,7 +96,7 @@ export default function Step6({ onNext, onBack, agentName }) {
           {called
             ? `Everything is working. ${displayAgent} is ready to go live.`
             : phone
-              ? `Dial the number above from your phone to hear ${displayAgent}'s greeting and test the full experience. Or click the button below and we'll call you.`
+              ? `Dial the number above from your phone to hear ${displayAgent} answer with the greeting and voice you configured. Once setup is complete, your agent will handle orders, reservations and FAQs too.`
               : `Go back to Step 6 to connect a number, or skip and test from your dashboard.`}
         </p>
 
@@ -172,8 +172,8 @@ export default function Step6({ onNext, onBack, agentName }) {
               What to expect
             </div>
             <div style={{ fontSize: 12.5, color: T.mid, lineHeight: 1.55 }}>
-              When you call, {displayAgent} will answer with the greeting message and voice you configured in Step 5. 
-              Try asking about your menu, opening hours, or placing a test order!
+              {displayAgent} will answer with your greeting and voice — exactly as callers will hear it.
+              After you complete setup, the full agent (menu, orders, reservations, FAQs) will be active on this number.
             </div>
           </div>
         </div>

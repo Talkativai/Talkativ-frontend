@@ -7,7 +7,7 @@ import ObShell from "./ObShell";
 
 const DAY_ENTRIES = [["mon","Mon"],["tue","Tue"],["wed","Wed"],["thu","Thu"],["fri","Fri"],["sat","Sat"],["sun","Sun"]];
 
-export default function Step4({ onNext, onBack, bizName, bizPhone, onAgentNameChange }) {
+export default function Step4({ onNext, onBack, bizName, bizPhone, onAgentNameChange, bizHoursFromSearch }) {
   const [gender, setGender] = useState("female");
   const voices = VOICE_CATALOGUE[gender];
   const [vc, setVc] = useState(0);
@@ -192,7 +192,19 @@ export default function Step4({ onNext, onBack, bizName, bizPhone, onAgentNameCh
       {/* Agent Working Schedule — Step2 grid style */}
       <div style={{ marginTop: 8 }}>
         <div style={{ fontSize: 13, color: T.soft, marginBottom: 4 }}>Agent working schedule</div>
-        <div style={{ fontSize: 16, fontWeight: 700, color: T.ink, marginBottom: 16 }}>When should your agent be active?</div>
+        <div style={{ fontSize: 16, fontWeight: 700, color: T.ink, marginBottom: bizHoursFromSearch ? 10 : 16 }}>When should your agent be active?</div>
+
+        {/* If business hours were found during search, show a summary banner */}
+        {bizHoursFromSearch && (
+          <div style={{ background: `linear-gradient(135deg, #f0fdf4, #ecfdf5)`, border: `1.5px solid #bbf7d0`, borderRadius: 14, padding: "14px 18px", marginBottom: 16, display: "flex", alignItems: "flex-start", gap: 12 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: `linear-gradient(135deg, #22c55e, #16a34a)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>⏰</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#166534", marginBottom: 3 }}>✓ Business hours imported from your online listing</div>
+              <div style={{ fontSize: 12, color: "#15803d", lineHeight: 1.5 }}>{bizHoursFromSearch}</div>
+              <div style={{ fontSize: 11, color: "#6b7280", marginTop: 5, fontStyle: "italic" }}>These are saved as your restaurant hours. Set below when your AI agent should actively take calls.</div>
+            </div>
+          </div>
+        )}
 
         <label
           style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20, cursor: "pointer", userSelect: "none" }}

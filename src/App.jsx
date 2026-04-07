@@ -1116,6 +1116,7 @@ function AppRoutes() {
   const [obBizName, setObBizName] = useState("");
   const [obAgentName, setObAgentName] = useState("Aria");
   const [obPhone, setObPhone] = useState("");
+  const [obBizHours, setObBizHours] = useState(null); // hours found during business search
 
   const goOb = (n) => { window.scrollTo(0,0); navigate(`/onboarding/${n}`); };
 
@@ -1131,9 +1132,9 @@ function AppRoutes() {
           <Route path="/reset-password" element={<ResetPasswordScreen />} />
           <Route path="/onboarding/0" element={<Step0 onNext={() => goOb(1)} onBack={() => navigate('/')} />} />
           <Route path="/onboarding/1" element={<Step1 onNext={() => goOb(2)} onBack={() => goOb(0)} onRegister={(userData) => handleLogin(userData)} />} />
-          <Route path="/onboarding/2" element={<Step2 onNext={() => goOb(3)} onBack={() => goOb(1)} onBizNameChange={setObBizName} onBizPhoneChange={setObPhone} />} />
+          <Route path="/onboarding/2" element={<Step2 onNext={() => goOb(3)} onBack={() => goOb(1)} onBizNameChange={setObBizName} onBizPhoneChange={setObPhone} onHoursFound={setObBizHours} />} />
           <Route path="/onboarding/3" element={<Step3 onNext={() => goOb(4)} onBack={() => goOb(2)} />} />
-          <Route path="/onboarding/4" element={<Step4 onNext={() => goOb(5)} onBack={() => goOb(3)} bizName={obBizName} bizPhone={obPhone} onAgentNameChange={setObAgentName} />} />
+          <Route path="/onboarding/4" element={<Step4 onNext={() => goOb(5)} onBack={() => goOb(3)} bizName={obBizName} bizPhone={obPhone} onAgentNameChange={setObAgentName} bizHoursFromSearch={obBizHours} />} />
           <Route path="/onboarding/5" element={<Step5 onNext={() => goOb(6)} onBack={() => goOb(4)} />} />
           <Route path="/onboarding/6" element={<Step6 onNext={() => goOb(7)} onBack={() => goOb(5)} agentName={obAgentName} />} />
           <Route path="/onboarding/7" element={<Step7 onNext={() => navigate('/success')} onBack={() => goOb(6)} />} />

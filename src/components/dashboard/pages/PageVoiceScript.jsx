@@ -79,6 +79,8 @@ export default function PageVoiceScript({ user, agentName, bizName, agentData, b
   };
   const handleGenderChange = (g) => { setGender(g); setVoice(0); };
 
+  const syncAgent = () => { api.agent.rebuildPrompt().catch(() => {}); };
+
   const handleSaveIdentity = async () => {
     setSavingIdentity(true);
     try {
@@ -86,6 +88,7 @@ export default function PageVoiceScript({ user, agentName, bizName, agentData, b
       if (onAgentNameChange) onAgentNameChange(localName);
       setIdentityDirty(false); setIdentitySaved(true);
       setTimeout(() => setIdentitySaved(false), 2500);
+      syncAgent();
     } catch {}
     setSavingIdentity(false);
   };
@@ -99,6 +102,7 @@ export default function PageVoiceScript({ user, agentName, bizName, agentData, b
         fallbackAction, transferNumber: transferNumber||null, takeMessages,
       });
       if (onAgentNameChange) onAgentNameChange(localName);
+      syncAgent();
     } catch {}
     setSaving(false);
   };
@@ -108,6 +112,7 @@ export default function PageVoiceScript({ user, agentName, bizName, agentData, b
     try {
       await api.settings.updateBusiness({ openingHours: buildHours(biz24h, bizSched) });
       setShowBizHoursEdit(false);
+      syncAgent();
     } catch {}
     setSavingBizHours(false);
   };
@@ -117,6 +122,7 @@ export default function PageVoiceScript({ user, agentName, bizName, agentData, b
     try {
       await api.agent.update({ agentSchedule: buildHours(agent24h, agentSched) });
       setShowAgentHoursEdit(false);
+      syncAgent();
     } catch {}
     setSavingAgentHours(false);
   };

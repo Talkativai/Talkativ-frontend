@@ -22,6 +22,8 @@ export default function PageFaq({ user, agentName }) {
       .catch(() => setLoading(false));
   }, []);
 
+  const syncAgent = () => { api.agent.rebuildPrompt().catch(() => {}); };
+
   const handleAddFaq = async () => {
     if (!faqQuestion.trim() || !faqAnswer.trim()) return;
     setAddingFaq(true); setFaqError('');
@@ -29,6 +31,7 @@ export default function PageFaq({ user, agentName }) {
       const created = await api.faq.create({ question: faqQuestion.trim(), answer: faqAnswer.trim() });
       setFaqs(prev => [...prev, created]);
       setFaqQuestion(''); setFaqAnswer('');
+      syncAgent();
     } catch (e) { setFaqError(e.message || 'Failed to save FAQ. Please try again.'); }
     setAddingFaq(false);
   };
@@ -49,6 +52,7 @@ export default function PageFaq({ user, agentName }) {
       const updated = await api.faq.update(id, { question: editingFaqQ.trim(), answer: editingFaqA.trim() });
       setFaqs(prev => prev.map(f => f.id === id ? updated : f));
       cancelEditFaq();
+      syncAgent();
     } catch {}
     setSavingFaq(false);
   };

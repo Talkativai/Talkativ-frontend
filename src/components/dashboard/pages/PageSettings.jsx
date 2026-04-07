@@ -215,6 +215,7 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
         openingHours: buildHours(biz24h, bizSched),
       });
       if (onBizNameChange) onBizNameChange(bizName);
+      api.agent.rebuildPrompt().catch(() => {});
     } catch (e) {} finally { setSavingBiz(false); }
   };
 

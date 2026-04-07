@@ -9,7 +9,7 @@ import COUNTRIES, { getFlag } from "../../utils/countries.js";
 // Required fields for the business details form
 const REQUIRED = ["bizName", "bizAddress", "bizPhone", "bizCategory", "country"];
 
-export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChange }) {
+export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChange, onHoursFound }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searching, setSearching] = useState(false);
   const [results, setResults] = useState([]);
@@ -167,12 +167,14 @@ export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChang
     if (!countryFound && biz.country) countryFound = applyCountry(biz.country, false);
     if (!countryFound) applyCountryFromIp(); // auto-fill from IP
 
-    // If hours were found from search, flag it
+    // If hours were found from search, flag it and bubble up to parent
     if (biz.hours && biz.hours.trim().length > 0) {
       setHoursFromSearch(true);
       setShowScheduleOverride(false);
+      if (onHoursFound) onHoursFound(biz.hours);
     } else {
       setHoursFromSearch(false);
+      if (onHoursFound) onHoursFound(null);
     }
 
     setView('confirmed');

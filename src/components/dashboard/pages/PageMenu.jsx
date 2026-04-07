@@ -96,11 +96,14 @@ export default function PageMenu({ user, agentName, bizName }) {
     try {
       const r = await api.menu.importFromPos(importPosSelected, importPosFields);
       setImportResult({ pos: r });
+      syncAgent();
     } catch (e) { setImportError(e.message || 'POS import failed'); }
     setImportLoading(false);
   };
 
   const closeImport = () => { setShowImport(false); setImportResult(null); setImportError(''); setImportPosSelected(null); setImportPosFields({}); };
+
+  const syncAgent = () => { api.agent.rebuildPrompt().catch(() => {}); };
 
   const handleAddItem = async () => {
     const catId = newItemCatId || activeCatId;
@@ -114,6 +117,7 @@ export default function PageMenu({ user, agentName, bizName }) {
         setItems(d || []);
       }
       await loadCategories();
+      syncAgent();
     } catch (e) { setItemError(e.message || 'Failed to save item. Please try again.'); }
     setAddingItem(false);
   };
@@ -135,6 +139,7 @@ export default function PageMenu({ user, agentName, bizName }) {
       const updated = await api.menu.updateItem(editingItem.id, { name: editItemName.trim(), description: editItemDesc.trim() || null, price: parseFloat(editItemPrice) });
       setItems(prev => prev.map(i => i.id === editingItem.id ? updated : i));
       closeEditItem();
+      syncAgent();
     } catch (e) { setEditItemError(e.message || 'Failed to save changes. Please try again.'); }
     setSavingItem(false);
   };
@@ -147,6 +152,7 @@ export default function PageMenu({ user, agentName, bizName }) {
       setNewCatName(''); setShowAddCat(false); setCatError('');
       await loadCategories();
       setActiveCatId(cat.id);
+      syncAgent();
     } catch (e) { setCatError(e.message || 'Failed to create category. Please try again.'); }
     setAddingCat(false);
   };
