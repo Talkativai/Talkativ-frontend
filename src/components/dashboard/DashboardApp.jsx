@@ -16,19 +16,21 @@ import PageIntegrations from './pages/PageIntegrations';
 import PageBilling from './pages/PageBilling';
 import PageSettings from './pages/PageSettings';
 import PageFaq from './pages/PageFaq';
+import PageSupport from './pages/PageSupport';
 
 const PAGE_MAP = {
-  "Dashboard":      PageDashboard,
-  "Calls":          PageCalls,
-  "Orders":         PageOrders,
-  "Reservations":   PageReservations,
-  "My Agent":       PageMyAgent,
-  "Voice & Script": PageVoiceScript,
-  "Menu":           PageMenu,
-  "FAQs":           PageFaq,
-  "Integrations":   PageIntegrations,
-  "Billing":        PageBilling,
-  "Settings":       PageSettings,
+  "Dashboard":        PageDashboard,
+  "Calls":            PageCalls,
+  "Orders":           PageOrders,
+  "Reservations":     PageReservations,
+  "My Agent":         PageMyAgent,
+  "Voice & Script":   PageVoiceScript,
+  "Menu":             PageMenu,
+  "FAQs":             PageFaq,
+  "Integrations":     PageIntegrations,
+  "Billing":          PageBilling,
+  "Settings":         PageSettings,
+  "Customer Support": PageSupport,
 };
 
 export default function DashboardApp() {

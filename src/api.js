@@ -338,6 +338,11 @@ export const api = {
       return post('/api/upload/menu-image', fd);
     },
   },
+  // ─── Support ────────────────────────────
+  support: {
+    submitTicket: (data) => post('/api/support/ticket', data),
+  },
+
   // ─── Public (no auth) ────────────────────
   public: {
     async searchBusiness(query) {

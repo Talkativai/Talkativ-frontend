@@ -30,8 +30,8 @@ export default function Sidebar({ active, onNav, user, bizName }) {
       ))}
       <div style={{ marginTop:"auto", paddingTop:18, borderTop:`1.5px solid ${T.line}` }}>
         <div
-          className="dash-nav-item"
-          onClick={() => window.open('mailto:support@talkativ.com')}
+          className={`dash-nav-item ${active === 'Customer Support' ? 'active' : ''}`}
+          onClick={() => onNav('Customer Support')}
           style={{ marginBottom: 4 }}
         >
           <span className="dash-nav-icon">🎧</span>Customer Support
