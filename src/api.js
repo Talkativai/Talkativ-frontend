@@ -59,22 +59,29 @@ async function authFetch(url, options = {}) {
   return res;
 }
 
+// Singleton refresh — coalesces concurrent 401 retries into one network call
+let _refreshPromise = null;
+
 async function refreshAccessToken() {
-  try {
-    const res = await fetch(`${API_URL}/auth/refresh-token`, {
-      method: 'POST',
-      credentials: 'include',
-    });
-    if (res.ok) {
-      const data = await res.json();
-      accessToken = data.accessToken;
-      return data; // truthy; includes fresh user data if available
+  if (_refreshPromise) return _refreshPromise;
+  _refreshPromise = (async () => {
+    try {
+      const res = await fetch(`${API_URL}/auth/refresh-token`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (res.ok) {
+        const data = await res.json();
+        accessToken = data.accessToken;
+        return data; // truthy; includes fresh user data if available
+      }
+    } catch (err) {
+      console.error('Token refresh failed:', err);
     }
-  } catch (err) {
-    console.error('Token refresh failed:', err);
-  }
-  accessToken = null;
-  return false;
+    accessToken = null;
+    return false;
+  })().finally(() => { _refreshPromise = null; });
+  return _refreshPromise;
 }
 
 // ─── Generic request helpers ────────────────────────────────────────────────
