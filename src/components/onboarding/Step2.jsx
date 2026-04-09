@@ -70,7 +70,8 @@ export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChang
 
   // Whether hours were auto-found from search
   const [hoursFromSearch, setHoursFromSearch] = useState(false);
-  const [showScheduleOverride, setShowScheduleOverride] = useState(false);
+  // Structured opening hours from Google Places (saved as business hours)
+  const [googleOpeningHours, setGoogleOpeningHours] = useState(null);
 
   // Photo viewer state
   const [activePhotoIdx, setActivePhotoIdx] = useState(0);
@@ -167,13 +168,14 @@ export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChang
     if (!countryFound && biz.country) countryFound = applyCountry(biz.country, false);
     if (!countryFound) applyCountryFromIp(); // auto-fill from IP
 
-    // If hours were found from search, flag it and bubble up to parent
+    // If hours were found from search, store them as business hours
     if (biz.hours && biz.hours.trim().length > 0) {
       setHoursFromSearch(true);
-      setShowScheduleOverride(false);
+      setGoogleOpeningHours(biz.openingHoursStructured || null);
       if (onHoursFound) onHoursFound(biz.hours);
     } else {
       setHoursFromSearch(false);
+      setGoogleOpeningHours(null);
       if (onHoursFound) onHoursFound(null);
     }
 
@@ -205,6 +207,7 @@ export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChang
     setPendingBiz(null);
     setFormError(null);
     setHoursFromSearch(false);
+    setGoogleOpeningHours(null);
   };
 
   // Country autocomplete state
@@ -265,11 +268,13 @@ export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChang
 
     setFormError(null);
 
-    // Build the opening hours payload
-    // If hours were found from search and user didn't override, save the search hours as a string
-    const openingHoursPayload = hoursFromSearch && !showScheduleOverride
-      ? { searchHours: bizHours, is24h: "false" }
+    // Business hours: use Google Places structured hours if found, else use the schedule grid
+    const openingHoursPayload = (hoursFromSearch && googleOpeningHours)
+      ? googleOpeningHours
       : buildOpeningHours();
+
+    // Agent hours: always from the schedule grid
+    const agentSchedulePayload = buildOpeningHours();
 
     try {
       await api.settings.updateBusiness({
@@ -282,6 +287,12 @@ export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChang
         openingHours: openingHoursPayload,
       });
     } catch {}
+
+    // Save agent working hours separately
+    try {
+      await api.agent.update({ agentSchedule: agentSchedulePayload });
+    } catch {}
+
     if (onBizNameChange) onBizNameChange(bizName);
     if (onBizPhoneChange) onBizPhoneChange(bizPhone);
     onNext();
@@ -761,11 +772,8 @@ export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChang
         </div>
       )}
 
-      {/* ── Working Hours Schedule ───────────────────────────────────────── */}
-      {/* When hours are found from search, show a compact confirmation banner.
-          The full manual schedule editor is in Step4 (Agent schedule).
-          Only show the manual editor here if NO hours were auto-detected. */}
-      {hoursFromSearch && !showScheduleOverride ? (
+      {/* ── Business Hours (auto from Google Places) ─────────────────────── */}
+      {hoursFromSearch && (
         <div style={{ marginTop: 28, animation: "fadeUp .3s ease both" }}>
           <div style={{
             background: `linear-gradient(135deg, ${T.greenBg || "#f0fdf4"}, #ecfdf5)`,
@@ -775,97 +783,68 @@ export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChang
             position: "relative",
             overflow: "hidden",
           }}>
-            {/* Decorative corner */}
             <div style={{ position: "absolute", top: -20, right: -20, width: 80, height: 80, borderRadius: "50%", background: "rgba(34,197,94,.08)" }} />
-
             <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
-              <div style={{
-                width: 42, height: 42, borderRadius: 12,
-                background: `linear-gradient(135deg, #22c55e, #16a34a)`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 20, flexShrink: 0, boxShadow: "0 4px 12px rgba(34,197,94,.25)",
-              }}>
+              <div style={{ width: 42, height: 42, borderRadius: 12, background: `linear-gradient(135deg, #22c55e, #16a34a)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0, boxShadow: "0 4px 12px rgba(34,197,94,.25)" }}>
                 ⏰
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 14, fontWeight: 700, color: T.ink, marginBottom: 4 }}>
-                  ✓ Business hours found automatically
-                </div>
-                <div style={{ fontSize: 12.5, color: T.mid, lineHeight: 1.5 }}>
-                  {bizHours}
-                </div>
-                <div style={{ fontSize: 11, color: T.soft, marginTop: 6, fontStyle: "italic" }}>
-                  These will be saved as your business working hours. You can set your AI agent's schedule on the next screen.
-                </div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: T.ink, marginBottom: 4 }}>✓ Business hours saved automatically</div>
+                <div style={{ fontSize: 12.5, color: T.mid, lineHeight: 1.5 }}>{bizHours}</div>
+                <div style={{ fontSize: 11, color: T.soft, marginTop: 6, fontStyle: "italic" }}>These are saved as your business working hours.</div>
               </div>
             </div>
-
-            <button
-              onClick={() => {
-                setShowScheduleOverride(true);
-                setHoursFromSearch(false);
-              }}
-              style={{
-                marginTop: 14, background: "transparent", border: `1.5px solid ${T.greenBd || "#bbf7d0"}`,
-                borderRadius: 10, padding: "7px 16px", fontSize: 12, fontWeight: 600,
-                color: T.green || "#16a34a", cursor: "pointer", fontFamily: "'Outfit',sans-serif",
-                transition: "all .2s",
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = "rgba(34,197,94,.08)"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
-            >
-              ✏️ Edit hours manually instead
-            </button>
           </div>
         </div>
-      ) : (
-        <div style={{ marginTop: 28, animation: "fadeUp .3s ease both" }}>
-          <div style={{ fontSize: 13, color: T.soft, marginBottom: 4 }}>When are you open?</div>
-          <div style={{ fontSize: 16, fontWeight: 700, color: T.ink, marginBottom: 16 }}>Set your business working hours</div>
-
-          <label style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20, cursor: "pointer", userSelect: "none" }}
-            onClick={() => setIs24h(v => !v)}>
-            <div style={{ width: 20, height: 20, borderRadius: 5, border: `2px solid ${is24h ? T.p600 : T.line}`, background: is24h ? T.p600 : T.white, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all .15s" }}>
-              {is24h && <span style={{ color: "white", fontSize: 11, fontWeight: 800, lineHeight: 1 }}>✓</span>}
-            </div>
-            <span style={{ fontSize: 14, fontWeight: 600, color: T.ink }}>We operate 24/7</span>
-          </label>
-
-          {!is24h && (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 8 }}>
-              {[["mon","Mon"],["tue","Tue"],["wed","Wed"],["thu","Thu"],["fri","Fri"],["sat","Sat"],["sun","Sun"]].map(([key, label]) => {
-                const day = schedule[key];
-                return (
-                  <div key={key} style={{ background: T.white, border: `1.5px solid ${day.open ? T.p400 : T.line}`, borderRadius: 12, padding: "12px 10px", display: "flex", flexDirection: "column", alignItems: "center", gap: 8, transition: "border-color .15s", minWidth: 0 }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: day.open ? T.p700 : T.ink }}>{label}</div>
-                    <div onClick={() => toggleDay(key)} style={{ width: 22, height: 22, borderRadius: 6, border: `2px solid ${day.open ? T.p600 : T.line}`, background: day.open ? T.p600 : T.white, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, transition: "all .15s" }}>
-                      {day.open && <span style={{ color: "white", fontSize: 11, fontWeight: 800, lineHeight: 1 }}>✓</span>}
-                    </div>
-                    {day.open && (
-                      <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 6 }}>
-                        <div>
-                          <div style={{ fontSize: 9, color: T.soft, marginBottom: 2, textAlign: "center" }}>Open</div>
-                          <input type="time" value={day.openTime} onChange={e => updateTime(key, "openTime", e.target.value)} style={{ width: "100%", border: `1.5px solid ${T.line}`, borderRadius: 7, padding: "4px 4px", fontSize: 11, fontFamily: "'Outfit',sans-serif", color: T.ink, outline: "none", textAlign: "center", boxSizing: "border-box" }} />
-                        </div>
-                        <div>
-                          <div style={{ fontSize: 9, color: T.soft, marginBottom: 2, textAlign: "center" }}>Close</div>
-                          <input type="time" value={day.closeTime} onChange={e => updateTime(key, "closeTime", e.target.value)} style={{ width: "100%", border: `1.5px solid ${T.line}`, borderRadius: 7, padding: "4px 4px", fontSize: 11, fontFamily: "'Outfit',sans-serif", color: T.ink, outline: "none", textAlign: "center", boxSizing: "border-box" }} />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {is24h && (
-            <div style={{ background: T.greenBg, border: `1px solid ${T.greenBd}`, borderRadius: 12, padding: "14px 18px", fontSize: 13, color: T.green, fontWeight: 600 }}>
-              Your business will be marked as available around the clock.
-            </div>
-          )}
-        </div>
       )}
+
+      {/* ── Agent Working Hours ──────────────────────────────────────────── */}
+      <div style={{ marginTop: 28, animation: "fadeUp .3s ease both" }}>
+        <div style={{ fontSize: 13, color: T.soft, marginBottom: 4 }}>Agent working hours</div>
+        <div style={{ fontSize: 16, fontWeight: 700, color: T.ink, marginBottom: 16 }}>When should your AI agent be active?</div>
+
+        <label style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20, cursor: "pointer", userSelect: "none" }}
+          onClick={() => setIs24h(v => !v)}>
+          <div style={{ width: 20, height: 20, borderRadius: 5, border: `2px solid ${is24h ? T.p600 : T.line}`, background: is24h ? T.p600 : T.white, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all .15s" }}>
+            {is24h && <span style={{ color: "white", fontSize: 11, fontWeight: 800, lineHeight: 1 }}>✓</span>}
+          </div>
+          <span style={{ fontSize: 14, fontWeight: 600, color: T.ink }}>Agent active 24/7</span>
+        </label>
+
+        {!is24h && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 8 }}>
+            {[["mon","Mon"],["tue","Tue"],["wed","Wed"],["thu","Thu"],["fri","Fri"],["sat","Sat"],["sun","Sun"]].map(([key, label]) => {
+              const day = schedule[key];
+              return (
+                <div key={key} style={{ background: T.white, border: `1.5px solid ${day.open ? T.p400 : T.line}`, borderRadius: 12, padding: "12px 10px", display: "flex", flexDirection: "column", alignItems: "center", gap: 8, transition: "border-color .15s", minWidth: 0 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: day.open ? T.p700 : T.ink }}>{label}</div>
+                  <div onClick={() => toggleDay(key)} style={{ width: 22, height: 22, borderRadius: 6, border: `2px solid ${day.open ? T.p600 : T.line}`, background: day.open ? T.p600 : T.white, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, transition: "all .15s" }}>
+                    {day.open && <span style={{ color: "white", fontSize: 11, fontWeight: 800, lineHeight: 1 }}>✓</span>}
+                  </div>
+                  {day.open && (
+                    <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 6 }}>
+                      <div>
+                        <div style={{ fontSize: 9, color: T.soft, marginBottom: 2, textAlign: "center" }}>Open</div>
+                        <input type="time" value={day.openTime} onChange={e => updateTime(key, "openTime", e.target.value)} style={{ width: "100%", border: `1.5px solid ${T.line}`, borderRadius: 7, padding: "4px 4px", fontSize: 11, fontFamily: "'Outfit',sans-serif", color: T.ink, outline: "none", textAlign: "center", boxSizing: "border-box" }} />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 9, color: T.soft, marginBottom: 2, textAlign: "center" }}>Close</div>
+                        <input type="time" value={day.closeTime} onChange={e => updateTime(key, "closeTime", e.target.value)} style={{ width: "100%", border: `1.5px solid ${T.line}`, borderRadius: 7, padding: "4px 4px", fontSize: 11, fontFamily: "'Outfit',sans-serif", color: T.ink, outline: "none", textAlign: "center", boxSizing: "border-box" }} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {is24h && (
+          <div style={{ background: T.greenBg, border: `1px solid ${T.greenBd}`, borderRadius: 12, padding: "14px 18px", fontSize: 13, color: T.green, fontWeight: 600 }}>
+            Your AI agent will answer calls around the clock, every day.
+          </div>
+        )}
+      </div>
 
       {/* Spinner keyframe for search */}
       <style>{`

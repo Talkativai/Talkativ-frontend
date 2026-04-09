@@ -2,10 +2,7 @@ import { useState, useRef } from "react";
 import { T } from "../../utils/tokens";
 import { api } from "../../api.js";
 import { VOICE_CATALOGUE } from "../../utils/constants";
-import { makeDefaultSchedule, buildHours } from "../../utils/schedule";
 import ObShell from "./ObShell";
-
-const DAY_ENTRIES = [["mon","Mon"],["tue","Tue"],["wed","Wed"],["thu","Thu"],["fri","Fri"],["sat","Sat"],["sun","Sun"]];
 
 export default function Step4({ onNext, onBack, bizName, bizPhone, onAgentNameChange, bizHoursFromSearch }) {
   const [gender, setGender] = useState("female");
@@ -18,15 +15,6 @@ export default function Step4({ onNext, onBack, bizName, bizPhone, onAgentNameCh
   const autoGreeting = `Hi, thanks for calling us at ${displayBiz}! I'm ${agentName}, your AI assistant. Would you like to place an order, check our hours, or something else?`;
   const [greeting, setGreeting] = useState(autoGreeting);
   const [fallbackAction, setFallbackAction] = useState("transfer");
-
-  // Schedule
-  const [agentIs24h, setAgentIs24h] = useState(false);
-  const [agentSchedule, setAgentSchedule] = useState(makeDefaultSchedule());
-
-  const toggleDay = (day) =>
-    setAgentSchedule(prev => ({ ...prev, [day]: { ...prev[day], open: !prev[day].open } }));
-  const updateTime = (day, field, value) =>
-    setAgentSchedule(prev => ({ ...prev, [day]: { ...prev[day], [field]: value } }));
 
   // Voice preview
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -87,7 +75,6 @@ export default function Step4({ onNext, onBack, bizName, bizPhone, onAgentNameCh
         voiceName: voices[vc].n,
         voiceDescription: voices[vc].d,
         transferNumber: (fallbackAction === "transfer" && bizPhone) ? bizPhone : null,
-        agentSchedule: buildHours(agentIs24h, agentSchedule),
       });
     } catch (err) {
       console.error("Failed to save agent settings:", err?.message || err);
@@ -189,67 +176,6 @@ export default function Step4({ onNext, onBack, bizName, bizPhone, onAgentNameCh
         </select>
       </div>
 
-      {/* Agent Working Schedule — Step2 grid style */}
-      <div style={{ marginTop: 8 }}>
-        <div style={{ fontSize: 13, color: T.soft, marginBottom: 4 }}>Agent working schedule</div>
-        <div style={{ fontSize: 16, fontWeight: 700, color: T.ink, marginBottom: bizHoursFromSearch ? 10 : 16 }}>When should your agent be active?</div>
-
-        {/* If business hours were found during search, show a summary banner */}
-        {bizHoursFromSearch && (
-          <div style={{ background: `linear-gradient(135deg, #f0fdf4, #ecfdf5)`, border: `1.5px solid #bbf7d0`, borderRadius: 14, padding: "14px 18px", marginBottom: 16, display: "flex", alignItems: "flex-start", gap: 12 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: `linear-gradient(135deg, #22c55e, #16a34a)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>⏰</div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#166534", marginBottom: 3 }}>✓ Business hours imported from your online listing</div>
-              <div style={{ fontSize: 12, color: "#15803d", lineHeight: 1.5 }}>{bizHoursFromSearch}</div>
-              <div style={{ fontSize: 11, color: "#6b7280", marginTop: 5, fontStyle: "italic" }}>These are saved as your restaurant hours. Set below when your AI agent should actively take calls.</div>
-            </div>
-          </div>
-        )}
-
-        <label
-          style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20, cursor: "pointer", userSelect: "none" }}
-          onClick={() => setAgentIs24h(v => !v)}
-        >
-          <div style={{ width: 20, height: 20, borderRadius: 5, border: `2px solid ${agentIs24h ? T.p600 : T.line}`, background: agentIs24h ? T.p600 : T.white, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all .15s" }}>
-            {agentIs24h && <span style={{ color: "white", fontSize: 11, fontWeight: 800, lineHeight: 1 }}>✓</span>}
-          </div>
-          <span style={{ fontSize: 14, fontWeight: 600, color: T.ink }}>We operate 24/7</span>
-        </label>
-
-        {!agentIs24h && (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 8 }}>
-            {DAY_ENTRIES.map(([key, label]) => {
-              const day = agentSchedule[key];
-              return (
-                <div key={key} style={{ background: T.white, border: `1.5px solid ${day.open ? T.p400 : T.line}`, borderRadius: 12, padding: "12px 10px", display: "flex", flexDirection: "column", alignItems: "center", gap: 8, transition: "border-color .15s", minWidth: 0 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: day.open ? T.p700 : T.ink }}>{label}</div>
-                  <div onClick={() => toggleDay(key)} style={{ width: 22, height: 22, borderRadius: 6, border: `2px solid ${day.open ? T.p600 : T.line}`, background: day.open ? T.p600 : T.white, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, transition: "all .15s" }}>
-                    {day.open && <span style={{ color: "white", fontSize: 11, fontWeight: 800, lineHeight: 1 }}>✓</span>}
-                  </div>
-                  {day.open && (
-                    <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 6 }}>
-                      <div>
-                        <div style={{ fontSize: 9, color: T.soft, marginBottom: 2, textAlign: "center" }}>Open</div>
-                        <input type="time" value={day.openTime} onChange={e => updateTime(key, "openTime", e.target.value)} style={{ width: "100%", border: `1.5px solid ${T.line}`, borderRadius: 7, padding: "4px 4px", fontSize: 11, fontFamily: "'Outfit',sans-serif", color: T.ink, outline: "none", textAlign: "center", boxSizing: "border-box" }} />
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 9, color: T.soft, marginBottom: 2, textAlign: "center" }}>Close</div>
-                        <input type="time" value={day.closeTime} onChange={e => updateTime(key, "closeTime", e.target.value)} style={{ width: "100%", border: `1.5px solid ${T.line}`, borderRadius: 7, padding: "4px 4px", fontSize: 11, fontFamily: "'Outfit',sans-serif", color: T.ink, outline: "none", textAlign: "center", boxSizing: "border-box" }} />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {agentIs24h && (
-          <div style={{ background: T.greenBg, border: `1px solid ${T.greenBd}`, borderRadius: 12, padding: "14px 18px", fontSize: 13, color: T.green, fontWeight: 600 }}>
-            Your agent will answer calls around the clock, every day.
-          </div>
-        )}
-      </div>
     </ObShell>
   );
 }

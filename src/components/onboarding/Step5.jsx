@@ -40,7 +40,12 @@ export default function Step5({ onNext, onBack }) {
         setError("Could not provision a number. Please try again.");
       }
     } catch (e) {
-      setError(e?.message || "Something went wrong. You can set this up later in Settings.");
+      const msg = e?.message || "";
+      if (msg.includes("NO_NUMBER_IN_REGION")) {
+        setError("Oops! Phone numbers aren't available in your region yet. Please try again later or contact support.");
+      } else {
+        setError("Something went wrong. You can set this up later in Settings.");
+      }
     } finally {
       setConnecting(false);
     }
