@@ -24,7 +24,7 @@ export function AuthProvider({ children }) {
       return;
     }
 
-    // Google login callback: issue token and go to dashboard
+    // Google login callback: issue token and go to dashboard (or resume onboarding)
     const authToken = params.get('auth_token');
     if (authToken) {
       setAccessToken(authToken);
@@ -39,7 +39,19 @@ export function AuthProvider({ children }) {
       try { localStorage.setItem('talkativ_user', JSON.stringify(userData)); } catch {}
       window.history.replaceState({}, '', window.location.pathname);
       setAuthChecked(true);
-      window.location.href = '/#/dashboard';
+      // Check if onboarding is complete
+      (async () => {
+        try {
+          const biz = await api.business.get();
+          if (!biz?.onboardingDone) {
+            window.location.href = `/#/onboarding/${biz?.onboardingStep || 1}`;
+          } else {
+            window.location.href = '/#/dashboard';
+          }
+        } catch {
+          window.location.href = '/#/dashboard';
+        }
+      })();
       return;
     }
 
@@ -61,6 +73,13 @@ export function AuthProvider({ children }) {
             if (refreshed.user) {
               try { localStorage.setItem('talkativ_user', JSON.stringify(freshUser)); } catch {}
             }
+            // Redirect to onboarding if not complete
+            try {
+              const biz = await api.business.get();
+              if (!biz?.onboardingDone) {
+                window.location.href = `/#/onboarding/${biz?.onboardingStep || 1}`;
+              }
+            } catch {}
           } catch {}
         } else {
           try { localStorage.removeItem('talkativ_user'); } catch {}

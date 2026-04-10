@@ -1,55 +1,52 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { T } from "../../utils/tokens";
 import ObShell from "./ObShell";
 import { api } from "../../api";
 
-export default function Step5({ onNext, onBack }) {
-  const [connecting, setConnecting] = useState(false);
-  const [connected, setConnected] = useState(false);
+export default function Step5({ onNext, onBack, agentName = "your agent" }) {
+  const [status, setStatus] = useState("loading"); // loading | provisioning | done | error
   const [assignedNumber, setAssignedNumber] = useState(null);
   const [error, setError] = useState("");
 
-  // Check if number already assigned on mount
-  useEffect(() => {
-    api.settings.getPhone().then(d => {
-      if (d?.assignedNumber) {
-        setAssignedNumber(d.assignedNumber);
-        setConnected(true);
-      }
-    }).catch(() => {});
-  }, []);
-
-  const handleConnect = async () => {
-    setConnecting(true);
+  const provision = useCallback(async () => {
+    setStatus("provisioning");
     setError("");
     try {
-      // Get the business country for provisioning
       let country = "GB";
       try {
         const biz = await api.business.get();
         if (biz?.country) country = biz.country;
       } catch {}
-
-      // Provision number + connect to agent (backend handles both)
       const result = await api.business.setupPhone("new", country);
-
       if (result?.assignedNumber) {
         setAssignedNumber(result.assignedNumber);
-        setConnected(true);
+        setStatus("done");
       } else {
-        setError("Could not provision a number. Please try again.");
+        setStatus("error");
+        setError("Could not provision a number. You can retry or skip.");
       }
     } catch (e) {
       const msg = e?.message || "";
       if (msg.includes("NO_NUMBER_IN_REGION")) {
-        setError("Oops! Phone numbers aren't available in your region yet. Please try again later or contact support.");
+        setError("Phone numbers aren't available in your region yet. Please contact support or skip.");
       } else {
-        setError("Something went wrong. You can set this up later in Settings.");
+        setError("Something went wrong. You can retry or skip to continue.");
       }
-    } finally {
-      setConnecting(false);
+      setStatus("error");
     }
-  };
+  }, []);
+
+  // On mount: check if number already assigned, else auto-provision
+  useEffect(() => {
+    api.settings.getPhone().then(d => {
+      if (d?.assignedNumber) {
+        setAssignedNumber(d.assignedNumber);
+        setStatus("done");
+      } else {
+        provision();
+      }
+    }).catch(() => { provision(); });
+  }, [provision]);
 
   const formatPhone = (num) => {
     if (!num) return "";
@@ -60,19 +57,18 @@ export default function Step5({ onNext, onBack }) {
   };
 
   return (
-    <ObShell step={5} onNext={onNext} onBack={onBack} nextLabel={connected ? "Test your agent →" : "Skip for now →"}>
+    <ObShell step={5} onNext={onNext} onBack={onBack} nextLabel={status === "done" ? "Test your agent →" : "Skip for now →"}>
       <div className="ob-step-label">Step 6 · Phone number</div>
-      <h1 className="ob-heading">Connect your<br /><em>phone number</em></h1>
+      <h1 className="ob-heading">Your agent's<br /><em>phone number</em></h1>
       <p className="ob-subheading">
-        {connected
-          ? "Your AI agent now has a phone number. Customers can call it and your agent will answer."
-          : "One click to give your AI agent a real phone number. We'll provision a local number and connect it to your agent automatically."}
+        {status === "done"
+          ? `${agentName} now has a dedicated phone number. Customers can call it and ${agentName} will answer.`
+          : `We're assigning a local number to ${agentName}. This only takes a moment.`}
       </p>
 
-      {/* Before connecting — show the connect button */}
-      {!connected && (
+      {/* Provisioning / loading state */}
+      {(status === "loading" || status === "provisioning") && (
         <div style={{ textAlign: "center", padding: "40px 0" }}>
-          {/* Decorative phone icon */}
           <div style={{
             width: 100, height: 100, borderRadius: "50%",
             background: `linear-gradient(135deg, ${T.p50}, ${T.mist || "#f3f0ff"})`,
@@ -82,46 +78,24 @@ export default function Step5({ onNext, onBack }) {
           }}>
             📞
           </div>
-
-          <button
-            onClick={handleConnect}
-            disabled={connecting}
-            style={{
-              background: connecting ? T.soft : `linear-gradient(135deg, ${T.p500}, ${T.p700})`,
-              color: "white",
-              border: "none",
-              borderRadius: 50,
-              padding: "16px 44px",
-              fontSize: 16,
-              fontWeight: 700,
-              cursor: connecting ? "not-allowed" : "pointer",
-              fontFamily: "'Outfit', sans-serif",
-              boxShadow: connecting ? "none" : `0 6px 24px rgba(112,53,245,.35)`,
-              transition: "all .25s",
-              opacity: connecting ? 0.8 : 1,
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 10,
-            }}
-          >
-            {connecting && (
-              <div style={{
-                width: 18, height: 18, border: "2.5px solid rgba(255,255,255,.3)",
-                borderTopColor: "white", borderRadius: "50%",
-                animation: "spin 0.7s linear infinite",
-              }} />
-            )}
-            {connecting ? "Connecting…" : "Connect your number"}
-          </button>
-
-          <div style={{ fontSize: 13, color: T.soft, marginTop: 16, maxWidth: 360, margin: "16px auto 0" }}>
-            We'll assign a local number based on your business location and connect it to your AI agent.
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+            <div style={{
+              width: 20, height: 20, border: `2.5px solid ${T.p200}`,
+              borderTopColor: T.p600, borderRadius: "50%",
+              animation: "spin 0.7s linear infinite",
+            }} />
+            <span style={{ fontSize: 15, color: T.mid, fontWeight: 600 }}>
+              Assigning your number to {agentName}…
+            </span>
+          </div>
+          <div style={{ fontSize: 13, color: T.soft, marginTop: 12 }}>
+            We're provisioning a local number based on your business location.
           </div>
         </div>
       )}
 
-      {/* After connecting — show the assigned number */}
-      {connected && assignedNumber && (
+      {/* Success state */}
+      {status === "done" && assignedNumber && (
         <div style={{
           background: `linear-gradient(135deg, ${T.greenBg || "#f0fdf4"}, #ecfdf5)`,
           border: `1.5px solid ${T.greenBd || "#bbf7d0"}`,
@@ -139,7 +113,7 @@ export default function Step5({ onNext, onBack }) {
             ✅
           </div>
           <div style={{ fontSize: 13, fontWeight: 700, color: T.green || "#16a34a", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 10 }}>
-            Number connected
+            Number assigned
           </div>
           <div style={{
             fontFamily: "'Playfair Display', serif",
@@ -149,19 +123,19 @@ export default function Step5({ onNext, onBack }) {
             {formatPhone(assignedNumber)}
           </div>
           <div style={{ fontSize: 13, color: T.mid }}>
-            Connected to your AI agent and ready for calls
+            Connected to {agentName} and ready for inbound calls
           </div>
         </div>
       )}
 
-      {/* Error */}
-      {error && (
+      {/* Error state */}
+      {status === "error" && (
         <div style={{ marginTop: 18, background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 12, padding: "14px 18px", fontSize: 13, color: T.red, display: "flex", alignItems: "flex-start", gap: 10 }}>
           <span style={{ flexShrink: 0 }}>⚠️</span>
           <div>
             {error}
             <button
-              onClick={handleConnect}
+              onClick={provision}
               style={{ display: "block", marginTop: 8, background: "none", border: "none", color: T.p600, fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: "'Outfit', sans-serif", padding: 0 }}
             >
               🔄 Try again

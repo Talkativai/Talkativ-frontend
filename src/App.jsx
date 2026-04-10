@@ -1135,7 +1135,7 @@ function AppRoutes() {
           <Route path="/onboarding/2" element={<Step2 onNext={() => goOb(3)} onBack={() => goOb(1)} onBizNameChange={setObBizName} onBizPhoneChange={setObPhone} onHoursFound={setObBizHours} />} />
           <Route path="/onboarding/3" element={<Step3 onNext={() => goOb(4)} onBack={() => goOb(2)} />} />
           <Route path="/onboarding/4" element={<Step4 onNext={() => goOb(5)} onBack={() => goOb(3)} bizName={obBizName} bizPhone={obPhone} onAgentNameChange={setObAgentName} bizHoursFromSearch={obBizHours} />} />
-          <Route path="/onboarding/5" element={<Step5 onNext={() => goOb(6)} onBack={() => goOb(4)} />} />
+          <Route path="/onboarding/5" element={<Step5 onNext={() => goOb(6)} onBack={() => goOb(4)} agentName={obAgentName} />} />
           <Route path="/onboarding/6" element={<Step6 onNext={() => goOb(7)} onBack={() => goOb(5)} agentName={obAgentName} />} />
           <Route path="/onboarding/7" element={<Step7 onNext={() => navigate('/success')} onBack={() => goOb(6)} />} />
           <Route path="/success" element={<SuccessScreen onDashboard={() => navigate('/dashboard')} agentName={obAgentName} bizName={obBizName} />} />
