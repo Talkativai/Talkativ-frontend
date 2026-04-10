@@ -15,8 +15,9 @@ export default function PageSupport({ user, agentName, bizData }) {
   const [category, setCategory] = useState(null);
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
-  const [email, setEmail]   = useState(bizData?.email || user?.email || '');
-  const [phone, setPhone]   = useState(bizData?.phone || '');
+  const [email, setEmail]       = useState(bizData?.email || user?.email || '');
+  const [phone, setPhone]       = useState(bizData?.phone || '');
+  const [merchantId, setMerchantId] = useState(bizData?.id || '');
   const [sending, setSending] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError]   = useState(null);
@@ -30,6 +31,7 @@ export default function PageSupport({ user, agentName, bizData }) {
     // Re-sync autofill in case bizData loaded after mount
     setEmail(bizData?.email || user?.email || '');
     setPhone(bizData?.phone || '');
+    setMerchantId(bizData?.id || '');
   };
 
   const handleSubmit = async (e) => {
@@ -41,7 +43,7 @@ export default function PageSupport({ user, agentName, bizData }) {
     setSending(true);
     setError(null);
     try {
-      await api.support.submitTicket({ category: category.key, subject, message, email, phone });
+      await api.support.submitTicket({ category: category.key, subject, message, email, phone, merchantId });
       setSuccess(true);
       setSubject('');
       setMessage('');
@@ -156,6 +158,21 @@ export default function PageSupport({ user, agentName, bizData }) {
                     placeholder="+44 7000 000000"
                   />
                 </div>
+              </div>
+
+              {/* Merchant ID */}
+              <div className="form-group">
+                <label className="form-label">
+                  Merchant ID
+                  <span style={{ fontSize: 11, color: T.soft, fontWeight: 400, marginLeft: 6 }}>(auto-filled — helps us find your account faster)</span>
+                </label>
+                <input
+                  className="form-input"
+                  value={merchantId}
+                  onChange={e => setMerchantId(e.target.value)}
+                  placeholder="Your merchant ID"
+                  style={{ fontFamily: 'monospace', fontSize: 13 }}
+                />
               </div>
 
               <button
