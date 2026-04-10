@@ -3,6 +3,9 @@ import T from '../../../utils/tokens';
 import TopBar from '../TopBar';
 import { api } from '../../../api.js';
 
+const deriveMerchantId = (bizId) =>
+  bizId ? bizId.replace(/-/g, '').substring(0, 12).toUpperCase() : '';
+
 const CATEGORIES = [
   { key: 'Agent',         icon: '🤖', desc: 'Voice agent, calls, script issues' },
   { key: 'Billing',       icon: '💳', desc: 'Invoices, charges, plans' },
@@ -17,7 +20,7 @@ export default function PageSupport({ user, agentName, bizData }) {
   const [message, setMessage] = useState('');
   const [email, setEmail]       = useState(bizData?.email || user?.email || '');
   const [phone, setPhone]       = useState(bizData?.phone || '');
-  const [merchantId, setMerchantId] = useState(bizData?.id || '');
+  const [merchantId, setMerchantId] = useState(deriveMerchantId(bizData?.id));
   const [sending, setSending] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError]   = useState(null);
@@ -31,7 +34,7 @@ export default function PageSupport({ user, agentName, bizData }) {
     // Re-sync autofill in case bizData loaded after mount
     setEmail(bizData?.email || user?.email || '');
     setPhone(bizData?.phone || '');
-    setMerchantId(bizData?.id || '');
+    setMerchantId(deriveMerchantId(bizData?.id));
   };
 
   const handleSubmit = async (e) => {
