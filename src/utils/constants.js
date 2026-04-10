@@ -16,18 +16,24 @@ export const POS_SYSTEMS = [
   { name: "SpotOn",  icon: "📍", type: "ordering",     fields: [{ key: "apiKey", label: "API Key", ph: "sp_live_..." }, { key: "siteId", label: "Site ID", ph: "SITE-XXXXXXXX" }] },
 ];
 
+// All voices use ElevenLabs Turbo v2.5 — natural, low-latency, phone-grade
 export const VOICE_CATALOGUE = {
   female: [
-    { n: "Aria",  id: "21m00Tcm4TlvDq8ikWAM", d: "Warm & professional" },
-    { n: "Domi",  id: "AZnzlk1XvdvUeBnXmlld", d: "Confident" },
-    { n: "Bella", id: "EXAVITQu4vr4xnSDxMaL", d: "Soft & pleasant" },
-    { n: "Elli",  id: "MF3mGyEYCl7XYWbV9V6O", d: "Young & friendly" },
+    { n: "Sarah",   id: "EXAVITQu4vr4xnSDxMaL", d: "Warm & professional",    accent: "American" },
+    { n: "Jessica", id: "cgSgspJ2msm6clMCkdW9", d: "Friendly & bright",       accent: "American" },
+    { n: "Matilda", id: "XrExE9yKIg1WjnnlVkGX", d: "Knowledgeable & upbeat",  accent: "American" },
+    { n: "Alice",   id: "Xb7hH8MSUJpSbSDYk0k2", d: "Clear & engaging",        accent: "British"  },
+    { n: "Lily",    id: "pFZP5JQG7iQjIQuC4Bku", d: "Confident & velvety",     accent: "British"  },
   ],
   male: [
-    { n: "Antoni", id: "ErXwobaYiN019PkySvjV", d: "Well-rounded" },
-    { n: "Arnold", id: "VR6AewLTigWG4xSOukaG", d: "Crisp & professional" },
-    { n: "Adam",   id: "pNInz6obpgDQGcFmaJgB", d: "Deep & authoritative" },
-    { n: "Sam",    id: "yoZ06aMxZJJ28mfd3POQ", d: "Raspy & casual" },
+    { n: "Eric",   id: "cjVigY5qzO86Huf0OWal", d: "Smooth & trustworthy",      accent: "American" },
+    { n: "Chris",  id: "iP95p4xoKVk53GoZ742B", d: "Charming & down-to-earth",  accent: "American" },
+    { n: "Daniel", id: "onwK4e9ZLuTAKqWW03F9", d: "Steady & professional",     accent: "British"  },
+    { n: "George", id: "JBFqnCBsd6RMkjVDRZzb", d: "Warm & captivating",        accent: "British"  },
+    { n: "Brian",  id: "nPczCjzI2devNBz1zQrb", d: "Deep & comforting",         accent: "American" },
+  ],
+  neutral: [
+    { n: "River",  id: "SAz9YHcvj6GT2YYXdXww", d: "Calm & relaxed",           accent: "American" },
   ],
 };
 
