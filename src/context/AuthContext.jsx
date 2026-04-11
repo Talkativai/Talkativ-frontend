@@ -39,6 +39,11 @@ export function AuthProvider({ children }) {
       try { localStorage.setItem('talkativ_user', JSON.stringify(userData)); } catch {}
       window.history.replaceState({}, '', window.location.pathname);
       setAuthChecked(true);
+      // Admin users go straight to admin dashboard
+      if (userData.role === 'ADMIN') {
+        window.location.href = '/#/admin';
+        return;
+      }
       // Check if onboarding is complete
       (async () => {
         try {
@@ -73,6 +78,8 @@ export function AuthProvider({ children }) {
             if (refreshed.user) {
               try { localStorage.setItem('talkativ_user', JSON.stringify(freshUser)); } catch {}
             }
+            // Admin users skip onboarding check
+            if (freshUser.role === 'ADMIN') return;
             // Redirect to onboarding if not complete
             try {
               const biz = await api.business.get();

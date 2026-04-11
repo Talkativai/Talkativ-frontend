@@ -350,6 +350,41 @@ export const api = {
     submitTicket: (data) => post('/api/support/ticket', data),
   },
 
+  // ─── Admin ───────────────────────────────
+  admin: {
+    async getStats() {
+      const res = await authFetch('/api/admin/stats');
+      if (!res.ok) throw await buildError(res);
+      return res.json();
+    },
+    async listUsers(page = 1, limit = 20, search = '') {
+      const params = new URLSearchParams({ page, limit, ...(search ? { search } : {}) });
+      const res = await authFetch(`/api/admin/users?${params}`);
+      if (!res.ok) throw await buildError(res);
+      return res.json();
+    },
+    async deleteUser(id) {
+      const res = await authFetch(`/api/admin/users/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw await buildError(res);
+      return res.json();
+    },
+    async suspendUser(id) {
+      const res = await authFetch(`/api/admin/users/${id}/suspend`, { method: 'POST' });
+      if (!res.ok) throw await buildError(res);
+      return res.json();
+    },
+    async unsuspendUser(id) {
+      const res = await authFetch(`/api/admin/users/${id}/unsuspend`, { method: 'POST' });
+      if (!res.ok) throw await buildError(res);
+      return res.json();
+    },
+    async getIntegrationStats() {
+      const res = await authFetch('/api/admin/integrations');
+      if (!res.ok) throw await buildError(res);
+      return res.json();
+    },
+  },
+
   // ─── Public (no auth) ────────────────────
   public: {
     async searchBusiness(query) {

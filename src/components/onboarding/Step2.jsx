@@ -285,6 +285,9 @@ export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChang
         country: country,
         currency: currency,
         openingHours: openingHoursPayload,
+        ...(pendingBiz?.postalCode ? { postalCode: pendingBiz.postalCode } : {}),
+        ...(pendingBiz?.lat != null ? { lat: pendingBiz.lat } : {}),
+        ...(pendingBiz?.lng != null ? { lng: pendingBiz.lng } : {}),
       });
     } catch {}
 
