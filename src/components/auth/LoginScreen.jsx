@@ -39,7 +39,8 @@ export default function LoginScreen() {
       const data = await api.auth.login(ownerEmail, ownerPassword);
       setAlert({ type: "success", message: "Welcome back! Redirecting..." });
       handleLogin(data.user);
-      const dest = !data.onboardingDone ? `/onboarding/${data.onboardingStep || 1}` : '/dashboard';
+      const dest = data.user?.role === 'ADMIN' ? '/admin'
+        : !data.onboardingDone ? `/onboarding/${data.onboardingStep || 1}` : '/dashboard';
       setTimeout(() => navigate(dest), 500);
     } catch (err) {
       setAlert({ type: "error", message: err.message || "Invalid email or password.", action: { label: "Create an account →", onClick: () => navigate('/onboarding/0') } });
