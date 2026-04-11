@@ -177,7 +177,7 @@ export default function PageDashboard({ onNav, user, agentName, bizName, agentDa
           <div className="card">
             <div className="card-head">Quick actions</div>
             <div className="quick-actions-grid">
-              {[["📞","Test call",null],["📋","Update menu","Menu"],["⏰","Edit hours","Settings"]].map(([ic, l, nav]) => (
+              {[["📞","Test call","Voice & Script"],["📋","Update menu","Menu"],["⏰","Edit hours","Settings"]].map(([ic, l, nav]) => (
                 <div key={l} className="qa-item" onClick={() => nav && onNav && onNav(nav)} style={{ cursor: nav ? "pointer" : "default" }}>
                   <div className="qa-icon">{ic}</div>
                   <div className="qa-label">{l}</div>
