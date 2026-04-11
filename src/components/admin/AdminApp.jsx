@@ -354,9 +354,6 @@ function PageIntegrations() {
             )}
             <div style={{ height: 1, background: T.line, margin: "6px 0" }} />
             <Row label="Active agents" value={el.activeAgents ?? "—"} />
-            {el.agentList?.map(a => (
-              <Row key={a.agentId} label={a.agentId.slice(0, 16) + "…"} value={a.name} note />
-            ))}
           </>}
         </Card>
 
