@@ -337,14 +337,18 @@ function PageIntegrations() {
         <Card icon="🎙️" name="ElevenLabs" data={el}>
           {el?.status === "connected" && <>
             <Row label="Tier" value={el.tier?.replace(/_/g, " ")} />
-            <Row label="Active agents" value={el.activeAgents ?? "—"} />
+            {el.voiceLimit != null && <Row label="Voices" value={`${el.voiceCount} / ${el.voiceLimit}`} />}
             <div style={{ padding: "8px 0 4px" }}>
               <div style={{ fontSize: 12, color: T.soft, marginBottom: 2, fontWeight: 500 }}>Character usage</div>
               <UsageBar used={el.characterCount} total={el.characterLimit} />
             </div>
-            <Row label="Remaining" value={el.remainingCharacters?.toLocaleString()} />
-            {el.voiceLimit != null && <Row label="Voices" value={`${el.voiceCount} / ${el.voiceLimit}`} />}
+            <Row label="Characters remaining" value={el.remainingCharacters?.toLocaleString()} />
             <Row label="Resets" value={el.nextResetDate ? new Date(el.nextResetDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—"} />
+            <div style={{ height: 1, background: T.line, margin: "6px 0" }} />
+            <Row label="Active agents" value={el.activeAgents ?? "—"} />
+            {el.agentList?.map(a => (
+              <Row key={a.agentId} label={a.agentId.slice(0, 16) + "…"} value={a.name} note />
+            ))}
           </>}
         </Card>
 
@@ -352,10 +356,20 @@ function PageIntegrations() {
         <Card icon="📞" name="Twilio" data={tw}>
           {tw?.status === "connected" && <>
             <Row label="Account balance" value={`${tw.currency} ${tw.balance}`} />
+            <Row label="Month-to-date spend" value={`${tw.currency} ${tw.thisMonthTotalSpend}`} />
+            <div style={{ height: 1, background: T.line, margin: "6px 0" }} />
+            <Row label="Provisioned numbers" value={tw.activeNumbers} />
+            {tw.activeNumbersList?.map(n => (
+              <Row key={n.phoneNumber} label={n.phoneNumber} value={n.friendlyName} note />
+            ))}
+            <Row label="Number rental cost" value={`${tw.currency} ${tw.numberRentalCost}`} />
+            <div style={{ height: 1, background: T.line, margin: "6px 0" }} />
             <Row label="This month — call mins" value={tw.thisMonthCallMinutes} />
+            <Row label="This month — inbound mins" value={tw.thisMonthInboundCallMinutes} />
             <Row label="This month — call cost" value={`${tw.currency} ${tw.thisMonthCallCost}`} />
             <Row label="This month — SMS sent" value={tw.thisMonthSmsCount?.toLocaleString()} />
             <Row label="This month — SMS cost" value={`${tw.currency} ${tw.thisMonthSmsCost}`} />
+            <div style={{ height: 1, background: T.line, margin: "6px 0" }} />
             <Row label="Total calls handled" value={tw.totalCallsHandled?.toLocaleString()} />
           </>}
         </Card>
