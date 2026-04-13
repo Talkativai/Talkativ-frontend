@@ -317,7 +317,7 @@ export default function PageVoiceScript({ user, agentName, bizName, agentData, b
           <div className="card">
             <div className="card-head">Call handling rules</div>
             <p style={{fontSize:12,color:T.soft,margin:"-8px 0 16px 0"}}>When {localName} can't help…</p>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,alignItems:"stretch"}}>
+            <div className="resp-2col-grid" style={{alignItems:"stretch"}}>
               <div style={{background:T.paper,borderRadius:14,padding:"18px 20px",border:`1.5px solid ${T.line}`,display:"flex",flexDirection:"column"}}>
                 <label style={{display:"block",fontSize:12,fontWeight:700,color:T.mid,marginBottom:8,letterSpacing:".3px",textTransform:"uppercase"}}>Fallback action</label>
                 <select value={fallbackAction} onChange={e=>setFallbackAction(e.target.value)} style={{width:"100%",padding:"13px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.white,color:T.ink,fontSize:14,fontFamily:"'Outfit',sans-serif",outline:"none",cursor:"pointer",transition:"border-color .2s, box-shadow .2s",boxShadow:"0 1px 3px rgba(0,0,0,.04)",flex:1}}>

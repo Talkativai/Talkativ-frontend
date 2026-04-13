@@ -211,7 +211,7 @@ export default function Step3({ onNext, onBack }) {
       {sel === 2 && (
         <div style={{ marginTop: 18 }}>
           {/* 3-column integration cards */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 14 }}>
+          <div className="resp-3col-grid" style={{marginBottom: 14}}>
             {POS_SYSTEMS.map(p => {
               const active = posSelected === p.name;
               const configured = !!configuredSystems[p.name];

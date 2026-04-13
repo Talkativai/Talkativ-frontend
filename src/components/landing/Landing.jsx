@@ -49,10 +49,7 @@ export default function Landing({ onCTA, onLogin }) {
           </div>
 
           {/* Center Links */}
-          <div style={{
-            display: "flex", alignItems: "center", gap: 32,
-            position: "absolute", left: "50%", transform: "translateX(-50%)",
-          }}>
+          <div className="landing-nav-links">
             {["Features", "Integrations", "Pricing", "Blog"].map(l => (
               <span key={l} style={{
                 fontSize: 14, fontWeight: 500, color: T.mid,
@@ -169,7 +166,7 @@ export default function Landing({ onCTA, onLogin }) {
           </div>
 
           {/* floating mini cards */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+          <div className="resp-2col-grid">
             {[
               { icon: "⚡", label: "Live in 20 min", sub: "Self-serve setup" },
               { icon: "🔌", label: "POS connected", sub: "Clover · Square · resOS" },
@@ -205,7 +202,7 @@ export default function Landing({ onCTA, onLogin }) {
       {/* FEATURES */}
       <section style={{ background: T.ivory }}>
         <div className="features-section">
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 60, alignItems: "center", marginBottom: 60 }}>
+          <div className="resp-2col-grid" style={{ gap: 60, alignItems: "center", marginBottom: 60 }}>
             <div>
               <span className="section-tag">Why talkativ</span>
               <h2 className="section-h2">Built for restaurants<br />that <em>never stop</em></h2>
@@ -236,7 +233,7 @@ export default function Landing({ onCTA, onLogin }) {
       {/* TESTIMONIALS */}
       <section className="testi-section">
         <div style={{ maxWidth: 1100, margin: "0 auto", position: "relative", zIndex: 1 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 60, alignItems: "center", marginBottom: 52 }}>
+          <div className="resp-2col-grid" style={{ gap: 60, alignItems: "center", marginBottom: 52 }}>
             <div>
               <span className="section-tag" style={{ color: T.p300 }}>What they say</span>
               <h2 className="section-h2" style={{ color: "white" }}>Restaurants that<br /><em>never miss a call</em></h2>

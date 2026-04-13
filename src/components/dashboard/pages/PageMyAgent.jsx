@@ -68,7 +68,7 @@ export default function PageMyAgent({ user, agentName, bizName, agentData, bizDa
                 </div>
 
                 {/* 5-item stats grid */}
-                <div style={{marginTop:20,display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
+                <div className="resp-3col-grid" style={{marginTop:20}}>
                   {[
                     ["🎙️","Voice",      voiceDisplay],
                     ["🌍","Language",   "English"],
@@ -84,7 +84,7 @@ export default function PageMyAgent({ user, agentName, bizName, agentData, bizDa
                 </div>
 
                 {/* Hours — 2-column section */}
-                <div style={{marginTop:10,display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                <div className="resp-2col-grid" style={{marginTop:10}}>
                   {[
                     ["⏰","Business hours", bizHoursDisplay],
                     ["⏰","Agent hours",    agentHoursDisplay],

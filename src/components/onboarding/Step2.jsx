@@ -436,7 +436,7 @@ export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChang
           </div>
 
           {/* Map + Photos side by side (Google Maps style) */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 0, marginBottom: 12, borderRadius: 14, overflow: "hidden", border: `1.5px solid ${T.line}` }}>
+          <div className="resp-2col-grid" style={{ gap: 0, marginBottom: 12, borderRadius: 14, overflow: "hidden", border: `1.5px solid ${T.line}` }}>
             {/* Map panel */}
             <div style={{ height: 200, background: T.paper, position: "relative" }}>
               {pendingBiz.lat && pendingBiz.lng ? (
@@ -641,7 +641,7 @@ export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChang
           {/* ── Read-only view ── */}
           {!editing ? (
             <>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 11 }}>
+              <div className="resp-2col-grid">
                 {[
                   ["📍", "Address", bizAddress],
                   ["📞", "Phone", bizPhone || null],

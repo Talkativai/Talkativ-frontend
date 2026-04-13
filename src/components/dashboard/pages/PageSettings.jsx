@@ -395,7 +395,7 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
               </div>
               <button onClick={()=>setShowAddStaff(false)} style={{width:32,height:32,borderRadius:"50%",border:`1.5px solid ${T.line}`,background:T.paper,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:T.mid}}>✕</button>
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+            <div className="resp-2col-grid" style={{marginBottom:12}}>
               <div className="form-group" style={{marginBottom:0}}><label className="form-label">First name</label><input className="form-input" value={staffFn} onChange={e=>setStaffFn(e.target.value)} placeholder="Maria"/></div>
               <div className="form-group" style={{marginBottom:0}}><label className="form-label">Last name</label><input className="form-input" value={staffLn} onChange={e=>setStaffLn(e.target.value)} placeholder="Lopez"/></div>
             </div>
@@ -440,7 +440,7 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
                   <div className="card-head" style={{margin:0}}>Business details</div>
                   <button className="btn-primary" style={{fontSize:13,padding:"9px 20px"}} onClick={saveBiz} disabled={savingBiz}>{savingBiz?"Saving…":"Save changes"}</button>
                 </div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+                <div className="resp-2col-grid">
                   <div style={fw}><label style={lb}>Business name</label><input style={fi} value={bizName} onChange={e=>setBizName(e.target.value)}/></div>
                   <div style={fw}><label style={lb}>Business type</label><input style={fi} value={bizType} onChange={e=>setBizType(e.target.value)} placeholder="e.g. Pizza Restaurant"/></div>
                   <div style={{...fw,gridColumn:"1 / -1"}}><label style={lb}>Address</label><input style={fi} value={bizAddress} onChange={e=>setBizAddress(e.target.value)}/></div>
@@ -556,7 +556,7 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
                 <div className="card-head" style={{margin:0}}>Phone settings</div>
                 <button className="btn-primary" style={{fontSize:13,padding:"9px 20px"}} onClick={savePhone} disabled={savingPhone}>{savingPhone?"Saving...":"Save changes"}</button>
               </div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:20,alignItems:"stretch"}}>
+              <div className="resp-2col-grid" style={{marginBottom:20,alignItems:"stretch"}}>
                 <div style={{...fw,display:"flex",flexDirection:"column"}}>
                   <label style={lb}>Forwarding number (optional)</label>
                   <input value={assignedNumber} onChange={e=>setAssignedNumber(e.target.value)} placeholder="Assigned when you connect a number" style={{...fi,flex:1}}/>
@@ -575,7 +575,7 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
                   <span style={{fontSize:11,color:T.soft,marginTop:4}}>Fallback number if the agent can't handle a call.</span>
                 </div>
               </div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:20,alignItems:"stretch"}}>
+              <div className="resp-2col-grid" style={{marginBottom:20,alignItems:"stretch"}}>
                 <div style={{...fw,display:"flex",flexDirection:"column"}}>
                   <label style={lb}>Rings before agent answers</label>
                   <select value={ringsBeforeAi} onChange={e=>setRingsBeforeAi(e.target.value)} style={{...fi,flex:1,cursor:"pointer"}}>
@@ -583,7 +583,7 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
                   </select>
                 </div>
               </div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+              <div className="resp-2col-grid">
                 {[["Call recording","Record all calls for quality assurance",callRecording,setCallRecording],["Voicemail fallback","If transfer fails, offer voicemail",voicemailFallback,setVoicemailFallback]].map(([title,desc,val,setter])=>(
                   <div key={title} style={{background:T.paper,borderRadius:12,padding:"16px 14px",display:"flex",flexDirection:"column",gap:10}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
@@ -677,7 +677,7 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
               {/* ── Ordering type ── */}
               <div style={{marginBottom:24}}>
                 <div style={{fontSize:13,fontWeight:700,color:T.ink,marginBottom:14}}>Ordering type</div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+                <div className="resp-2col-grid">
                   {[
                     ["🏠","Collection","Allow customers to pick up orders in-store",collectionEnabled,setCollectionEnabled],
                     ["🚗","Delivery","Deliver orders to customers",deliveryEnabled,setDeliveryEnabled],
@@ -711,7 +711,7 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
                       <span style={{fontSize:16}}>🏠</span>
                       <span style={{fontSize:12,fontWeight:700,color:T.p700,letterSpacing:".4px",textTransform:"uppercase"}}>Collection payments</span>
                     </div>
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+                    <div className="resp-2col-grid">
                       {[
                         ["💳","Pay now while food is being prepared","Customer pays via payment link before the order is prepared",collectionPayNow,setCollectionPayNow],
                         ["🤝","Pay while picking it up","Customer pays when they arrive to collect their order",collectionPayOnPickup,setCollectionPayOnPickup],
@@ -734,7 +734,7 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
                       <span style={{fontSize:16}}>🚗</span>
                       <span style={{fontSize:12,fontWeight:700,color:T.p700,letterSpacing:".4px",textTransform:"uppercase"}}>Delivery payments</span>
                     </div>
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
+                    <div className="resp-2col-grid" style={{marginBottom:16}}>
                       {[
                         ["💳","Pay now while food is being prepared","Customer pays via payment link before the order is prepared",deliveryPayNow,setDeliveryPayNow],
                         ["🚚","Pay later when food is delivered","Customer pays when the order arrives at their door",deliveryPayOnDelivery,setDeliveryPayOnDelivery],
@@ -748,7 +748,7 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
                         </div>
                       ))}
                     </div>
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+                    <div className="resp-2col-grid">
                       <div style={fw}>
                         <label style={lb}>Delivery fee</label>
                         <div style={{display:"flex",alignItems:"center",gap:4}}>
@@ -776,7 +776,7 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
                 <div className="card-head" style={{margin:0}}>Reservation policy</div>
                 <button className="btn-primary" style={{fontSize:13,padding:"9px 20px"}} onClick={saveReservation} disabled={savingRes}>{savingRes?"Saving...":"Save changes"}</button>
               </div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:20}}>
+              <div className="resp-2col-grid" style={{marginBottom:20}}>
                 <div style={fw}><label style={lb}>Maximum party size</label><input value={maxPartySize} onChange={e=>setMaxPartySize(e.target.value)} style={fi} type="number" min="1"/></div>
                 <div style={fw}>
                   <label style={lb}>Booking lead time (hours)</label>
@@ -795,7 +795,7 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
                   <label className="toggle"><input type="checkbox" checked={depositRequired} onChange={e=>setDepositRequired(e.target.checked)}/><div className="toggle-track"/><div className="toggle-thumb"/></label>
                 </div>
                 {depositRequired && (
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+                  <div className="resp-2col-grid">
                     <div>
                       <label style={{...lb,fontSize:11}}>Deposit type</label>
                       <select value={depositType} onChange={e=>setDepositType(e.target.value)} style={{width:"100%",padding:"11px 14px",border:`1.5px solid ${T.p200}`,borderRadius:10,background:T.white,color:T.ink,fontSize:13,fontFamily:"'Outfit',sans-serif",cursor:"pointer"}}><option value="PER_GUEST">Per guest</option><option value="PER_TABLE">Per table</option><option value="FIXED">Fixed amount</option></select>
@@ -811,7 +811,7 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
                 )}
               </div>
               <div style={{fontSize:13,fontWeight:700,color:T.ink,marginBottom:14}}>Cancellation policy</div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+              <div className="resp-2col-grid">
                 <div style={fw}>
                   <label style={lb}>Free cancellation window</label>
                   <select value={cancellationHours} onChange={e=>setCancellationHours(e.target.value)} style={fi}>

@@ -146,7 +146,7 @@ export default function PaymentLinkScreen({ onBack }) {
             <label style={{display:"block",fontSize:12,fontWeight:600,color:T.mid,marginBottom:6}}>Card number</label>
             <input placeholder="4242 4242 4242 4242" style={{width:"100%",padding:"14px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.paper,color:T.ink,fontSize:15,fontFamily:"'Outfit',sans-serif",outline:"none",letterSpacing:1,boxSizing:"border-box"}}/>
           </div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
+          <div className="resp-2col-grid" style={{marginBottom:14}}>
             <div>
               <label style={{display:"block",fontSize:12,fontWeight:600,color:T.mid,marginBottom:6}}>Expiry date</label>
               <input placeholder="MM / YY" style={{width:"100%",padding:"14px 18px",border:`1.5px solid ${T.line}`,borderRadius:12,background:T.paper,color:T.ink,fontSize:15,fontFamily:"'Outfit',sans-serif",outline:"none"}}/>

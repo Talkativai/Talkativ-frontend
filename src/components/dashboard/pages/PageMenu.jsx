@@ -287,7 +287,7 @@ export default function PageMenu({ user, agentName, bizName }) {
             <div style={{padding:"20px 28px 24px"}}>
               {!importResult && (
                 <>
-                  <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:7,marginBottom:14}}>
+                  <div className="resp-3col-grid" style={{gap:7,marginBottom:14}}>
                     {POS_SYSTEMS.map(p=>{
                       const active = importPosSelected===p.name;
                       return (

@@ -33,7 +33,7 @@ export default function PaymentConfirmScreen({ onBack, data, type }) {
         </p>
 
         {/* Confirmation stats */}
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:14,marginBottom:28}}>
+        <div className="resp-3col-grid" style={{marginBottom:28}}>
           {isOrder && [
             ["🧾", shortId ? `ORD-${shortId}` : '—', "Order ID"],
             ["💳", `£${amount}`, "Amount paid"],
