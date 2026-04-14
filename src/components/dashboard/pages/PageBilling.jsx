@@ -162,8 +162,17 @@ export default function PageBilling({ user, agentName }) {
             </div>
             {sub?.stripeCustomerId ? (
               <>
-                <div style={{fontSize:16,fontWeight:700,color:T.ink,letterSpacing:1.5,marginBottom:6}}>•••• •••• •••• ••••</div>
-                <div style={{fontSize:12,color:T.soft}}>Card on file — managed via Stripe</div>
+                <div style={{fontSize:16,fontWeight:700,color:T.ink,letterSpacing:1.5,marginBottom:4,fontFamily:"monospace"}}>
+                  •••• •••• •••• {sub?.cardLast4 || '••••'}
+                </div>
+                <div style={{display:"flex",alignItems:"center",gap:6}}>
+                  {sub?.cardBrand && (
+                    <span style={{fontSize:11,fontWeight:700,background:T.p50,color:T.p700,border:`1px solid ${T.p100}`,borderRadius:4,padding:"2px 6px",textTransform:"uppercase",letterSpacing:.5}}>
+                      {sub.cardBrand}
+                    </span>
+                  )}
+                  <span style={{fontSize:12,color:T.soft}}>Card on file — managed via Stripe</span>
+                </div>
               </>
             ) : (
               <div style={{fontSize:13,color:T.soft,lineHeight:1.6}}>

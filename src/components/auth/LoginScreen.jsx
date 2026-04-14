@@ -55,10 +55,26 @@ export default function LoginScreen() {
     setLoading(false);
   };
 
-  // ── Google login via OAuth redirect ────────────────────────────────────────
+  // ── Google login via OAuth redirect ───────────────────────────────────────
   const handleGoogleLogin = () => {
     window.location.href = api.auth.googleLoginUrl();
   };
+
+  // ── Google login via Clerk SSO (commented out — using Google OAuth) ────────
+  // const handleGoogleLogin = async () => {
+  //   if (!clerkLoaded || !signIn) return;
+  //   setLoading(true); setAlert(null);
+  //   try {
+  //     await signIn.authenticateWithRedirect({
+  //       strategy: "oauth_google",
+  //       redirectUrl: `${window.location.origin}/#/sso-callback`,
+  //       redirectUrlComplete: `${window.location.origin}/#/dashboard`,
+  //     });
+  //   } catch (err) {
+  //     setAlert({ type: "error", message: err.message || "Google sign-in failed. Please try again." });
+  //     setLoading(false);
+  //   }
+  // };
 
   // ── Staff login ────────────────────────────────────────────────────────────
   const handleStaffLogin = async () => {

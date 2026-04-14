@@ -1,9 +1,13 @@
 import { useState, useEffect, lazy, Suspense } from "react";
 import { Routes, Route, useNavigate } from "react-router-dom";
+// import { ClerkProvider } from "@clerk/clerk-react"; // commented out — using Google OAuth
 import { api } from "./api.js";
 import { AuthProvider, useAuth } from "./context/AuthContext.jsx";
+
+// const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY; // commented out — using Google OAuth
 import LoginScreenExternal from "./components/auth/LoginScreen.jsx";
 import ResetPasswordScreen from "./components/auth/ResetPasswordScreen.jsx";
+// import SSOCallback from "./components/auth/SSOCallback.jsx"; // commented out — using Google OAuth
 import RequireAuth from "./components/auth/RequireAuth.jsx";
 import RequireAdmin from "./components/auth/RequireAdmin.jsx";
 import Landing from "./components/landing/Landing.jsx";
@@ -1240,6 +1244,7 @@ function AppRoutes() {
         <Routes>
           <Route path="/" element={<Landing onCTA={() => navigate('/onboarding/1')} onLogin={() => navigate('/login')} />} />
           <Route path="/login" element={<LoginScreenExternal />} />
+          {/* <Route path="/sso-callback" element={<SSOCallback />} /> */}{/* commented out — using Google OAuth */}
           <Route path="/reset-password" element={<ResetPasswordScreen />} />
           {/* <Route path="/onboarding/0" element={<Step0 onNext={() => goOb(1)} onBack={() => navigate('/')} />} /> */}
           <Route path="/onboarding/1" element={<Step1 onNext={() => goOb(2)} onBack={() => navigate('/')} onRegister={(userData) => handleLogin(userData)} />} />
@@ -1260,6 +1265,11 @@ function AppRoutes() {
   );
 }
 
+// ClerkProvider removed — using Google OAuth
+// To re-enable Clerk, wrap AuthProvider with:
+//   <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY} afterSignInUrl="/#/dashboard" afterSignUpUrl="/#/onboarding/2">
+//     ...
+//   </ClerkProvider>
 export default function App() {
   return (
     <AuthProvider>

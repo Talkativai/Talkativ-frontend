@@ -161,6 +161,20 @@ export const api = {
       return `${API_URL}/auth/google`;
     },
 
+    // Exchange a Clerk session token for an app JWT (commented out — using Google OAuth)
+    // async clerkExchange(clerkToken) {
+    //   const res = await fetch(`${API_URL}/auth/clerk`, {
+    //     method: 'POST',
+    //     headers: { 'Content-Type': 'application/json' },
+    //     body: JSON.stringify({ token: clerkToken }),
+    //     credentials: 'include',
+    //   });
+    //   if (!res.ok) throw await buildError(res);
+    //   const data = await res.json();
+    //   accessToken = data.accessToken;
+    //   return data;
+    // },
+
     async register(email, password, firstName, lastName) {
       const res = await fetch(`${API_URL}/auth/register/${REGISTER_HASH}`, {
         method: 'POST',
@@ -295,6 +309,7 @@ export const api = {
     getInvoices: () => get('/api/billing/invoices'),
     createSetupIntent: () => post('/api/billing/create-setup-intent', {}),
     subscribe: (data) => post('/api/billing/subscribe', data),
+    attachTestCard: (data) => post('/api/billing/attach-test-card', data), // test mode
     changePlan: (data) => put('/api/billing/plan', data),
     cancel: () => post('/api/billing/cancel', {}),
     getPortal: () => get('/api/billing/portal'),
