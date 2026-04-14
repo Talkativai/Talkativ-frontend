@@ -67,7 +67,7 @@ function PlanForm({ onNext, onBack }) {
   const [error, setError] = useState("");
   const [clientSecret, setClientSecret] = useState("");
   const [cardComplete, setCardComplete] = useState(false);
-  const [devMode, setDevMode] = useState(false); // true when Stripe not configured
+  const [loadingSecret, setLoadingSecret] = useState(true);
 
   // Fetch business currency
   useEffect(() => {
@@ -79,39 +79,25 @@ function PlanForm({ onNext, onBack }) {
       .catch(() => {});
   }, []);
 
-  // Create SetupIntent on mount (or detect dev bypass mode)
+  // Create SetupIntent on mount
   useEffect(() => {
-    if (!STRIPE_KEY) { setDevMode(true); return; }
+    if (!STRIPE_KEY) { setLoadingSecret(false); return; }
     api.billing
       .createSetupIntent()
       .then((d) => {
-        if (d?.devMode) { setDevMode(true); return; }
         if (d?.clientSecret) setClientSecret(d.clientSecret);
       })
       .catch((err) => {
         console.error("Failed to create setup intent:", err);
-        setDevMode(true); // fall back to dev mode so testing isn't blocked
-      });
+        setError("Could not initialise payment. Please refresh and try again.");
+      })
+      .finally(() => setLoadingSecret(false));
   }, []);
 
   const prices = PLAN_PRICES[currency] || PLAN_PRICES.GBP;
   const planKey = plan === 0 ? "starter" : "growth";
 
-  const handleDevSubmit = async () => {
-    setSaving(true);
-    try {
-      await api.billing.subscribe({ plan: planKey.toUpperCase() });
-      try { await api.business.completeOnboarding(); } catch {}
-      onNext();
-    } catch (err) {
-      setError(err?.message || "Something went wrong.");
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const handleSubmit = async () => {
-    if (devMode) { handleDevSubmit(); return; }
     if (!stripe || !elements) return;
 
     setSaving(true);
@@ -165,6 +151,7 @@ function PlanForm({ onNext, onBack }) {
       onNext={handleSubmit}
       onBack={onBack}
       nextLabel={saving ? "Processing…" : "Start free trial →"}
+      loading={saving}
     >
       <div className="ob-step-label">Step 8 · Plan</div>
       <h1 className="ob-heading">
@@ -260,54 +247,48 @@ function PlanForm({ onNext, onBack }) {
         ))}
       </div>
 
-      {/* Stripe card form OR dev bypass */}
-      {devMode ? (
-        <div style={{ marginTop: 8, background: "#fffbeb", border: "1.5px solid #fde68a", borderRadius: 14, padding: "18px 20px" }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "#92400e", marginBottom: 6 }}>
-            Dev mode — Stripe not configured
-          </div>
-          <div style={{ fontSize: 12.5, color: "#78350f", lineHeight: 1.6 }}>
-            No Stripe keys found. Click <strong>"Start free trial →"</strong> to activate your 14-day trial and complete setup without entering card details.
-            Add <code style={{ background: "#fef3c7", padding: "1px 5px", borderRadius: 4 }}>STRIPE_SECRET_KEY</code> and{" "}
-            <code style={{ background: "#fef3c7", padding: "1px 5px", borderRadius: 4 }}>VITE_STRIPE_PUBLIC_KEY</code> to your .env files when you're ready to go live.
-          </div>
+      {/* Stripe card form */}
+      <div className="info-block">
+        <div style={{ fontWeight: 700, color: T.ink, marginBottom: 16, fontSize: 14 }}>
+          💳 Payment details
         </div>
-      ) : (
-        <div className="info-block">
-          <div style={{ fontWeight: 700, color: T.ink, marginBottom: 16, fontSize: 14 }}>
-            💳 Payment details
-          </div>
 
+        {loadingSecret ? (
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 0", color: T.soft, fontSize: 13 }}>
+            <div style={{ width: 16, height: 16, border: `2px solid ${T.p200}`, borderTopColor: T.p600, borderRadius: "50%", animation: "ob-spin .65s linear infinite", flexShrink: 0 }} />
+            Preparing payment form…
+          </div>
+        ) : (
           <div style={{ background: T.white, border: `1.5px solid ${T.line}`, borderRadius: 12, padding: "14px 18px", marginBottom: 12 }}>
             <CardElement options={CARD_ELEMENT_OPTIONS} onChange={(e) => setCardComplete(e.complete)} />
           </div>
+        )}
 
-          {error && (
-            <div style={{ fontSize: 13, color: T.red, marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
-              ⚠️ {error}
-            </div>
-          )}
-
-          <div style={{ fontSize: 12, color: T.soft, display: "flex", alignItems: "center", gap: 6 }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill={T.soft}>
-              <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM12 17c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM9 8V6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9z" />
-            </svg>
-            Secured by Stripe · You won't be charged until your 14-day trial ends
+        {error && (
+          <div style={{ fontSize: 13, color: T.red, marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
+            ⚠️ {error}
           </div>
+        )}
 
-          {/* Test card hint */}
-          <div style={{ marginTop: 14, background: T.paper, border: `1.5px solid ${T.line}`, borderRadius: 12, padding: "12px 16px", display: "flex", alignItems: "flex-start", gap: 10 }}>
-            <span style={{ fontSize: 14 }}>🧪</span>
-            <div style={{ fontSize: 12, color: T.soft, lineHeight: 1.5 }}>
-              <strong style={{ color: T.mid }}>Test mode</strong> — Use card{" "}
-              <code style={{ background: T.p50, padding: "1px 6px", borderRadius: 4, fontSize: 11.5, color: T.p700, fontWeight: 600 }}>
-                4242 4242 4242 4242
-              </code>{" "}
-              with any future expiry and any CVC.
-            </div>
+        <div style={{ fontSize: 12, color: T.soft, display: "flex", alignItems: "center", gap: 6 }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill={T.soft}>
+            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM12 17c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM9 8V6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9z" />
+          </svg>
+          Secured by Stripe · You won't be charged until your 14-day trial ends
+        </div>
+
+        {/* Test card hint */}
+        <div style={{ marginTop: 14, background: T.paper, border: `1.5px solid ${T.line}`, borderRadius: 12, padding: "12px 16px", display: "flex", alignItems: "flex-start", gap: 10 }}>
+          <span style={{ fontSize: 14 }}>🧪</span>
+          <div style={{ fontSize: 12, color: T.soft, lineHeight: 1.5 }}>
+            <strong style={{ color: T.mid }}>Test card</strong> —{" "}
+            <code style={{ background: T.p50, padding: "1px 6px", borderRadius: 4, fontSize: 11.5, color: T.p700, fontWeight: 600 }}>
+              4242 4242 4242 4242
+            </code>{" "}
+            · any future expiry · any CVC.
           </div>
         </div>
-      )}
+      </div>
     </ObShell>
   );
 }

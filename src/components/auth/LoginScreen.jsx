@@ -49,7 +49,7 @@ export default function LoginScreen() {
     } catch (err) {
       setAlert({
         type: "error", message: err.message || "Invalid email or password.",
-        action: { label: "Create an account →", onClick: () => navigate("/onboarding/0") },
+        action: { label: "Create an account →", onClick: () => navigate("/onboarding/1") },
       });
     }
     setLoading(false);
@@ -182,7 +182,7 @@ export default function LoginScreen() {
         {mode !== "forgot" && (
           <div style={{textAlign:"center",marginTop:24}}>
             <span style={{fontSize:13,color:T.soft}}>Don't have an account? </span>
-            <span style={{fontSize:13,color:T.p600,cursor:"pointer",fontWeight:600}} onClick={()=>navigate("/onboarding/0")}>Create one free →</span>
+            <span style={{fontSize:13,color:T.p600,cursor:"pointer",fontWeight:600}} onClick={()=>navigate("/onboarding/1")}>Create one free →</span>
           </div>
         )}
       </div>

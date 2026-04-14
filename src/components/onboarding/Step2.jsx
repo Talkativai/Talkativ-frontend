@@ -29,6 +29,7 @@ export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChang
   const [bizCategory, setBizCategory] = useState("");
   const [editing, setEditing] = useState(false);
   const [formError, setFormError] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   // Country & currency
   const [country, setCountry] = useState("");
@@ -267,6 +268,7 @@ export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChang
     }
 
     setFormError(null);
+    setSaving(true);
 
     // Business hours: use Google Places structured hours if found, else use the schedule grid
     const openingHoursPayload = (hoursFromSearch && googleOpeningHours)
@@ -298,6 +300,7 @@ export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChang
 
     if (onBizNameChange) onBizNameChange(bizName);
     if (onBizPhoneChange) onBizPhoneChange(bizPhone);
+    setSaving(false);
     onNext();
   };
 
@@ -333,7 +336,7 @@ export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChang
   ].filter(Boolean) : [];
 
   return (
-    <ObShell step={2} onNext={handleNext} onBack={onBack} nextLabel="Looks good →">
+    <ObShell step={2} onNext={handleNext} onBack={onBack} nextLabel={saving ? "Saving…" : "Looks good →"} loading={saving}>
       <div className="ob-step-label">Step 3 · Business profile</div>
       <h1 className="ob-heading">Tell us about<br /><em>your business</em></h1>
       <p className="ob-subheading">Search your business name and we'll pull your address and details automatically.</p>

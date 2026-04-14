@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { Routes, Route, useNavigate } from "react-router-dom";
 import { api } from "./api.js";
 import { AuthProvider, useAuth } from "./context/AuthContext.jsx";
@@ -1211,9 +1211,23 @@ function AppRoutes() {
   const navigate = useNavigate();
   const { authChecked, handleLogin } = useAuth();
   const [obBizName, setObBizName] = useState("");
-  const [obAgentName, setObAgentName] = useState("Aria");
+  const [obAgentName, setObAgentName] = useState("");
   const [obPhone, setObPhone] = useState("");
   const [obBizHours, setObBizHours] = useState(null); // hours found during business search
+  const [obPhoneNumber, setObPhoneNumber] = useState(""); // phone number provisioned in Step5
+
+  // Restore onboarding state from the backend after a page refresh
+  useEffect(() => {
+    if (!authChecked) return;
+    api.agent.get().then(a => {
+      if (a?.name) setObAgentName(a.name);
+    }).catch(() => {});
+    api.business.get().then(b => {
+      if (b?.name) setObBizName(b.name);
+      if (b?.phone) setObPhone(b.phone);
+      if (b?.phoneConfig?.assignedNumber) setObPhoneNumber(b.phoneConfig.assignedNumber);
+    }).catch(() => {});
+  }, [authChecked]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const goOb = (n) => { window.scrollTo(0,0); navigate(`/onboarding/${n}`); };
 
@@ -1232,8 +1246,8 @@ function AppRoutes() {
           <Route path="/onboarding/2" element={<Step2 onNext={() => goOb(3)} onBack={() => goOb(1)} onBizNameChange={setObBizName} onBizPhoneChange={setObPhone} onHoursFound={setObBizHours} />} />
           <Route path="/onboarding/3" element={<Step3 onNext={() => goOb(4)} onBack={() => goOb(2)} />} />
           <Route path="/onboarding/4" element={<Step4 onNext={() => goOb(5)} onBack={() => goOb(3)} bizName={obBizName} bizPhone={obPhone} onAgentNameChange={setObAgentName} bizHoursFromSearch={obBizHours} />} />
-          <Route path="/onboarding/5" element={<Step5 onNext={() => goOb(6)} onBack={() => goOb(4)} agentName={obAgentName} />} />
-          <Route path="/onboarding/6" element={<Step6 onNext={() => goOb(7)} onBack={() => goOb(5)} agentName={obAgentName} />} />
+          <Route path="/onboarding/5" element={<Step5 onNext={() => goOb(6)} onBack={() => goOb(4)} agentName={obAgentName} onPhoneProvisioned={setObPhoneNumber} />} />
+          <Route path="/onboarding/6" element={<Step6 onNext={() => goOb(7)} onBack={() => goOb(5)} agentName={obAgentName} phoneNumber={obPhoneNumber} />} />
           <Route path="/onboarding/7" element={<Step7 onNext={() => navigate('/success')} onBack={() => goOb(6)} />} />
           <Route path="/success" element={<SuccessScreen onDashboard={() => navigate('/dashboard')} agentName={obAgentName} bizName={obBizName} />} />
           <Route path="/dashboard" element={<RequireAuth><DashboardApp /></RequireAuth>} />

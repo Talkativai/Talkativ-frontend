@@ -55,9 +55,13 @@ export default function ObShell({ step, children, onNext, onBack, nextLabel = "C
         <div style={{ flex: 1, marginTop: 8 }}>{children}</div>
         <div className="ob-footer">
           <button className="btn-back" onClick={onBack} disabled={loading}>← Back</button>
-          <button className="btn-next" onClick={onNext} disabled={loading} style={{ opacity: loading ? 0.7 : 1, pointerEvents: loading ? "none" : "auto" }}>{nextLabel}</button>
+          <button className="btn-next" onClick={onNext} disabled={loading} style={{ opacity: loading ? 0.75 : 1, pointerEvents: loading ? "none" : "auto", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+            {loading && <span style={{ width: 14, height: 14, border: "2.5px solid rgba(255,255,255,0.35)", borderTopColor: "white", borderRadius: "50%", flexShrink: 0, animation: "ob-spin .65s linear infinite" }} />}
+            {nextLabel}
+          </button>
         </div>
       </div>
+    <style>{`@keyframes ob-spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

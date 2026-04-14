@@ -3,7 +3,7 @@ import { T } from "../../utils/tokens";
 import ObShell from "./ObShell";
 import { api } from "../../api";
 
-export default function Step5({ onNext, onBack, agentName = "your agent" }) {
+export default function Step5({ onNext, onBack, agentName = "your agent", onPhoneProvisioned }) {
   const [status, setStatus] = useState("loading"); // loading | provisioning | done | error
   const [assignedNumber, setAssignedNumber] = useState(null);
   const [error, setError] = useState("");
@@ -20,6 +20,7 @@ export default function Step5({ onNext, onBack, agentName = "your agent" }) {
       const result = await api.business.setupPhone("new", country);
       if (result?.assignedNumber) {
         setAssignedNumber(result.assignedNumber);
+        if (onPhoneProvisioned) onPhoneProvisioned(result.assignedNumber);
         setStatus("done");
       } else {
         setStatus("error");
@@ -41,6 +42,7 @@ export default function Step5({ onNext, onBack, agentName = "your agent" }) {
     api.settings.getPhone().then(d => {
       if (d?.assignedNumber) {
         setAssignedNumber(d.assignedNumber);
+        if (onPhoneProvisioned) onPhoneProvisioned(d.assignedNumber);
         setStatus("done");
       } else {
         provision();

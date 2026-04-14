@@ -554,20 +554,7 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
             <div className="card">
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
                 <div className="card-head" style={{margin:0}}>Phone settings</div>
-                <div style={{display:"flex",gap:8}}>
-                  <button
-                    style={{fontSize:13,padding:"9px 20px",background:"transparent",border:`1.5px solid ${T.line}`,borderRadius:10,color:T.mid,cursor:"pointer",fontFamily:"'Outfit',sans-serif",fontWeight:600}}
-                    onClick={async()=>{
-                      try{
-                        await api.settings.reconnectPhone();
-                        alert("Phone reconnected successfully! Try calling your number again.");
-                      }catch(e){
-                        alert("Reconnect failed: "+(e.message||"unknown error"));
-                      }
-                    }}
-                  >Reconnect</button>
-                  <button className="btn-primary" style={{fontSize:13,padding:"9px 20px"}} onClick={savePhone} disabled={savingPhone}>{savingPhone?"Saving...":"Save changes"}</button>
-                </div>
+                <button className="btn-primary" style={{fontSize:13,padding:"9px 20px"}} onClick={savePhone} disabled={savingPhone}>{savingPhone?"Saving...":"Save changes"}</button>
               </div>
               <div className="resp-2col-grid" style={{marginBottom:20,alignItems:"stretch"}}>
                 <div style={{...fw,display:"flex",flexDirection:"column"}}>

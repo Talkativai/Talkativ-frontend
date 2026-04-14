@@ -3,21 +3,23 @@ import { T } from "../../utils/tokens";
 import ObShell from "./ObShell";
 import { api } from "../../api";
 
-export default function Step6({ onNext, onBack, agentName }) {
+export default function Step6({ onNext, onBack, agentName, phoneNumber }) {
   const [called, setCalled] = useState(false);
   const [calling, setCalling] = useState(false);
   const [error, setError] = useState("");
-  const [phone, setPhone] = useState("");
-  const [loadingPhone, setLoadingPhone] = useState(true);
+  const [phone, setPhone] = useState(phoneNumber || "");
+  const [loadingPhone, setLoadingPhone] = useState(!phoneNumber);
   const displayAgent = agentName || "Your agent";
 
-  // Fetch their assigned number on mount
+  // If number wasn't passed as prop (e.g. user landed here via direct URL / page refresh),
+  // fall back to fetching it from the API.
   useEffect(() => {
+    if (phoneNumber) { setPhone(phoneNumber); setLoadingPhone(false); return; }
     setLoadingPhone(true);
     api.settings.getPhone().then(d => {
       if (d?.assignedNumber) setPhone(d.assignedNumber);
     }).catch(() => {}).finally(() => setLoadingPhone(false));
-  }, []);
+  }, [phoneNumber]);
 
   const handleCall = async () => {
     if (!phone) {
