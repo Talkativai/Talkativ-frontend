@@ -64,8 +64,11 @@ export default function Step4({ onNext, onBack, bizName, bizPhone, onAgentNameCh
     }
   };
 
+  const [saving, setSaving] = useState(false);
+
   const handleNext = async () => {
     if (onAgentNameChange) onAgentNameChange(agentName);
+    setSaving(true);
     try {
       await api.agent.update({
         name: agentName,
@@ -79,11 +82,12 @@ export default function Step4({ onNext, onBack, bizName, bizPhone, onAgentNameCh
     } catch (err) {
       console.error("Failed to save agent settings:", err?.message || err);
     }
+    setSaving(false);
     onNext();
   };
 
   return (
-    <ObShell step={4} onNext={handleNext} onBack={onBack} nextLabel="Save & continue →">
+    <ObShell step={4} onNext={handleNext} onBack={onBack} nextLabel={saving ? "Saving…" : "Save & continue →"} loading={saving}>
       <div className="ob-step-label">Step 5 · Voice & script</div>
       <h1 className="ob-heading">Customise your<br /><em>AI agent</em></h1>
       <p className="ob-subheading">Pick a voice and personalise your greeting. All fields are pre-filled — just change what you want.</p>
