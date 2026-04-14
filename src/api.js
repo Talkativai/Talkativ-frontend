@@ -308,6 +308,7 @@ export const api = {
     updateNotifications: (data) => put('/api/settings/notifications', data),
     getPhone: () => get('/api/settings/phone'),
     updatePhone: (data) => put('/api/settings/phone', data),
+    reconnectPhone: () => post('/api/settings/phone/reconnect', {}),
     changePassword: (data) => put('/api/settings/password', data),
     getSessions: () => get('/api/settings/sessions'),
     revokeSession: (id) => del(`/api/settings/sessions/${id}`),
