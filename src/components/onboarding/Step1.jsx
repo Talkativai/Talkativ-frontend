@@ -1,31 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { T } from "../../utils/tokens";
 import { api } from "../../api.js";
 import ObShell from "./ObShell";
 
-export default function Step1({ onNext, onBack, onPhoneChange, onRegister }) {
+export default function Step1({ onNext, onBack, onRegister }) {
   const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [googlePrefilled, setGooglePrefilled] = useState(false);
-
-  // Pre-fill from Google OAuth profile if it came back from the callback
-  useEffect(() => {
-    const stored = sessionStorage.getItem('talkativ_google_profile');
-    if (stored) {
-      try {
-        const data = JSON.parse(stored);
-        if (data.firstName) setFirstName(data.firstName);
-        if (data.lastName) setLastName(data.lastName);
-        if (data.email) setEmail(data.email);
-        setGooglePrefilled(true);
-        sessionStorage.removeItem('talkativ_google_profile');
-      } catch {}
-    }
-  }, []);
+  const [lastName, setLastName]   = useState("");
+  const [email, setEmail]         = useState("");
+  const [password, setPassword]   = useState("");
+  const [loading, setLoading]     = useState(false);
+  const [error, setError]         = useState(null);
 
   const handleRegister = async () => {
     setError(null);
@@ -48,40 +32,17 @@ export default function Step1({ onNext, onBack, onPhoneChange, onRegister }) {
     setLoading(false);
   };
 
-  const handleGoogleSignIn = () => {
-    window.location.href = api.auth.googleLoginUrl('register');
-  };
-
   return (
     <ObShell step={1} onNext={handleRegister} onBack={onBack} nextLabel={loading ? "Creating account…" : "Create account →"} loading={loading}>
       <div className="ob-step-label">Step 2 · Account</div>
       <h1 className="ob-heading">Create your<br /><em>account</em></h1>
       <p className="ob-subheading">No credit card required. 14-day free trial on all plans — cancel any time.</p>
 
-      {/* Google pre-fill success banner */}
-      {googlePrefilled && (
-        <div style={{ background: T.greenBg, border: `1.5px solid ${T.greenBd}`, borderRadius: 12, padding: "12px 16px", marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ fontSize: 16 }}>✅</span>
-          <div style={{ fontSize: 13, fontWeight: 600, color: T.green }}>Google account connected — just set a password to finish.</div>
-        </div>
-      )}
-
-      {/* Error banner */}
       {error && (
         <div style={{ background: T.redBg, border: `1.5px solid #fecaca`, borderRadius: 12, padding: "12px 16px", marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ fontSize: 16 }}>⚠️</span>
           <div style={{ fontSize: 13, fontWeight: 600, color: T.red }}>{error}</div>
         </div>
-      )}
-
-      {/* Show Google button only if not already pre-filled from Google */}
-      {!googlePrefilled && (
-        <>
-          <div className="sso-row">
-            <button className="sso-btn" onClick={handleGoogleSignIn}>🔵 Continue with Google</button>
-          </div>
-          <div className="divider-row"><div className="divider-line" /><span className="divider-text">or continue with email</span><div className="divider-line" /></div>
-        </>
       )}
 
       <div className="form-row">
@@ -90,13 +51,12 @@ export default function Step1({ onNext, onBack, onPhoneChange, onRegister }) {
       </div>
       <div className="form-group">
         <label className="form-label">Email address</label>
-        <input className="form-input" placeholder="maria@restaurant.com" type="email" value={email}
-          onChange={e => setEmail(e.target.value)}
-          readOnly={googlePrefilled}
-          style={googlePrefilled ? { background: T.paper, color: T.mid } : {}} />
-        {googlePrefilled && <div style={{ fontSize: 11.5, color: T.soft, marginTop: 4 }}>Email confirmed via Google</div>}
+        <input className="form-input" placeholder="maria@restaurant.com" type="email" value={email} onChange={e => setEmail(e.target.value)} />
       </div>
-      <div className="form-group"><label className="form-label">Password</label><input className="form-input" placeholder="At least 8 characters" type="password" value={password} onChange={e => setPassword(e.target.value)} /></div>
+      <div className="form-group">
+        <label className="form-label">Password</label>
+        <input className="form-input" placeholder="At least 8 characters" type="password" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === "Enter" && handleRegister()} />
+      </div>
       <p style={{ fontSize: 12.5, color: T.soft, marginTop: 6 }}>By continuing you agree to our <span style={{ color: T.p600, cursor: "pointer" }}>Terms of Service</span> and <span style={{ color: T.p600, cursor: "pointer" }}>Privacy Policy</span>.</p>
     </ObShell>
   );

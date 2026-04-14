@@ -157,15 +157,15 @@ export const api = {
       return data;
     },
 
-    googleLoginUrl(state = 'login') {
-      return `${API_URL}/auth/google?state=${state}`;
+    googleLoginUrl() {
+      return `${API_URL}/auth/google`;
     },
 
-    async register(email, password, firstName, lastName, googleId) {
+    async register(email, password, firstName, lastName) {
       const res = await fetch(`${API_URL}/auth/register/${REGISTER_HASH}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, firstName, lastName, ...(googleId && { googleId }) }),
+        body: JSON.stringify({ email, password, firstName, lastName }),
         credentials: 'include',
       });
       if (!res.ok) throw await buildError(res);
