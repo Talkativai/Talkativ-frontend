@@ -301,6 +301,9 @@ export const api = {
     list: () => get('/api/integrations'),
     connect: (name, category, config = {}) => post('/api/integrations/connect', { name, category, config }),
     disconnect: (id) => del(`/api/integrations/${id}/disconnect`),
+    // Stripe Connect OAuth
+    stripeConnectInit: () => get('/api/integrations/stripe/connect'),
+    stripeConnectDisconnect: () => del('/api/integrations/stripe/disconnect'),
   },
 
   // ─── Billing ────────────────────────────────

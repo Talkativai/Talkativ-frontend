@@ -4,19 +4,22 @@ import ObShell from "./ObShell";
 import { api } from "../../api";
 
 export default function Step5({ onNext, onBack, agentName = "your agent", onPhoneProvisioned }) {
-  const [status, setStatus] = useState("loading"); // loading | provisioning | done | error
+  const [status, setStatus] = useState("loading"); // loading | provisioning | done | error | unavailable
   const [assignedNumber, setAssignedNumber] = useState(null);
   const [error, setError] = useState("");
+  const [bizCountry, setBizCountry] = useState("");
 
   const provision = useCallback(async () => {
     setStatus("provisioning");
     setError("");
     try {
       let country = "GB";
+      let countryName = "";
       try {
         const biz = await api.business.get();
-        if (biz?.country) country = biz.country;
+        if (biz?.country) { country = biz.country; countryName = biz.country; }
       } catch {}
+      setBizCountry(countryName);
       const result = await api.business.setupPhone("new", country);
       if (result?.assignedNumber) {
         setAssignedNumber(result.assignedNumber);
@@ -29,11 +32,11 @@ export default function Step5({ onNext, onBack, agentName = "your agent", onPhon
     } catch (e) {
       const msg = e?.message || "";
       if (msg.includes("NO_NUMBER_IN_REGION")) {
-        setError("Phone numbers aren't available in your region yet. Please contact support or skip.");
+        setStatus("unavailable");
       } else {
-        setError("Something went wrong. You can retry or skip to continue.");
+        setError("Something went wrong provisioning your number. You can retry or continue without one.");
+        setStatus("error");
       }
-      setStatus("error");
     }
   }, []);
 
@@ -58,13 +61,20 @@ export default function Step5({ onNext, onBack, agentName = "your agent", onPhon
     return num.replace(/(\+\d{1,3})(\d{3})(\d{3})(\d{3,4})/, "$1 $2 $3 $4").trim();
   };
 
+  const nextLabel =
+    status === "done"       ? "Test your agent →" :
+    status === "unavailable"? "Continue without a number →" :
+                              "Skip for now →";
+
   return (
-    <ObShell step={5} onNext={onNext} onBack={onBack} nextLabel={status === "done" ? "Test your agent →" : "Skip for now →"}>
+    <ObShell step={5} onNext={onNext} onBack={onBack} nextLabel={nextLabel} loading={status === "provisioning" || status === "loading"}>
       <div className="ob-step-label">Step 6 · Phone number</div>
       <h1 className="ob-heading">Your agent's<br /><em>phone number</em></h1>
       <p className="ob-subheading">
         {status === "done"
           ? `${agentName} now has a dedicated phone number. Customers can call it and ${agentName} will answer.`
+          : status === "unavailable"
+          ? `No phone numbers are available for your region yet.`
           : `We're assigning a local number to ${agentName}. This only takes a moment.`}
       </p>
 
@@ -130,7 +140,23 @@ export default function Step5({ onNext, onBack, agentName = "your agent", onPhon
         </div>
       )}
 
-      {/* Error state */}
+      {/* No numbers available for this country */}
+      {status === "unavailable" && (
+        <div style={{ marginTop: 18, background: "#fffbeb", border: "1.5px solid #fde68a", borderRadius: 14, padding: "20px 22px" }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: "#92400e", marginBottom: 8 }}>
+            📵 No numbers available{bizCountry ? ` for ${bizCountry}` : " in your region"}
+          </div>
+          <div style={{ fontSize: 13, color: "#78350f", lineHeight: 1.6 }}>
+            Talkativ doesn't have local phone numbers available for your country yet. You can still continue — your agent will be fully set up, and you can:
+          </div>
+          <ul style={{ fontSize: 13, color: "#78350f", lineHeight: 1.8, paddingLeft: 18, marginTop: 8, marginBottom: 0 }}>
+            <li>Forward calls from your existing number to your agent later</li>
+            <li>Contact <strong>support@talkativ.io</strong> to request a number for your region</li>
+          </ul>
+        </div>
+      )}
+
+      {/* Temporary error state */}
       {status === "error" && (
         <div style={{ marginTop: 18, background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 12, padding: "14px 18px", fontSize: 13, color: T.red, display: "flex", alignItems: "flex-start", gap: 10 }}>
           <span style={{ flexShrink: 0 }}>⚠️</span>
