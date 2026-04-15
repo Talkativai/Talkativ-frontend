@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { T } from "../../utils/tokens";
 import { STEPS } from "../../utils/constants";
 
-export default function ObShell({ step, children, onNext, onBack, nextLabel = "Continue →", loading = false }) {
+export default function ObShell({ step, children, onNext, onBack, nextLabel = "Continue →", loading = false, nextDisabled = false }) {
   const pct = ((step + 1) / STEPS.length) * 100;
   const [obOpen, setObOpen] = useState(false);
   const [animating, setAnimating] = useState(false);
@@ -74,10 +74,10 @@ export default function ObShell({ step, children, onNext, onBack, nextLabel = "C
           <button
             className={`btn-next ${loading ? "btn-next-loading" : ""}`}
             onClick={onNext}
-            disabled={loading}
+            disabled={loading || nextDisabled}
             style={{
-              opacity: loading ? 0.85 : 1,
-              pointerEvents: loading ? "none" : "auto",
+              opacity: loading || nextDisabled ? 0.45 : 1,
+              pointerEvents: loading || nextDisabled ? "none" : "auto",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
