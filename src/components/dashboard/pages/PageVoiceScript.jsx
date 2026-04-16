@@ -209,9 +209,7 @@ export default function PageVoiceScript({ user, agentName, bizName, agentData, b
 
   return (
     <>
-      <TopBar title={<>Voice <strong>&</strong> Script</>} subtitle={`Customise how ${localName} sounds and what ${localName} says`} user={user} agentName={agentName}>
-        <button className="btn-primary" style={{fontSize:13,padding:"9px 20px"}} onClick={handleSave}>{saving?"Saving…":"Save changes"}</button>
-      </TopBar>
+      <TopBar title={<>Voice <strong>&</strong> Script</>} subtitle={`Customise how ${localName} sounds and what ${localName} says`} user={user} agentName={agentName} />
 
       <div className="resp-grid-dashboard-hub">
         <div>
@@ -409,6 +407,17 @@ export default function PageVoiceScript({ user, agentName, bizName, agentData, b
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Save changes — full-width at the bottom of the page */}
+      <div style={{ marginTop: 24, display: "flex", justifyContent: "flex-end" }}>
+        <button
+          className="btn-primary"
+          style={{ fontSize: 14, padding: "12px 36px", minWidth: 180 }}
+          onClick={handleSave}
+        >
+          {saving ? "Saving…" : "Save changes"}
+        </button>
       </div>
     </>
   );

@@ -1,11 +1,15 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useRef, useCallback } from "react";
 import { api, setAccessToken } from "../api.js";
 
 const AuthContext = createContext(null);
 
+const INACTIVITY_TIMEOUT = 20 * 60 * 1000; // 20 minutes of no activity
+const ACTIVITY_EVENTS = ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart'];
+
 export function AuthProvider({ children }) {
   const [user, setUser]               = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
+  const inactivityTimerRef            = useRef(null);
 
   useEffect(() => {
     (async () => {
@@ -40,16 +44,51 @@ export function AuthProvider({ children }) {
     })();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleLogin = (userData) => {
-    setUser(userData);
-    try { localStorage.setItem("talkativ_user", JSON.stringify(userData)); } catch {}
-  };
-
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
+    if (inactivityTimerRef.current) {
+      clearTimeout(inactivityTimerRef.current);
+      inactivityTimerRef.current = null;
+    }
     await api.auth.logout();
     setUser(null);
     try { localStorage.removeItem("talkativ_user"); } catch {}
     setAccessToken(null);
+  }, []);
+
+  // ── Inactivity timeout — log out after 20 min of no user activity ─────────
+  // Only active while a user is logged in. Any mouse/keyboard/scroll/touch
+  // event resets the timer. Keeps the session alive during active use and
+  // only logs out on genuine prolonged inactivity.
+  useEffect(() => {
+    if (!user) {
+      // Clear any lingering timer when logged out
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+        inactivityTimerRef.current = null;
+      }
+      return;
+    }
+
+    const resetTimer = () => {
+      if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+      inactivityTimerRef.current = setTimeout(handleLogout, INACTIVITY_TIMEOUT);
+    };
+
+    ACTIVITY_EVENTS.forEach(evt => window.addEventListener(evt, resetTimer, { passive: true }));
+    resetTimer(); // Start the countdown from login
+
+    return () => {
+      ACTIVITY_EVENTS.forEach(evt => window.removeEventListener(evt, resetTimer));
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+        inactivityTimerRef.current = null;
+      }
+    };
+  }, [user, handleLogout]);
+
+  const handleLogin = (userData) => {
+    setUser(userData);
+    try { localStorage.setItem("talkativ_user", JSON.stringify(userData)); } catch {}
   };
 
   return (

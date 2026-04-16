@@ -169,16 +169,36 @@ export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChang
     if (!countryFound && biz.country) countryFound = applyCountry(biz.country, false);
     if (!countryFound) applyCountryFromIp(); // auto-fill from IP
 
-    // If hours were found from search, store them as business hours
-    if (biz.hours && biz.hours.trim().length > 0) {
-      setHoursFromSearch(true);
-      setGoogleOpeningHours(biz.openingHoursStructured || null);
-      if (onHoursFound) onHoursFound(biz.hours);
+    // Pre-populate the schedule grid with hours from the search result so the
+    // user can see and adjust them, and so they get saved for both business
+    // hours and agent hours when the user clicks "Looks good →".
+    const structured = biz.openingHoursStructured;
+    if (structured) {
+      if (structured.is24h === 'true') {
+        setIs24h(true);
+        setHoursFromSearch(true);
+      } else {
+        const newSched = {};
+        ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'].forEach(day => {
+          const v = structured[day];
+          if (!v || v === 'closed') {
+            newSched[day] = { open: false, openTime: '09:00', closeTime: '17:00' };
+          } else {
+            const [ot, ct] = v.split('-');
+            newSched[day] = { open: true, openTime: ot || '09:00', closeTime: ct || '17:00' };
+          }
+        });
+        setSchedule(newSched);
+        setIs24h(false);
+        // Only flag as "found" if at least one day is actually open
+        setHoursFromSearch(Object.values(newSched).some(d => d.open));
+      }
+      setGoogleOpeningHours(structured);
     } else {
       setHoursFromSearch(false);
       setGoogleOpeningHours(null);
-      if (onHoursFound) onHoursFound(null);
     }
+    if (onHoursFound) onHoursFound(biz.hours || '');
 
     setView('confirmed');
     setPendingBiz(null);
@@ -270,12 +290,10 @@ export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChang
     setFormError(null);
     setSaving(true);
 
-    // Business hours: use Google Places structured hours if found, else use the schedule grid
-    const openingHoursPayload = (hoursFromSearch && googleOpeningHours)
-      ? googleOpeningHours
-      : buildOpeningHours();
-
-    // Agent hours: always from the schedule grid
+    // The schedule grid is pre-populated from the search result (or set manually
+    // by the user). Use it as the single source for both business hours and
+    // agent schedule so both always reflect what the user sees on screen.
+    const openingHoursPayload = buildOpeningHours();
     const agentSchedulePayload = buildOpeningHours();
 
     try {
@@ -795,9 +813,9 @@ export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChang
                 ⏰
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 14, fontWeight: 700, color: T.ink, marginBottom: 4 }}>✓ Business hours saved automatically</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: T.ink, marginBottom: 4 }}>✓ Opening hours found &amp; pre-filled below</div>
                 <div style={{ fontSize: 12.5, color: T.mid, lineHeight: 1.5 }}>{bizHours}</div>
-                <div style={{ fontSize: 11, color: T.soft, marginTop: 6, fontStyle: "italic" }}>These are saved as your business working hours.</div>
+                <div style={{ fontSize: 11, color: T.soft, marginTop: 6, fontStyle: "italic" }}>Review and adjust the schedule below if needed.</div>
               </div>
             </div>
           </div>
@@ -806,8 +824,8 @@ export default function Step2({ onNext, onBack, onBizNameChange, onBizPhoneChang
 
       {/* ── Agent Working Hours ──────────────────────────────────────────── */}
       <div style={{ marginTop: 28, animation: "fadeUp .3s ease both" }}>
-        <div style={{ fontSize: 13, color: T.soft, marginBottom: 4 }}>Agent working hours</div>
-        <div style={{ fontSize: 16, fontWeight: 700, color: T.ink, marginBottom: 16 }}>When should your AI agent be active?</div>
+        <div style={{ fontSize: 13, color: T.soft, marginBottom: 4 }}>Opening &amp; agent hours</div>
+        <div style={{ fontSize: 16, fontWeight: 700, color: T.ink, marginBottom: 16 }}>Set your business hours</div>
 
         <label style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20, cursor: "pointer", userSelect: "none" }}
           onClick={() => setIs24h(v => !v)}>

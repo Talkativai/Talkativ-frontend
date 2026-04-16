@@ -14,6 +14,7 @@ export default function PageFaq({ user, agentName }) {
   const [editingFaqA, setEditingFaqA] = useState('');
   const [savingFaq, setSavingFaq] = useState(false);
   const [faqError, setFaqError] = useState('');
+  const [editFaqError, setEditFaqError] = useState('');
 
   useEffect(() => {
     setLoading(true);
@@ -43,17 +44,20 @@ export default function PageFaq({ user, agentName }) {
     } catch {}
   };
 
-  const startEditFaq = (faq) => { setEditingFaqId(faq.id); setEditingFaqQ(faq.question); setEditingFaqA(faq.answer); };
-  const cancelEditFaq = () => { setEditingFaqId(null); setEditingFaqQ(''); setEditingFaqA(''); };
+  const startEditFaq = (faq) => { setEditingFaqId(faq.id); setEditingFaqQ(faq.question); setEditingFaqA(faq.answer); setEditFaqError(''); };
+  const cancelEditFaq = () => { setEditingFaqId(null); setEditingFaqQ(''); setEditingFaqA(''); setEditFaqError(''); };
 
   const handleSaveFaq = async (id) => {
     setSavingFaq(true);
+    setEditFaqError('');
     try {
       const updated = await api.faq.update(id, { question: editingFaqQ.trim(), answer: editingFaqA.trim() });
       setFaqs(prev => prev.map(f => f.id === id ? updated : f));
       cancelEditFaq();
       syncAgent();
-    } catch {}
+    } catch (e) {
+      setEditFaqError(e.message || 'Failed to save. Please try again.');
+    }
     setSavingFaq(false);
   };
 
@@ -84,6 +88,7 @@ export default function PageFaq({ user, agentName }) {
                     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                       <input value={editingFaqQ} onChange={e => setEditingFaqQ(e.target.value)} placeholder="Question" style={{ ...inputStyle, padding: "9px 12px", fontSize: 13, background: T.white }} />
                       <textarea rows={3} value={editingFaqA} onChange={e => setEditingFaqA(e.target.value)} placeholder="Answer" style={{ ...inputStyle, padding: "9px 12px", fontSize: 13, resize: "vertical", lineHeight: 1.5, background: T.white }} />
+                      {editFaqError && <div style={{ fontSize: 12, color: T.red, background: T.redBg, border: `1px solid ${T.red}`, borderRadius: 8, padding: "7px 11px" }}>{editFaqError}</div>}
                       <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
                         <button onClick={cancelEditFaq} style={{ padding: "6px 14px", borderRadius: 9, border: `1.5px solid ${T.line}`, background: "transparent", color: T.mid, fontSize: 12.5, fontWeight: 600, cursor: "pointer", fontFamily: "'Outfit',sans-serif" }}>Cancel</button>
                         <button onClick={() => handleSaveFaq(faq.id)} disabled={savingFaq || !editingFaqQ.trim() || !editingFaqA.trim()} style={{ padding: "6px 14px", borderRadius: 9, border: "none", background: T.p600, color: "white", fontSize: 12.5, fontWeight: 700, cursor: savingFaq ? "not-allowed" : "pointer", fontFamily: "'Outfit',sans-serif", opacity: savingFaq ? 0.7 : 1 }}>

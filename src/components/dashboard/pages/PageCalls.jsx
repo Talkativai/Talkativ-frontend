@@ -69,6 +69,9 @@ function parseTranscript(raw) {
 // ─── Transcript Panel ───────────────────────────────────────────────────────
 function TranscriptPanel({ call }) {
   const turns = parseTranscript(call.transcript);
+  const order = call.order;
+  const reservation = call.reservation;
+
   return (
     <div className="transcript-panel">
       <div className="transcript-meta">
@@ -93,6 +96,43 @@ function TranscriptPanel({ call }) {
           </div>
         )}
       </div>
+
+      {/* Linked order details */}
+      {order && (
+        <div style={{ margin: "12px 0", padding: "12px 14px", background: "#F0FDF4", border: "1.5px solid #86EFAC", borderRadius: 10 }}>
+          <div style={{ fontSize: 11.5, fontWeight: 700, color: "#16A34A", textTransform: "uppercase", letterSpacing: ".5px", marginBottom: 8 }}>🛍️ Order placed during this call</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 20px", fontSize: 13 }}>
+            <span><strong>Customer:</strong> {order.customerName}</span>
+            {order.customerPhone && <span><strong>Phone:</strong> {order.customerPhone}</span>}
+            <span><strong>Type:</strong> {order.type}</span>
+            <span><strong>Status:</strong> {order.status}</span>
+            {order.amount > 0 && <span><strong>Amount:</strong> £{Number(order.amount).toFixed(2)}</span>}
+          </div>
+          {order.items && <div style={{ marginTop: 6, fontSize: 13 }}><strong>Items:</strong> {order.items}</div>}
+          {order.deliveryAddress && <div style={{ marginTop: 4, fontSize: 13 }}><strong>Address:</strong> {order.deliveryAddress}</div>}
+          {order.notes && <div style={{ marginTop: 4, fontSize: 13, color: "#6B7280" }}><strong>Notes:</strong> {order.notes}</div>}
+        </div>
+      )}
+
+      {/* Linked reservation details */}
+      {reservation && (
+        <div style={{ margin: "12px 0", padding: "12px 14px", background: "#EFF6FF", border: "1.5px solid #93C5FD", borderRadius: 10 }}>
+          <div style={{ fontSize: 11.5, fontWeight: 700, color: "#2563EB", textTransform: "uppercase", letterSpacing: ".5px", marginBottom: 8 }}>📅 Reservation booked during this call</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 20px", fontSize: 13 }}>
+            <span><strong>Guest:</strong> {reservation.guestName}</span>
+            {reservation.guestPhone && <span><strong>Phone:</strong> {reservation.guestPhone}</span>}
+            <span><strong>Guests:</strong> {reservation.guests}</span>
+            <span><strong>Status:</strong> {reservation.status}</span>
+          </div>
+          {reservation.dateTime && (
+            <div style={{ marginTop: 6, fontSize: 13 }}>
+              <strong>Date & Time:</strong> {fmtDate(reservation.dateTime)} at {fmtTime(reservation.dateTime)}
+            </div>
+          )}
+          {reservation.notes && <div style={{ marginTop: 4, fontSize: 13, color: "#6B7280" }}><strong>Notes:</strong> {reservation.notes}</div>}
+        </div>
+      )}
+
       {turns.length > 0 ? (
         <div className="transcript-body">
           {turns.map((t, i) => (
