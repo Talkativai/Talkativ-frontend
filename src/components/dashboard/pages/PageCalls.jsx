@@ -160,14 +160,16 @@ export default function PageCalls({ user, agentName, bizName }) {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   useEffect(() => { const h = () => setIsMobile(window.innerWidth <= 768); window.addEventListener('resize', h); return () => window.removeEventListener('resize', h); }, []);
 
-  const [calls, setCalls] = useState([]);
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [total, setTotal] = useState(0);
+  const CACHE_KEY = "calls_cache";
+  const cached = (() => { try { return JSON.parse(sessionStorage.getItem(CACHE_KEY) || "null"); } catch { return null; } })();
+
+  const [calls, setCalls] = useState(cached?.calls || []);
+  const [stats, setStats] = useState(cached?.stats || null);
+  const [loading, setLoading] = useState(!cached);
+  const [total, setTotal] = useState(cached?.total || 0);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    setLoading(true);
     setError(null);
     const dateMap = { "Today": "today", "Yesterday": "yesterday", "This week": "week", "This month": "month", "All time": "" };
     const dateParam = dateMap[timeFilter] ?? "";
@@ -175,9 +177,15 @@ export default function PageCalls({ user, agentName, bizName }) {
       api.calls.list(`filter=${filter}&date=${dateParam}&page=${page}`),
       api.calls.getStats(),
     ]).then(([data, s]) => {
-      setCalls(data.calls || []);
-      setTotal(data.total || 0);
+      const calls = data.calls || [];
+      const total = data.total || 0;
+      setCalls(calls);
+      setTotal(total);
       setStats(s);
+      // Cache only when showing all calls (no filter) so navigation back is instant
+      if (filter === "All" && !dateParam && page === 1) {
+        try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ calls, total, stats: s })); } catch {}
+      }
     }).catch(err => {
       setError(err?.message || "Failed to load calls. Please refresh.");
     }).finally(() => setLoading(false));

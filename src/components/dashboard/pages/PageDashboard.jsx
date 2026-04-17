@@ -1,6 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { T } from "../../../utils/tokens";
 import { getCurrencySymbol } from "../../../utils/countries";
+import { api } from "../../../api";
+
+function fmtTime(iso) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+}
+function fmtDate(iso) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+}
+function fmtDuration(s) {
+  if (!s) return "0:00";
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+}
 
 // Derive a stable 12-char merchant ID from the business UUID
 function deriveMerchantId(bizId) {
@@ -11,6 +25,13 @@ function deriveMerchantId(bizId) {
 export default function PageDashboard({ onNav, user, agentName, bizName, agentData, bizData, integrations = [] }) {
   const [copied, setCopied] = useState(false);
   const [phoneCopied, setPhoneCopied] = useState(false);
+  const [recentCalls, setRecentCalls] = useState([]);
+  const [callStats, setCallStats] = useState(null);
+
+  useEffect(() => {
+    api.calls.list("date=&page=1").then(data => setRecentCalls((data.calls || []).slice(0, 5))).catch(() => {});
+    api.calls.getStats().then(s => setCallStats(s)).catch(() => {});
+  }, []);
   const copyToClipboard = (text, setter) => {
     navigator.clipboard.writeText(text).then(() => {
       setter(true);
@@ -117,10 +138,10 @@ export default function PageDashboard({ onNav, user, agentName, bizName, agentDa
 
       <div className="kpi-row">
         {[
-          { l:"Calls today",   v:"0",  d:"No calls yet today" },
-          { l:"Revenue today", v:`${currencySymbol}0`, d:"No orders yet" },
-          { l:"Avg. call time",v:"0:00",d:"—" },
-          { l:"Answer rate",   v:"0%", d:"Connect a number to start" },
+          { l:"Calls today",    v: callStats?.total ?? "—",    d: callStats ? "calls handled" : "Loading…" },
+          { l:"Revenue today",  v: `${currencySymbol}${callStats?.revenue ?? "0"}`, d:"—" },
+          { l:"Avg. call time", v: callStats?.avgDuration ? fmtDuration(callStats.avgDuration) : "0:00", d:"—" },
+          { l:"Answer rate",    v: callStats?.answered != null && callStats?.total > 0 ? `${Math.round((callStats.answered / callStats.total) * 100)}%` : "—", d:"—" },
         ].map(k => (
           <div className="kpi-card" key={k.l}>
             <div className="kpi-label">{k.l}</div>
@@ -137,11 +158,34 @@ export default function PageDashboard({ onNav, user, agentName, bizName, agentDa
               Recent calls
               <span className="card-link" onClick={() => onNav && onNav("Calls")} style={{ cursor: "pointer" }}>View all →</span>
             </div>
-            <div style={{ textAlign:"center", padding:"32px 16px", color:T.soft }}>
-              <div style={{ fontSize:32, marginBottom:10 }}>📵</div>
-              <div style={{ fontSize:14, fontWeight:600, color:T.mid, marginBottom:6 }}>No recent calls yet</div>
-              <div style={{ fontSize:12.5 }}>Calls will appear here once your number is connected.</div>
-            </div>
+            {recentCalls.length === 0 ? (
+              <div style={{ textAlign:"center", padding:"32px 16px", color:T.soft }}>
+                <div style={{ fontSize:32, marginBottom:10 }}>📵</div>
+                <div style={{ fontSize:14, fontWeight:600, color:T.mid, marginBottom:6 }}>No recent calls yet</div>
+                <div style={{ fontSize:12.5 }}>Calls will appear here once your number is connected.</div>
+              </div>
+            ) : (
+              <div style={{ display:"flex", flexDirection:"column" }}>
+                {recentCalls.map((c, i) => (
+                  <div key={c.id} style={{ display:"flex", alignItems:"center", gap:12, padding:"10px 0", borderBottom: i < recentCalls.length - 1 ? `1px solid ${T.paper}` : "none" }}>
+                    <div style={{ width:8, height:8, borderRadius:"50%", background: c.status === "LIVE" ? T.green : c.status === "MISSED" ? "#EF4444" : T.p400, flexShrink:0 }} />
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ fontSize:13, fontWeight:600, color:T.ink, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{c.callerName || c.callerPhone || "Unknown caller"}</div>
+                      <div style={{ fontSize:11.5, color:T.soft, marginTop:1 }}>{fmtDate(c.startedAt)} · {fmtTime(c.startedAt)}</div>
+                    </div>
+                    <div style={{ fontSize:12, color:T.soft, flexShrink:0 }}>{fmtDuration(c.duration)}</div>
+                    {c.outcomeType && (
+                      <div style={{ fontSize:11, fontWeight:600, color: c.outcomeType === "ORDER" ? "#16A34A" : c.outcomeType === "RESERVATION" ? "#2563EB" : T.soft, flexShrink:0 }}>
+                        {c.outcomeType === "ORDER" ? "🛍️" : c.outcomeType === "RESERVATION" ? "📅" : "💬"}
+                      </div>
+                    )}
+                  </div>
+                ))}
+                <div style={{ paddingTop:10, textAlign:"right" }}>
+                  <span onClick={() => onNav && onNav("Calls")} style={{ fontSize:12.5, fontWeight:600, color:T.p600, cursor:"pointer" }}>View all calls →</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
