@@ -120,9 +120,6 @@ export default function Landing({ onCTA, onLogin }) {
               Get started free
               <span style={{ fontSize: 18, lineHeight: 1 }}>→</span>
             </button>
-            <button className="btn-hero-outline" onClick={onCTA}>
-              ▷ Hear a demo call
-            </button>
           </div>
           <div className="hero-trust">
             <span>Loved by 2,400+ restaurant owners</span>
