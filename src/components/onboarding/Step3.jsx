@@ -26,7 +26,7 @@ export default function Step3({ onNext, onBack }) {
   const opts = [
     { icon: "🌐", title: "Import from URL", desc: "Paste your website or online menu link", badge: "Fastest" },
     { icon: "📁", title: "Upload your file", desc: "PDF, DOCX, or PNG accepted" },
-    { icon: "🔌", title: "Connect your POS", desc: "Clover, Square, resOS", badge: "Recommended" },
+    { icon: "🔌", title: "Connect your POS", desc: "Square, Clover, SumUp, resOS & more", badge: "Recommended" },
   ];
 
   const resetResult = () => { setResult(null); setError(null); };

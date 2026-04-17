@@ -21,23 +21,6 @@ export default function Step6({ onNext, onBack, agentName, phoneNumber }) {
     }).catch(() => {}).finally(() => setLoadingPhone(false));
   }, [phoneNumber]);
 
-  const handleCall = async () => {
-    if (!phone) {
-      setError("No number assigned yet. Please go back and connect a number first, or skip for now.");
-      return;
-    }
-    setError("");
-    setCalling(true);
-    try {
-      await api.agent.testCall();
-      setCalled(true);
-    } catch (e) {
-      setError("Could not initiate call. You can test from your dashboard.");
-    } finally {
-      setCalling(false);
-    }
-  };
-
   const formatPhoneForDisplay = (num) => {
     if (!num) return "";
     // Add spaces for readability: +44 161 234 5678
@@ -122,26 +105,6 @@ export default function Step6({ onNext, onBack, agentName, phoneNumber }) {
               📞 Call / Dial {formatPhoneForDisplay(phone)}
             </a>
 
-            {/* Secondary: let backend call the user */}
-            <button
-              onClick={handleCall}
-              disabled={calling}
-              style={{
-                background: "transparent",
-                color: T.p600,
-                border: `1.5px solid ${T.p200}`,
-                borderRadius: 50,
-                padding: "10px 24px",
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: calling ? "not-allowed" : "pointer",
-                fontFamily: "'Outfit', sans-serif",
-                transition: "all .22s",
-                opacity: calling ? 0.7 : 1,
-              }}
-            >
-              {calling ? "📞 Connecting…" : "Or let us call you instead"}
-            </button>
           </div>
         )}
 

@@ -10,10 +10,17 @@ export const STEPS = [
 ];
 
 export const POS_SYSTEMS = [
-  { name: "Clover",  icon: "🍀", type: "ordering",     fields: [{ key: "accessToken", label: "Access Token", ph: "..." }, { key: "merchantId", label: "Merchant ID", ph: "XXXXXXXXXXXXXXXX" }] },
-  { name: "Square",  icon: "🟦", type: "ordering",     fields: [{ key: "accessToken", label: "Access Token", ph: "EAAAl..." }, { key: "locationId", label: "Location ID", ph: "LXXXXXXXXXXXXXXXX" }] },
-  { name: "resOS",   icon: "📅", type: "reservation",  fields: [{ key: "apiKey", label: "API Key", ph: "res_live_..." }, { key: "propertyId", label: "Property ID", ph: "PROP-XXXXXXXX" }] },
-  { name: "SpotOn",  icon: "📍", type: "ordering",     fields: [{ key: "apiKey", label: "API Key", ph: "sp_live_..." }, { key: "siteId", label: "Site ID", ph: "SITE-XXXXXXXX" }] },
+  // ── Ordering / KDS ──
+  { name: "Square",   icon: "🟦", type: "ordering",    fields: [{ key: "accessToken", label: "Access Token", ph: "EAAAl..." }, { key: "locationId",   label: "Location ID",   ph: "LXXXXXXXXXXXXXXXX" }] },
+  { name: "Clover",   icon: "🍀", type: "ordering",    fields: [{ key: "accessToken", label: "Access Token", ph: "..." },      { key: "merchantId",   label: "Merchant ID",   ph: "XXXXXXXXXXXXXXXX"  }] },
+  { name: "SumUp",    icon: "🟠", type: "ordering",    fields: [{ key: "apiKey",      label: "API Key",      ph: "sup_sk_..." },{ key: "merchantCode", label: "Merchant Code", ph: "M..."              }] },
+  { name: "Zettle",   icon: "💳", type: "ordering",    fields: [{ key: "apiKey",      label: "API Key",      ph: "..."        }] },
+  { name: "SpotOn",   icon: "📍", type: "ordering",    fields: [{ key: "apiKey",      label: "API Key",      ph: "sp_live_..." },{ key: "siteId",      label: "Site ID",      ph: "SITE-XXXXXXXX"     }] },
+  // ── Reservations ──
+  { name: "resOS",    icon: "📅", type: "reservation", fields: [{ key: "apiKey",      label: "API Key",      ph: "res_live_..." },{ key: "propertyId",  label: "Property ID",  ph: "PROP-XXXXXXXX"    }] },
+  { name: "ResDiary", icon: "📒", type: "reservation", fields: [{ key: "apiKey",      label: "API Key",      ph: "..." },         { key: "restaurantId",label: "Restaurant ID", ph: "..."              }] },
+  { name: "OpenTable",icon: "🍽️", type: "reservation", fields: [{ key: "apiKey",      label: "API Key",      ph: "..." },         { key: "restaurantId",label: "Restaurant ID", ph: "..."              }] },
+  { name: "Collins",  icon: "📋", type: "reservation", fields: [{ key: "apiKey",      label: "API Key",      ph: "..." },         { key: "venueId",     label: "Venue ID",     ph: "..."              }] },
 ];
 
 // All voices use ElevenLabs Turbo v2.5 — natural, low-latency, phone-grade
