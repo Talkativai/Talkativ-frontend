@@ -50,14 +50,22 @@ export default function DashboardApp() {
     api.integrations.list().then(data => setIntegrations(Array.isArray(data) ? data : [])).catch(() => {});
   }, []);
 
-  const nav = (p) => { setActive(p); document.body.classList.remove('mob-nav-open'); window.scrollTo(0,0); };
+  const [navSection, setNavSection] = useState(null);
+  const nav = (p) => {
+    // Support "Page:Section" format e.g. "Settings:Ordering"
+    const [page, section] = p.split(":");
+    setActive(page);
+    setNavSection(section || null);
+    document.body.classList.remove('mob-nav-open');
+    window.scrollTo(0, 0);
+  };
   const PageComponent = PAGE_MAP[active] || PageDashboard;
-  const sharedProps = { onNav: nav, user, agentName, bizName, agentData, bizData, menuSynced, integrations, onAgentNameChange: setAgentName, onBizNameChange: setBizName };
+  const sharedProps = { onNav: nav, user, agentName, bizName, agentData, bizData, menuSynced, integrations, onAgentNameChange: setAgentName, onBizNameChange: setBizName, defaultSection: navSection };
 
   return (
     <div className="dash-wrap">
       <Sidebar active={active} onNav={nav} user={user} agentName={agentName} bizName={bizName} />
-      <main className="dash-main" key={active}>
+      <main className="dash-main" key={active + (navSection || "")}>
         <div className="dash-overlay" onClick={() => document.body.classList.remove('mob-nav-open')} />
         <PageComponent {...sharedProps} />
       </main>

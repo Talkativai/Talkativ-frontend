@@ -148,26 +148,25 @@ export default function PageMyAgent({ user, agentName, bizName, agentData, bizDa
           <div className="card">
             <div className="card-head">Quick settings</div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(180px, 1fr))",gap:14}}>
-              <div style={{background:T.paper,borderRadius:12,padding:"16px 14px",display:"flex",flexDirection:"column",gap:10}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div style={{background:T.paper,borderRadius:12,padding:"16px 14px",display:"flex",flexDirection:"column",gap:12}}>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <span style={{fontSize:18}}>🛍️</span>
                   <h4 style={{margin:0,fontSize:13,fontWeight:700,color:T.ink}}>Accept orders</h4>
-                  <label className="toggle"><input type="checkbox" checked={acceptOrders} onChange={e=>{setAcceptOrders(e.target.checked);updateSetting('acceptOrders',e.target.checked);}}/><div className="toggle-track"/><div className="toggle-thumb"/></label>
                 </div>
-                <p style={{margin:0,fontSize:12,color:T.soft,lineHeight:1.4}}>{acceptOrders?`Allow ${displayAgent} to take phone orders`:`${displayAgent} will not take orders right now`}</p>
+                <p style={{margin:0,fontSize:12,color:T.soft,lineHeight:1.4}}>Allow {displayAgent} to take phone orders</p>
+                <button onClick={() => onNav && onNav("Settings:Ordering")} style={{marginTop:"auto",padding:"8px 14px",borderRadius:8,border:`1.5px solid ${T.p300}`,background:T.p50,color:T.p700,fontSize:12.5,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif",transition:"all .18s"}}>
+                  Configure ordering →
+                </button>
               </div>
-              <div style={{background:T.paper,borderRadius:12,padding:"16px 14px",display:"flex",flexDirection:"column",gap:10}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div style={{background:T.paper,borderRadius:12,padding:"16px 14px",display:"flex",flexDirection:"column",gap:12}}>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <span style={{fontSize:18}}>📅</span>
                   <h4 style={{margin:0,fontSize:13,fontWeight:700,color:T.ink}}>Take reservations</h4>
-                  <label className="toggle"><input type="checkbox" checked={takeReservations} onChange={e=>{setTakeReservations(e.target.checked);updateSetting('takeReservations',e.target.checked);}}/><div className="toggle-track"/><div className="toggle-thumb"/></label>
                 </div>
-                <p style={{margin:0,fontSize:12,color:T.soft,lineHeight:1.4}}>{takeReservations?"Allow booking via phone":`${displayAgent} will decline booking requests`}</p>
-              </div>
-              <div style={{background:T.paper,borderRadius:12,padding:"16px 14px",display:"flex",flexDirection:"column",gap:10}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                  <h4 style={{margin:0,fontSize:13,fontWeight:700,color:T.ink}}>Answer after hours</h4>
-                  <label className="toggle"><input type="checkbox" checked={answerAfterHours} onChange={e=>{setAnswerAfterHours(e.target.checked);updateSetting('answerAfterHours',e.target.checked);}}/><div className="toggle-track"/><div className="toggle-thumb"/></label>
-                </div>
-                <p style={{margin:0,fontSize:12,color:T.soft,lineHeight:1.4}}>Handle calls outside business hours</p>
+                <p style={{margin:0,fontSize:12,color:T.soft,lineHeight:1.4}}>Allow booking via phone</p>
+                <button onClick={() => onNav && onNav("Settings:Reservations")} style={{marginTop:"auto",padding:"8px 14px",borderRadius:8,border:`1.5px solid ${T.p300}`,background:T.p50,color:T.p700,fontSize:12.5,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif",transition:"all .18s"}}>
+                  Configure reservations →
+                </button>
               </div>
             </div>
           </div>

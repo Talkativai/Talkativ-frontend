@@ -8,8 +8,8 @@ import ScheduleInlineEditor from '../../ScheduleInlineEditor';
 import TopBar from '../TopBar';
 import COUNTRIES, { getCurrencySymbol, getFlag } from '../../../utils/countries';
 
-export default function PageSettings({ user, agentName, bizData, onBizNameChange }) {
-  const [section, setSection] = useState("Business");
+export default function PageSettings({ user, agentName, bizData, onBizNameChange, defaultSection }) {
+  const [section, setSection] = useState(defaultSection || "Business");
 
   // ── Phone country detection (IP-based, for flag display) ─────────────────
   const [bizPhoneCountry, setBizPhoneCountry] = useState('US');
