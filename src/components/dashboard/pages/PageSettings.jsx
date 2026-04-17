@@ -66,6 +66,7 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
   const [savingOrder, setSavingOrder] = useState(false);
 
   // ── Reservations ──────────────────────────────────────────────────────────
+  const [reservationsEnabled, setReservationsEnabled] = useState(false);
   const [maxPartySize, setMaxPartySize] = useState(20);
   const [bookingLeadTime, setBookingLeadTime] = useState(24);
   const [depositRequired, setDepositRequired] = useState(false);
@@ -179,6 +180,7 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
       }).catch(() => {});
     } else if (section === 'Reservations') {
       api.settings.getReservationPolicy().then(d => {
+        setReservationsEnabled(d.reservationsEnabled ?? false);
         setMaxPartySize(d.maxPartySize ?? 20);
         setBookingLeadTime(d.bookingLeadTime ?? 24);
         setDepositRequired(d.depositRequired ?? false);
@@ -239,7 +241,7 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
 
   const saveReservation = async () => {
     setSavingRes(true);
-    try { await api.settings.updateReservationPolicy({ maxPartySize: parseInt(maxPartySize), bookingLeadTime: parseInt(bookingLeadTime), depositRequired, depositAmount: parseFloat(depositAmount), depositType, cancellationHours: parseInt(cancellationHours), refundPercentage: parseInt(refundPercentage) }); }
+    try { await api.settings.updateReservationPolicy({ reservationsEnabled, maxPartySize: parseInt(maxPartySize), bookingLeadTime: parseInt(bookingLeadTime), depositRequired, depositAmount: parseFloat(depositAmount), depositType, cancellationHours: parseInt(cancellationHours), refundPercentage: parseInt(refundPercentage) }); }
     catch (e) {} finally { setSavingRes(false); }
   };
 
@@ -776,56 +778,85 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
                 <div className="card-head" style={{margin:0}}>Reservation policy</div>
                 <button className="btn-primary" style={{fontSize:13,padding:"9px 20px"}} onClick={saveReservation} disabled={savingRes}>{savingRes?"Saving...":"Save changes"}</button>
               </div>
-              <div className="resp-2col-grid" style={{marginBottom:20}}>
-                <div style={fw}><label style={lb}>Maximum party size</label><input value={maxPartySize} onChange={e=>setMaxPartySize(e.target.value)} style={fi} type="number" min="1"/></div>
-                <div style={fw}>
-                  <label style={lb}>Booking lead time (hours)</label>
-                  <select value={bookingLeadTime} onChange={e=>setBookingLeadTime(e.target.value)} style={fi}>
-                    <option value={1}>1 hour</option><option value={2}>2 hours</option><option value={4}>4 hours</option><option value={24}>24 hours</option><option value={48}>48 hours</option>
-                  </select>
+
+              {/* ── Enable reservations toggle ── */}
+              <div style={{marginBottom:24}}>
+                <div style={{fontSize:13,fontWeight:700,color:T.ink,marginBottom:14}}>Reservation booking</div>
+                <div style={{background: reservationsEnabled ? `linear-gradient(135deg,${T.p50},#f0ebff)` : T.paper, border:`1.5px solid ${reservationsEnabled ? T.p200 : T.line}`,borderRadius:14,padding:"18px 16px",transition:"all .2s"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:10}}>
+                      <span style={{fontSize:22}}>📅</span>
+                      <div>
+                        <h4 style={{margin:0,fontSize:13,fontWeight:700,color:T.ink}}>Accept reservations</h4>
+                        <p style={{margin:0,fontSize:12,color:T.soft,marginTop:3}}>Allow your agent to book tables for customers over the phone</p>
+                      </div>
+                    </div>
+                    <label className="toggle"><input type="checkbox" checked={reservationsEnabled} onChange={e=>setReservationsEnabled(e.target.checked)}/><div className="toggle-track"/><div className="toggle-thumb"/></label>
+                  </div>
                 </div>
               </div>
-              <div style={{fontSize:13,fontWeight:700,color:T.ink,marginBottom:14}}>Deposit settings</div>
-              <div style={{background:T.p50,border:`1.5px solid ${T.p100}`,borderRadius:14,padding:"18px 20px",marginBottom:20}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-                  <div>
-                    <h4 style={{margin:0,fontSize:14,fontWeight:700,color:T.ink}}>Require deposit</h4>
-                    <p style={{margin:0,fontSize:12,color:T.soft,marginTop:4}}>A payment link is sent after the customer agrees to reserve</p>
-                  </div>
-                  <label className="toggle"><input type="checkbox" checked={depositRequired} onChange={e=>setDepositRequired(e.target.checked)}/><div className="toggle-track"/><div className="toggle-thumb"/></label>
+
+              {/* ── Policy form — only shown when reservations are enabled ── */}
+              {!reservationsEnabled ? (
+                <div style={{background:T.paper,border:`1.5px solid ${T.line}`,borderRadius:14,padding:"32px 24px",textAlign:"center"}}>
+                  <div style={{fontSize:28,marginBottom:10}}>📅</div>
+                  <div style={{fontSize:13,fontWeight:600,color:T.mid,marginBottom:4}}>Reservations are turned off</div>
+                  <div style={{fontSize:12,color:T.soft}}>Enable "Accept reservations" above to configure your booking policy</div>
                 </div>
-                {depositRequired && (
-                  <div className="resp-2col-grid">
-                    <div>
-                      <label style={{...lb,fontSize:11}}>Deposit type</label>
-                      <select value={depositType} onChange={e=>setDepositType(e.target.value)} style={{width:"100%",padding:"11px 14px",border:`1.5px solid ${T.p200}`,borderRadius:10,background:T.white,color:T.ink,fontSize:13,fontFamily:"'Outfit',sans-serif",cursor:"pointer"}}><option value="PER_GUEST">Per guest</option><option value="PER_TABLE">Per table</option><option value="FIXED">Fixed amount</option></select>
+              ) : (
+                <>
+                  <div className="resp-2col-grid" style={{marginBottom:20}}>
+                    <div style={fw}><label style={lb}>Maximum party size</label><input value={maxPartySize} onChange={e=>setMaxPartySize(e.target.value)} style={fi} type="number" min="1"/></div>
+                    <div style={fw}>
+                      <label style={lb}>Booking lead time (hours)</label>
+                      <select value={bookingLeadTime} onChange={e=>setBookingLeadTime(e.target.value)} style={fi}>
+                        <option value={1}>1 hour</option><option value={2}>2 hours</option><option value={4}>4 hours</option><option value={24}>24 hours</option><option value={48}>48 hours</option>
+                      </select>
                     </div>
-                    <div>
-                      <label style={{...lb,fontSize:11}}>Deposit amount</label>
-                      <div style={{display:"flex",alignItems:"center",gap:4}}>
-                        <span style={{fontSize:14,fontWeight:700,color:T.mid}}>{currencySymbol}</span>
-                        <input value={depositAmount} onChange={e=>setDepositAmount(e.target.value)} style={{width:"100%",padding:"11px 14px",border:`1.5px solid ${T.p200}`,borderRadius:10,background:T.white,color:T.ink,fontSize:13,fontFamily:"'Outfit',sans-serif",outline:"none"}} type="number" min="0" step="0.01"/>
+                  </div>
+                  <div style={{fontSize:13,fontWeight:700,color:T.ink,marginBottom:14}}>Deposit settings</div>
+                  <div style={{background:T.p50,border:`1.5px solid ${T.p100}`,borderRadius:14,padding:"18px 20px",marginBottom:20}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+                      <div>
+                        <h4 style={{margin:0,fontSize:14,fontWeight:700,color:T.ink}}>Require deposit</h4>
+                        <p style={{margin:0,fontSize:12,color:T.soft,marginTop:4}}>A payment link is sent to the customer's phone after they agree to book</p>
+                      </div>
+                      <label className="toggle"><input type="checkbox" checked={depositRequired} onChange={e=>setDepositRequired(e.target.checked)}/><div className="toggle-track"/><div className="toggle-thumb"/></label>
+                    </div>
+                    {depositRequired && (
+                      <div className="resp-2col-grid">
+                        <div>
+                          <label style={{...lb,fontSize:11}}>Deposit type</label>
+                          <select value={depositType} onChange={e=>setDepositType(e.target.value)} style={{width:"100%",padding:"11px 14px",border:`1.5px solid ${T.p200}`,borderRadius:10,background:T.white,color:T.ink,fontSize:13,fontFamily:"'Outfit',sans-serif",cursor:"pointer"}}><option value="PER_GUEST">Per guest</option><option value="PER_TABLE">Per table</option><option value="FIXED">Fixed amount</option></select>
+                        </div>
+                        <div>
+                          <label style={{...lb,fontSize:11}}>Deposit amount</label>
+                          <div style={{display:"flex",alignItems:"center",gap:4}}>
+                            <span style={{fontSize:14,fontWeight:700,color:T.mid}}>{currencySymbol}</span>
+                            <input value={depositAmount} onChange={e=>setDepositAmount(e.target.value)} style={{width:"100%",padding:"11px 14px",border:`1.5px solid ${T.p200}`,borderRadius:10,background:T.white,color:T.ink,fontSize:13,fontFamily:"'Outfit',sans-serif",outline:"none"}} type="number" min="0" step="0.01"/>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div style={{fontSize:13,fontWeight:700,color:T.ink,marginBottom:14}}>Cancellation policy</div>
+                  <div className="resp-2col-grid">
+                    <div style={fw}>
+                      <label style={lb}>Free cancellation window</label>
+                      <select value={cancellationHours} onChange={e=>setCancellationHours(e.target.value)} style={fi}>
+                        <option value={2}>2 hours before</option><option value={4}>4 hours before</option><option value={24}>24 hours before</option><option value={48}>48 hours before</option>
+                      </select>
+                    </div>
+                    <div style={fw}>
+                      <label style={lb}>Refund if cancelled in time</label>
+                      <div style={{display:"flex",alignItems:"center",gap:8}}>
+                        <input value={refundPercentage} onChange={e=>setRefundPercentage(e.target.value)} style={{...fi,flex:1}} type="number" min="0" max="100"/>
+                        <span style={{fontSize:16,fontWeight:700,color:T.mid,flexShrink:0}}>%</span>
                       </div>
                     </div>
                   </div>
-                )}
-              </div>
-              <div style={{fontSize:13,fontWeight:700,color:T.ink,marginBottom:14}}>Cancellation policy</div>
-              <div className="resp-2col-grid">
-                <div style={fw}>
-                  <label style={lb}>Free cancellation window</label>
-                  <select value={cancellationHours} onChange={e=>setCancellationHours(e.target.value)} style={fi}>
-                    <option value={2}>2 hours before</option><option value={4}>4 hours before</option><option value={24}>24 hours before</option><option value={48}>48 hours before</option>
-                  </select>
-                </div>
-                <div style={fw}>
-                  <label style={lb}>Refund if cancelled in time</label>
-                  <div style={{display:"flex",alignItems:"center",gap:8}}>
-                    <input value={refundPercentage} onChange={e=>setRefundPercentage(e.target.value)} style={{...fi,flex:1}} type="number" min="0" max="100"/>
-                    <span style={{fontSize:16,fontWeight:700,color:T.mid,flexShrink:0}}>%</span>
-                  </div>
-                </div>
-              </div>
+                </>
+              )}
             </div>
           )}
 
