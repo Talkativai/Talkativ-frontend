@@ -154,7 +154,7 @@ function TranscriptPanel({ call }) {
 // ─── Main PageCalls Component ───────────────────────────────────────────────
 export default function PageCalls({ user, agentName, bizName }) {
   const [filter, setFilter] = useState("All");
-  const [timeFilter, setTimeFilter] = useState("Today");
+  const [timeFilter, setTimeFilter] = useState("All time");
   const [page, setPage] = useState(1);
   const [expandedId, setExpandedId] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -164,18 +164,23 @@ export default function PageCalls({ user, agentName, bizName }) {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     setLoading(true);
-    const dateMap = { "Today": "today", "Yesterday": "yesterday", "This week": "week", "This month": "month" };
+    setError(null);
+    const dateMap = { "Today": "today", "Yesterday": "yesterday", "This week": "week", "This month": "month", "All time": "" };
+    const dateParam = dateMap[timeFilter] ?? "";
     Promise.all([
-      api.calls.list(`filter=${filter}&date=${dateMap[timeFilter] || "today"}&page=${page}`),
+      api.calls.list(`filter=${filter}&date=${dateParam}&page=${page}`),
       api.calls.getStats(),
     ]).then(([data, s]) => {
       setCalls(data.calls || []);
       setTotal(data.total || 0);
       setStats(s);
-    }).catch(() => {}).finally(() => setLoading(false));
+    }).catch(err => {
+      setError(err?.message || "Failed to load calls. Please refresh.");
+    }).finally(() => setLoading(false));
   }, [filter, timeFilter, page]);
 
   const tabs = ["All", "Orders", "Reservations", "Enquiries", "Missed"];
@@ -212,12 +217,18 @@ export default function PageCalls({ user, agentName, bizName }) {
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <select value={timeFilter} onChange={e => { setTimeFilter(e.target.value); setPage(1); }} style={{ padding: "8px 16px", fontSize: 13, border: `1.5px solid ${T.line}`, borderRadius: 50, background: T.white, color: T.ink, fontFamily: "'Outfit',sans-serif", fontWeight: 600, cursor: "pointer", outline: "none", transition: "border-color .2s", boxShadow: "0 1px 3px rgba(0,0,0,.04)" }}>
-              <option>Today</option><option>Yesterday</option><option>This week</option><option>This month</option>
+              <option>All time</option><option>Today</option><option>Yesterday</option><option>This week</option><option>This month</option>
             </select>
           </div>
         </div>
 
-        {calls.length === 0 ? (
+        {error ? (
+          <div style={{ textAlign: "center", padding: "48px 20px" }}>
+            <div style={{ fontSize: 36, marginBottom: 12 }}>⚠️</div>
+            <div style={{ fontSize: 15, fontWeight: 600, color: "#DC2626", marginBottom: 6 }}>Could not load calls</div>
+            <div style={{ fontSize: 13, color: T.soft }}>{error}</div>
+          </div>
+        ) : calls.length === 0 ? (
           <div style={{ textAlign: "center", padding: "48px 20px" }}>
             <div style={{ fontSize: 36, marginBottom: 12 }}>📞</div>
             <div style={{ fontSize: 15, fontWeight: 600, color: T.ink, marginBottom: 6 }}>No calls yet</div>

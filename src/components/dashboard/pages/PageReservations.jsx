@@ -125,9 +125,11 @@ export default function PageReservations({ user, agentName, bizName }) {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     setLoading(true);
+    setError(null);
     Promise.all([
       api.reservations.list(`status=${statusFilter === 'All' ? '' : statusFilter.toUpperCase()}&page=${page}`),
       api.reservations.getStats(),
@@ -135,7 +137,9 @@ export default function PageReservations({ user, agentName, bizName }) {
       setReservations(data.reservations || []);
       setTotal(data.total || 0);
       setStats(s);
-    }).catch(() => {}).finally(() => setLoading(false));
+    }).catch(err => {
+      setError(err?.message || "Failed to load reservations. Please refresh.");
+    }).finally(() => setLoading(false));
   }, [statusFilter, page]);
 
   const perPage = 5;
@@ -171,7 +175,13 @@ export default function PageReservations({ user, agentName, bizName }) {
           </div>
         </div>
 
-        {reservations.length === 0 ? (
+        {error ? (
+          <div style={{ textAlign: "center", padding: "48px 20px" }}>
+            <div style={{ fontSize: 36, marginBottom: 12 }}>⚠️</div>
+            <div style={{ fontSize: 15, fontWeight: 600, color: "#DC2626", marginBottom: 6 }}>Could not load reservations</div>
+            <div style={{ fontSize: 13, color: T.soft }}>{error}</div>
+          </div>
+        ) : reservations.length === 0 ? (
           <div style={{ textAlign: "center", padding: "48px 20px" }}>
             <div style={{ fontSize: 36, marginBottom: 12 }}>📅</div>
             <div style={{ fontSize: 15, fontWeight: 600, color: T.ink, marginBottom: 6 }}>No reservations yet</div>
