@@ -148,9 +148,7 @@ export default function PageReservations({ user, agentName, bizName }) {
 
   return (
     <>
-      <TopBar title={<>Reservations</>} subtitle={`Bookings taken by ${agentName || 'your agent'} via phone`} user={user} agentName={agentName}>
-        <button className="btn-primary" style={{ fontSize: 13, padding: "9px 20px" }}>+ Add booking</button>
-      </TopBar>
+      <TopBar title={<>Reservations</>} subtitle={`Bookings taken by ${agentName || 'your agent'} via phone`} user={user} agentName={agentName} />
 
       <div className="kpi-row">
         {[
