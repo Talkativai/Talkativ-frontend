@@ -129,13 +129,14 @@ export default function PageIntegrations({ user, agentName, bizName }) {
 
   useEffect(() => {
     fetchConnected();
-    // Handle Stripe Connect callback query params
-    const hash = window.location.hash;
-    if (hash.includes('stripe_connected=1')) {
+    // Handle Stripe Connect callback query params — params are in window.location.search
+    // (before the #) so React Router can still match the hash route correctly.
+    const search = window.location.search;
+    if (search.includes('stripe_connected=1')) {
       window.history.replaceState(null, '', window.location.pathname + '#/dashboard/integrations');
       fetchConnected();
-    } else if (hash.includes('stripe_error=')) {
-      const match = hash.match(/stripe_error=([^&]+)/);
+    } else if (search.includes('stripe_error=')) {
+      const match = search.match(/stripe_error=([^&]+)/);
       if (match) setStripeError(decodeURIComponent(match[1]));
       window.history.replaceState(null, '', window.location.pathname + '#/dashboard/integrations');
     }
