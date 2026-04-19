@@ -127,16 +127,55 @@ export default function PageReservations({ user, agentName, bizName }) {
   const [total, setTotal] = useState(0);
   const [error, setError] = useState(null);
 
+  // Integration live pull
+  const [integrationSource, setIntegrationSource] = useState(null);
+  const [integrationLoading, setIntegrationLoading] = useState(false);
+
+  // Combined list: integration reservations when connected, DB otherwise
+  const [displayReservations, setDisplayReservations] = useState([]);
+
+  const loadIntegration = async () => {
+    setIntegrationLoading(true);
+    try {
+      const data = await api.reservations.getLiveIntegration();
+      if (data?.source) {
+        setIntegrationSource(data.source);
+        // Sort by dateTime ascending
+        const sorted = [...(data.reservations || [])].sort((a, b) =>
+          new Date(a.dateTime) - new Date(b.dateTime)
+        );
+        setDisplayReservations(sorted);
+      } else {
+        setIntegrationSource(null);
+      }
+    } catch {
+      setIntegrationSource(null);
+    }
+    setIntegrationLoading(false);
+  };
+
   useEffect(() => {
     setLoading(true);
     setError(null);
     Promise.all([
       api.reservations.list(`status=${statusFilter === 'All' ? '' : statusFilter.toUpperCase()}&page=${page}`),
       api.reservations.getStats(),
-    ]).then(([data, s]) => {
-      setReservations(data.reservations || []);
-      setTotal(data.total || 0);
+      api.reservations.getLiveIntegration().catch(() => null),
+    ]).then(([data, s, intData]) => {
       setStats(s);
+      if (intData?.source) {
+        setIntegrationSource(intData.source);
+        const sorted = [...(intData.reservations || [])].sort((a, b) =>
+          new Date(a.dateTime) - new Date(b.dateTime)
+        );
+        setDisplayReservations(sorted);
+        setTotal(sorted.length);
+      } else {
+        setIntegrationSource(null);
+        setReservations(data.reservations || []);
+        setDisplayReservations(data.reservations || []);
+        setTotal(data.total || 0);
+      }
     }).catch(err => {
       setError(err?.message || "Failed to load reservations. Please refresh.");
     }).finally(() => setLoading(false));
@@ -146,9 +185,27 @@ export default function PageReservations({ user, agentName, bizName }) {
   const totalPages = Math.ceil(total / perPage);
   const toggleExpand = (id) => setExpandedId(prev => prev === id ? null : id);
 
+  // Filter integration reservations client-side by status
+  const filteredDisplayReservations = statusFilter === "All"
+    ? displayReservations
+    : displayReservations.filter(r => r.status === statusFilter.toUpperCase());
+
   return (
     <>
-      <TopBar title={<>Reservations</>} subtitle={`Bookings taken by ${agentName || 'your agent'} via phone`} user={user} agentName={agentName} />
+      <TopBar title={<>Reservations</>} subtitle={`Bookings taken by ${agentName || 'your agent'} via phone`} user={user} agentName={agentName}>
+        {integrationSource && (
+          <button onClick={loadIntegration} disabled={integrationLoading} style={{padding:"7px 14px",borderRadius:50,border:`1.5px solid #BAE6FD`,background:"#F0F9FF",color:"#0369A1",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
+            {integrationLoading ? "↻ Syncing…" : `↻ Refresh ${integrationSource}`}
+          </button>
+        )}
+      </TopBar>
+
+      {integrationSource && (
+        <div style={{background:"#F0F9FF",border:"1.5px solid #BAE6FD",borderRadius:12,padding:"10px 16px",marginBottom:16,fontSize:13,color:"#0369A1",display:"flex",alignItems:"center",gap:8}}>
+          <span>🔗</span>
+          <span>Reservations are synced live from <strong>{integrationSource}</strong> — manage bookings directly in your {integrationSource} dashboard.</span>
+        </div>
+      )}
 
       <div className="kpi-row">
         {[
@@ -179,7 +236,7 @@ export default function PageReservations({ user, agentName, bizName }) {
             <div style={{ fontSize: 15, fontWeight: 600, color: "#DC2626", marginBottom: 6 }}>Could not load reservations</div>
             <div style={{ fontSize: 13, color: T.soft }}>{error}</div>
           </div>
-        ) : reservations.length === 0 ? (
+        ) : filteredDisplayReservations.length === 0 ? (
           <div style={{ textAlign: "center", padding: "48px 20px" }}>
             <div style={{ fontSize: 36, marginBottom: 12 }}>📅</div>
             <div style={{ fontSize: 15, fontWeight: 600, color: T.ink, marginBottom: 6 }}>No reservations yet</div>
@@ -187,56 +244,72 @@ export default function PageReservations({ user, agentName, bizName }) {
           </div>
         ) : isMobile ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {reservations.map(r => (
-              <div key={r.id}>
-                <div onClick={() => toggleExpand(r.id)} style={{ background: T.paper, border: `1.5px solid ${expandedId === r.id ? T.p300 : T.line}`, borderRadius: 14, padding: "14px 16px", cursor: "pointer" }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <div style={{ width: 40, height: 40, borderRadius: 12, background: ["CONFIRMED", "COMPLETED"].includes(r.status) ? T.p50 : T.paper, border: `1.5px solid ${["CONFIRMED", "COMPLETED"].includes(r.status) ? T.p100 : T.line}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>👥</div>
-                      <div>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: T.ink }}>{r.guestName}</div>
-                        <div style={{ fontSize: 12, color: T.soft, marginTop: 2 }}>{r.guests} guests</div>
+            {filteredDisplayReservations.map((r, idx) => {
+              const rid = r.id || r.externalId || `int-${idx}`;
+              const isIntegration = !!r.source;
+              return (
+                <div key={rid}>
+                  <div onClick={() => toggleExpand(rid)} style={{ background: isIntegration ? "#F0F9FF" : T.paper, border: `1.5px solid ${expandedId === rid ? T.p300 : isIntegration ? "#BAE6FD" : T.line}`, borderRadius: 14, padding: "14px 16px", cursor: "pointer" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <div style={{ width: 40, height: 40, borderRadius: 12, background: ["CONFIRMED", "COMPLETED"].includes(r.status) ? T.p50 : T.paper, border: `1.5px solid ${["CONFIRMED", "COMPLETED"].includes(r.status) ? T.p100 : T.line}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>👥</div>
+                        <div>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: T.ink }}>{r.guestName}</div>
+                          <div style={{ fontSize: 12, color: T.soft, marginTop: 2 }}>
+                            {r.guests} guests
+                            {r.talkativRef && <span style={{ marginLeft: 6, color: "#0369A1", fontWeight: 700 }}>· {r.talkativRef}</span>}
+                            {isIntegration && !r.talkativRef && <span style={{ marginLeft: 6, fontSize: 10, background: "#BAE6FD", color: "#0369A1", borderRadius: 4, padding: "1px 5px", fontWeight: 700 }}>{r.source}</span>}
+                          </div>
+                        </div>
                       </div>
+                      <span className={`badge ${statusBadgeClass(r.status)}`}>{statusLabel(r.status)}</span>
                     </div>
-                    <span className={`badge ${statusBadgeClass(r.status)}`}>{statusLabel(r.status)}</span>
+                    <div style={{ fontSize: 12, color: T.soft, marginBottom: 8 }}>{r.guestPhone || "No phone"} · {r.note || "No special requests"}</div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 8, borderTop: `1px solid ${T.line}` }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: T.ink }}>{fmtDateTime(r.dateTime)}</div>
+                      {r.call
+                        ? <button className="transcript-toggle-btn">{expandedId === rid ? "▲ Hide" : "📝 Call log"}</button>
+                        : isIntegration ? <span style={{ fontSize: 11, color: "#0369A1" }}>🔒 Read-only</span> : null}
+                    </div>
                   </div>
-                  <div style={{ fontSize: 12, color: T.soft, marginBottom: 8 }}>{r.guestPhone || "No phone"} · {r.note || "No special requests"}</div>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 8, borderTop: `1px solid ${T.line}` }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: T.ink }}>{fmtDateTime(r.dateTime)}</div>
-                    <button className="transcript-toggle-btn">
-                      {expandedId === r.id ? "▲ Hide" : "📝 Call log"}
-                    </button>
-                  </div>
+                  {expandedId === rid && <TranscriptPanel call={r.call} />}
                 </div>
-                {expandedId === r.id && <TranscriptPanel call={r.call} />}
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <>
-            {reservations.map(r => (
-              <div key={r.id}>
-                <div onClick={() => toggleExpand(r.id)} style={{ display: "flex", alignItems: "center", gap: 16, padding: "14px 0", borderBottom: `1px solid ${T.paper}`, cursor: "pointer", transition: "background .15s", borderRadius: 8, background: expandedId === r.id ? T.p50 : "transparent" }} onMouseEnter={e => { if (expandedId !== r.id) e.currentTarget.style.background = T.paper; }} onMouseLeave={e => { if (expandedId !== r.id) e.currentTarget.style.background = "transparent"; }}>
-                  <div style={{ width: 48, height: 48, borderRadius: 14, background: ["CONFIRMED", "COMPLETED"].includes(r.status) ? T.p50 : T.paper, border: `1.5px solid ${["CONFIRMED", "COMPLETED"].includes(r.status) ? T.p100 : T.line}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>👥</div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: T.ink }}>{r.guestName}</div>
-                    <div style={{ fontSize: 12, color: T.soft, marginTop: 2 }}>{r.guestPhone || "No phone"} · {r.note || "No special requests"}</div>
+            {filteredDisplayReservations.map((r, idx) => {
+              const rid = r.id || r.externalId || `int-${idx}`;
+              const isIntegration = !!r.source;
+              return (
+                <div key={rid}>
+                  <div onClick={() => toggleExpand(rid)} style={{ display: "flex", alignItems: "center", gap: 16, padding: "14px 0", borderBottom: `1px solid ${T.paper}`, cursor: "pointer", transition: "background .15s", borderRadius: 8, background: expandedId === rid ? T.p50 : "transparent" }} onMouseEnter={e => { if (expandedId !== rid) e.currentTarget.style.background = isIntegration ? "#F0F9FF" : T.paper; }} onMouseLeave={e => { if (expandedId !== rid) e.currentTarget.style.background = "transparent"; }}>
+                    <div style={{ width: 48, height: 48, borderRadius: 14, background: ["CONFIRMED", "COMPLETED"].includes(r.status) ? T.p50 : T.paper, border: `1.5px solid ${["CONFIRMED", "COMPLETED"].includes(r.status) ? T.p100 : T.line}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>👥</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <span style={{ fontSize: 14, fontWeight: 600, color: T.ink }}>{r.guestName}</span>
+                        {r.talkativRef && <span style={{ fontSize: 11, background: T.p50, color: T.p700, borderRadius: 4, padding: "1px 6px", fontWeight: 700 }}>{r.talkativRef}</span>}
+                        {isIntegration && !r.talkativRef && <span style={{ fontSize: 10, background: "#BAE6FD", color: "#0369A1", borderRadius: 4, padding: "1px 6px", fontWeight: 700 }}>{r.source}</span>}
+                      </div>
+                      <div style={{ fontSize: 12, color: T.soft, marginTop: 2 }}>{r.guestPhone || "No phone"} · {r.note || "No special requests"}</div>
+                    </div>
+                    <div style={{ textAlign: "center", minWidth: 80 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: T.ink }}>{r.guests} guests</div>
+                      <div style={{ fontSize: 11, color: T.soft, marginTop: 2 }}>party size</div>
+                    </div>
+                    <div style={{ textAlign: "center", minWidth: 160 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: T.ink }}>{fmtDateTime(r.dateTime)}</div>
+                    </div>
+                    <div><span className={`badge ${statusBadgeClass(r.status)}`}>{statusLabel(r.status)}</span></div>
+                    {r.call
+                      ? <button className="transcript-toggle-btn">{expandedId === rid ? "▲ Hide" : "📝 View"}</button>
+                      : isIntegration ? <span style={{ fontSize: 11, color: "#0369A1", whiteSpace: "nowrap" }}>🔒 Read-only</span> : <span style={{ width: 60 }} />}
                   </div>
-                  <div style={{ textAlign: "center", minWidth: 80 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: T.ink }}>{r.guests} guests</div>
-                    <div style={{ fontSize: 11, color: T.soft, marginTop: 2 }}>party size</div>
-                  </div>
-                  <div style={{ textAlign: "center", minWidth: 160 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: T.ink }}>{fmtDateTime(r.dateTime)}</div>
-                  </div>
-                  <div><span className={`badge ${statusBadgeClass(r.status)}`}>{statusLabel(r.status)}</span></div>
-                  <button className="transcript-toggle-btn">
-                    {expandedId === r.id ? "▲ Hide" : "📝 View"}
-                  </button>
+                  {expandedId === rid && <TranscriptPanel call={r.call} />}
                 </div>
-                {expandedId === r.id && <TranscriptPanel call={r.call} />}
-              </div>
-            ))}
+              );
+            })}
           </>
         )}
         {totalPages > 1 && (

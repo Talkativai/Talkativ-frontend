@@ -238,6 +238,7 @@ export const api = {
     update: (id, data) => put(`/api/reservations/${id}`, data),
     delete: (id) => del(`/api/reservations/${id}`),
     getStats: () => get('/api/reservations/stats'),
+    getLiveIntegration: () => get('/api/reservations/integration/live'),
   },
 
   // ─── Agent ──────────────────────────────────
@@ -286,6 +287,7 @@ export const api = {
       return post('/api/menu/import/image', fd);
     },
     importFromPos: (posSystem, credentials) => post('/api/menu/import/pos', { posSystem, credentials }),
+    getLiveIntegration: () => get('/api/menu/integration/live'),
   },
 
   // ─── FAQ ────────────────────────────────────────
