@@ -48,6 +48,11 @@ export default function DashboardApp() {
     api.business.get().then(d => { if (d?.name) setBizName(d.name); setBizData(d); }).catch(() => {});
     api.menu.getCategories().then(cats => { setMenuSynced(Array.isArray(cats) && cats.length > 0); }).catch(() => {});
     api.integrations.list().then(data => setIntegrations(Array.isArray(data) ? data : [])).catch(() => {});
+    // Auto-open Integrations page after Stripe Connect OAuth redirect
+    if (window.location.search.includes('stripe_connected=1') || window.location.search.includes('stripe_error=')) {
+      setActive('Integrations');
+      window.history.replaceState(null, '', window.location.pathname + '#/dashboard');
+    }
   }, []);
 
   const [navSection, setNavSection] = useState(null);
