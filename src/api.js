@@ -306,6 +306,12 @@ export const api = {
     // Stripe Connect OAuth
     stripeConnectInit: () => get('/api/integrations/stripe/connect'),
     stripeConnectDisconnect: () => del('/api/integrations/stripe/disconnect'),
+    // Square OAuth
+    squareConnectInit: () => get('/api/integrations/square/connect'),
+    // Clover OAuth
+    cloverConnectInit: () => get('/api/integrations/clover/connect'),
+    // SumUp OAuth
+    sumupConnectInit: () => get('/api/integrations/sumup/connect'),
   },
 
   // ─── Billing ────────────────────────────────

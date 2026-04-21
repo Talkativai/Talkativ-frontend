@@ -3,39 +3,44 @@ import T from '../../../utils/tokens';
 import { api } from '../../../api.js';
 import TopBar from '../TopBar';
 
-// ─── Credential-based integrations ───────────────────────────────────────────
+// ─── OAuth integrations (one-tap connect) ────────────────────────────────────
 
-const POS_INTEGRATIONS = [
+const OAUTH_POS_INTEGRATIONS = [
   {
     name: "Square",
     icon: "🟦",
     category: "ordering",
-    desc: "Connect Square POS — orders sync and customers pay directly into your Square account",
-    fields: [
-      { key: "accessToken", label: "Access Token", placeholder: "EAAAl..." },
-      { key: "locationId",  label: "Location ID",  placeholder: "LXXXXXXXXXXXXXXXX" },
-    ],
+    desc: "Connect Square POS — orders sync and your menu is pulled in automatically",
+    oauthKey: "squareConnectInit",
+    connectedParam: "square_connected",
+    errorParam: "square_error",
+    color: "#006AFF",
   },
   {
     name: "Clover",
     icon: "🍀",
     category: "ordering",
     desc: "Full order and inventory sync with Clover POS",
-    fields: [
-      { key: "accessToken", label: "Access Token", placeholder: "..." },
-      { key: "merchantId",  label: "Merchant ID",  placeholder: "XXXXXXXXXXXXXXXX" },
-    ],
+    oauthKey: "cloverConnectInit",
+    connectedParam: "clover_connected",
+    errorParam: "clover_error",
+    color: "#1DA462",
   },
   {
     name: "SumUp",
     icon: "🟠",
     category: "ordering",
     desc: "Accept payments via SumUp — popular with UK takeaways and independents",
-    fields: [
-      { key: "apiKey",       label: "API Key",        placeholder: "sup_sk_..." },
-      { key: "merchantCode", label: "Merchant Code",  placeholder: "M..." },
-    ],
+    oauthKey: "sumupConnectInit",
+    connectedParam: "sumup_connected",
+    errorParam: "sumup_error",
+    color: "#00B4D8",
   },
+];
+
+// ─── Credential-based integrations ───────────────────────────────────────────
+
+const POS_INTEGRATIONS = [
   {
     name: "Zettle",
     icon: "💳",
@@ -101,7 +106,7 @@ const RESERVATION_INTEGRATIONS = [
 ];
 
 const ALL_CREDENTIAL_INTEGRATIONS = [...POS_INTEGRATIONS, ...RESERVATION_INTEGRATIONS];
-const TOTAL_INTEGRATIONS = ALL_CREDENTIAL_INTEGRATIONS.length + 1; // +1 for Stripe Connect
+const TOTAL_INTEGRATIONS = OAUTH_POS_INTEGRATIONS.length + ALL_CREDENTIAL_INTEGRATIONS.length + 1; // +1 for Stripe Connect
 
 export default function PageIntegrations({ user, agentName, bizName }) {
   const displayBiz = bizName || "your business";
@@ -117,9 +122,11 @@ export default function PageIntegrations({ user, agentName, bizName }) {
   const [configError, setConfigError]             = useState('');
   const [connecting, setConnecting]               = useState(false);
 
-  // Stripe Connect OAuth
+  // OAuth connecting state
   const [stripeConnecting, setStripeConnecting]   = useState(false);
   const [stripeError, setStripeError]             = useState('');
+  const [oauthConnecting, setOauthConnecting]     = useState(null); // name of integration being OAuth'd
+  const [oauthErrors, setOauthErrors]             = useState({});   // { Square: 'error msg', ... }
 
   const fetchConnected = async () => {
     try { setConnected(await api.integrations.list()); }
@@ -129,16 +136,27 @@ export default function PageIntegrations({ user, agentName, bizName }) {
 
   useEffect(() => {
     fetchConnected();
-    // Handle Stripe Connect callback query params — params are in window.location.search
-    // (before the #) so React Router can still match the hash route correctly.
+    // Handle OAuth callback query params (always before # in URL)
     const search = window.location.search;
-    if (search.includes('stripe_connected=1')) {
-      window.history.replaceState(null, '', window.location.pathname + '#/dashboard/integrations');
-      fetchConnected();
-    } else if (search.includes('stripe_error=')) {
-      const match = search.match(/stripe_error=([^&]+)/);
-      if (match) setStripeError(decodeURIComponent(match[1]));
-      window.history.replaceState(null, '', window.location.pathname + '#/dashboard/integrations');
+    const oauthProviders = [
+      { connected: 'stripe_connected=1', error: 'stripe_error=', name: 'Stripe', setter: setStripeError },
+      { connected: 'square_connected=1', error: 'square_error=', name: 'Square' },
+      { connected: 'clover_connected=1', error: 'clover_error=', name: 'Clover' },
+      { connected: 'sumup_connected=1',  error: 'sumup_error=',  name: 'SumUp'  },
+    ];
+    for (const p of oauthProviders) {
+      if (search.includes(p.connected)) {
+        window.history.replaceState(null, '', window.location.pathname + '#/dashboard');
+        fetchConnected();
+        break;
+      } else if (search.includes(p.error)) {
+        const match = search.match(new RegExp(p.error.replace('=', '=') + '([^&]+)'));
+        const msg = match ? decodeURIComponent(match[1]) : 'Connection failed';
+        if (p.setter) p.setter(msg);
+        else setOauthErrors(prev => ({ ...prev, [p.name]: msg }));
+        window.history.replaceState(null, '', window.location.pathname + '#/dashboard');
+        break;
+      }
     }
   }, []);
 
@@ -192,6 +210,18 @@ export default function PageIntegrations({ user, agentName, bizName }) {
     }
   };
 
+  const handleOAuthConnect = async (intg) => {
+    setOauthConnecting(intg.name);
+    setOauthErrors(prev => ({ ...prev, [intg.name]: '' }));
+    try {
+      const { url } = await api.integrations[intg.oauthKey]();
+      window.location.href = url;
+    } catch (e) {
+      setOauthErrors(prev => ({ ...prev, [intg.name]: e?.message || 'Could not start connection. Try again.' }));
+      setOauthConnecting(null);
+    }
+  };
+
   const handleStripeDisconnect = async () => {
     setDisconnecting('stripe');
     try { await api.integrations.stripeConnectDisconnect(); await fetchConnected(); }
@@ -204,10 +234,11 @@ export default function PageIntegrations({ user, agentName, bizName }) {
   const stripeConnected = connectedNames.has('Stripe');
   const notConnected = ALL_CREDENTIAL_INTEGRATIONS.filter(i => !connectedNames.has(i.name));
 
-  const intgIcon = (name) => ALL_CREDENTIAL_INTEGRATIONS.find(i => i.name === name)?.icon
+  const ALL_INTEGRATIONS_FOR_META = [...OAUTH_POS_INTEGRATIONS, ...ALL_CREDENTIAL_INTEGRATIONS];
+  const intgIcon = (name) => ALL_INTEGRATIONS_FOR_META.find(i => i.name === name)?.icon
     || (name === 'Stripe' ? '💳' : '🔌');
-  const intgDesc = (name) => ALL_CREDENTIAL_INTEGRATIONS.find(i => i.name === name)?.desc
-    || (name === 'Stripe' ? 'Accept payments directly into your Stripe account — 0.5% platform fee' : '');
+  const intgDesc = (name) => ALL_INTEGRATIONS_FOR_META.find(i => i.name === name)?.desc
+    || (name === 'Stripe' ? 'Accept payments directly into your Stripe account' : '');
 
   const modalOverlay = { position:'fixed', inset:0, zIndex:9999, display:'flex', alignItems:'center', justifyContent:'center', padding:24 };
 
@@ -242,7 +273,7 @@ export default function PageIntegrations({ user, agentName, bizName }) {
             <div style={{fontSize:13,color:T.soft,lineHeight:1.5}}>
               {stripeConnected
                 ? 'Your Stripe account is connected. Customers pay directly into your account.'
-                : 'Connect your existing Stripe account so customers can pay you directly. We take a 0.5% platform fee per transaction.'}
+                : 'Connect your existing Stripe account so customers can pay you directly. All money goes straight to your account.'}
             </div>
             {stripeError && <div style={{fontSize:12,color:T.red,marginTop:6}}>⚠️ {stripeError}</div>}
           </div>
@@ -268,6 +299,47 @@ export default function PageIntegrations({ user, agentName, bizName }) {
               </button>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* ── OAuth one-tap POS integrations ── */}
+      <div style={{marginBottom:28}}>
+        <div style={{fontSize:11,fontWeight:700,color:T.mid,textTransform:'uppercase',letterSpacing:'.5px',marginBottom:12}}>POS & Ordering (One-tap connect)</div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))',gap:16}}>
+          {OAUTH_POS_INTEGRATIONS.map(intg => {
+            const isConnected = connectedNames.has(intg.name);
+            const isBusy = oauthConnecting === intg.name || disconnecting === intg.name;
+            const connRecord = connected.find(c => c.name === intg.name);
+            const err = oauthErrors[intg.name];
+            return (
+              <div key={intg.name} style={{background:T.white,border:`1.5px solid ${isConnected ? T.greenBd : T.line}`,borderRadius:18,padding:22,display:'flex',flexDirection:'column',gap:0}}>
+                <div style={{display:'flex',alignItems:'center',gap:14,marginBottom:14}}>
+                  <div style={{width:48,height:48,borderRadius:13,background:isConnected ? T.greenBg : '#f8f7ff',border:`1.5px solid ${isConnected ? T.greenBd : '#e8e5ff'}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,flexShrink:0}}>{intg.icon}</div>
+                  <div>
+                    <div style={{fontSize:15,fontWeight:700,color:T.ink}}>{intg.name}</div>
+                    <div style={{fontSize:11.5,color:T.soft,marginTop:1,lineHeight:1.4}}>{intg.desc}</div>
+                  </div>
+                </div>
+                {err && <div style={{fontSize:12,color:T.red,marginBottom:10}}>⚠️ {err}</div>}
+                {isConnected ? (
+                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginTop:'auto'}}>
+                    <span style={{display:'inline-flex',alignItems:'center',gap:5,padding:'5px 12px',borderRadius:50,fontSize:12,fontWeight:700,background:T.greenBg,color:T.green,border:`1px solid ${T.greenBd}`}}>
+                      <span style={{width:6,height:6,borderRadius:'50%',background:T.green,display:'inline-block'}}/>Connected
+                    </span>
+                    <button disabled={isBusy} onClick={()=>handleDisconnect(connRecord.id)}
+                      style={{padding:'6px 14px',borderRadius:50,border:`1.5px solid ${T.red}33`,background:'#FEF2F2',color:T.red,fontSize:12,fontWeight:700,cursor:isBusy?'not-allowed':'pointer',fontFamily:"'Outfit',sans-serif",opacity:isBusy?0.6:1}}>
+                      {isBusy?'Disconnecting…':'Disconnect'}
+                    </button>
+                  </div>
+                ) : (
+                  <button onClick={()=>handleOAuthConnect(intg)} disabled={isBusy}
+                    style={{padding:'9px 18px',borderRadius:50,border:'none',background:intg.color,color:'white',fontSize:13,fontWeight:700,cursor:isBusy?'not-allowed':'pointer',fontFamily:"'Outfit',sans-serif",opacity:isBusy?0.7:1,marginTop:'auto',whiteSpace:'nowrap'}}>
+                    {isBusy ? 'Redirecting…' : `Connect with ${intg.name} →`}
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -339,8 +411,30 @@ export default function PageIntegrations({ user, agentName, bizName }) {
             <div style={{padding:'22px 28px 28px'}}>
               {!pickedIntegration ? (
                 <div style={{display:'flex',flexDirection:'column',gap:8}}>
-                  {/* POS section */}
-                  <div style={{fontSize:10,fontWeight:700,color:T.mid,textTransform:'uppercase',letterSpacing:'.5px',marginBottom:4,marginTop:4}}>POS & Payments</div>
+                  {/* OAuth POS section */}
+                  <div style={{fontSize:10,fontWeight:700,color:T.mid,textTransform:'uppercase',letterSpacing:'.5px',marginBottom:4,marginTop:4}}>POS & Ordering (One-tap)</div>
+                  {OAUTH_POS_INTEGRATIONS.map(intg => {
+                    const already = connectedNames.has(intg.name);
+                    const isBusy = oauthConnecting === intg.name;
+                    return (
+                      <div key={intg.name}
+                        style={{display:'flex',alignItems:'center',gap:14,padding:'14px 16px',borderRadius:12,border:`1.5px solid ${already ? T.greenBd : T.line}`,background:already ? T.greenBg : T.paper,transition:'all .18s'}}>
+                        <div style={{width:40,height:40,borderRadius:10,background:already?T.greenBg:T.white,border:`1.5px solid ${already?T.greenBd:T.line}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>{intg.icon}</div>
+                        <div style={{flex:1}}>
+                          <div style={{fontSize:13,fontWeight:700,color:T.ink}}>{intg.name}</div>
+                          <div style={{fontSize:11.5,color:T.soft,marginTop:1}}>{intg.desc}</div>
+                        </div>
+                        {already
+                          ? <span style={{fontSize:11,fontWeight:700,color:T.green,background:T.greenBg,border:`1px solid ${T.greenBd}`,borderRadius:50,padding:'3px 10px',flexShrink:0}}>Connected</span>
+                          : <button onClick={()=>handleOAuthConnect(intg)} disabled={isBusy}
+                              style={{fontSize:11,fontWeight:700,color:'white',background:intg.color,border:'none',borderRadius:50,padding:'5px 12px',flexShrink:0,cursor:isBusy?'not-allowed':'pointer',fontFamily:"'Outfit',sans-serif",opacity:isBusy?0.7:1}}>
+                              {isBusy?'…':`Connect →`}
+                            </button>}
+                      </div>
+                    );
+                  })}
+                  {/* Credential-based POS section */}
+                  <div style={{fontSize:10,fontWeight:700,color:T.mid,textTransform:'uppercase',letterSpacing:'.5px',marginBottom:4,marginTop:8}}>Other POS</div>
                   {POS_INTEGRATIONS.map(intg => {
                     const already = connectedNames.has(intg.name);
                     return (
