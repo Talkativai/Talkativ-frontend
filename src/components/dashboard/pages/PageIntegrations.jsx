@@ -114,6 +114,7 @@ export default function PageIntegrations({ user, agentName, bizName }) {
   const [connected, setConnected] = useState([]);
   const [loading, setLoading]     = useState(true);
   const [disconnecting, setDisconnecting] = useState(null);
+  const [settingPrimary, setSettingPrimary]   = useState(null);
 
   // Connect modal (credential-based)
   const [showConnectModal, setShowConnectModal]   = useState(false);
@@ -198,6 +199,13 @@ export default function PageIntegrations({ user, agentName, bizName }) {
     setDisconnecting(null);
   };
 
+  const handleSetPrimary = async (id) => {
+    setSettingPrimary(id);
+    try { await api.integrations.setPrimary(id); await fetchConnected(); }
+    catch {}
+    setSettingPrimary(null);
+  };
+
   const handleStripeConnect = async () => {
     setStripeConnecting(true);
     setStripeError('');
@@ -234,6 +242,20 @@ export default function PageIntegrations({ user, agentName, bizName }) {
   const stripeConnected = connectedNames.has('Stripe');
   const notConnected = ALL_CREDENTIAL_INTEGRATIONS.filter(i => !connectedNames.has(i.name));
 
+  // Smart status banner logic
+  const PAYMENT_PROVIDERS = ['Square', 'Clover', 'SumUp', 'Zettle', 'Stripe'];
+  const connectedPayment = connected.filter(i => PAYMENT_PROVIDERS.includes(i.name));
+  const primaryPayment = connectedPayment.find(i => i.isPrimary) || connectedPayment[0] || null;
+  const hasKDS = connectedNames.has('Square') || connectedNames.has('Clover');
+  const hasMenuIntegration = connectedNames.has('Square') || connectedNames.has('Clover') || connectedNames.has('Zettle');
+
+  const smartBanner = (() => {
+    if (connectedPayment.length === 0) return { type: 'warn', msg: 'No payment integration connected — your agent cannot take orders until you connect one.' };
+    if (hasKDS && hasMenuIntegration) return { type: 'ok', msg: `Menu + payments powered by ${primaryPayment?.name}. Customers pay directly to you. Orders push to your KDS automatically.` };
+    if (hasMenuIntegration) return { type: 'ok', msg: `Menu from ${primaryPayment?.name}. Payments via ${primaryPayment?.name}. Customers pay directly to you.` };
+    return { type: 'info', msg: `Payments via ${primaryPayment?.name}. Your Talkativ menu is used for ordering. Customers pay directly to you.` };
+  })();
+
   const ALL_INTEGRATIONS_FOR_META = [...OAUTH_POS_INTEGRATIONS, ...ALL_CREDENTIAL_INTEGRATIONS];
   const intgIcon = (name) => ALL_INTEGRATIONS_FOR_META.find(i => i.name === name)?.icon
     || (name === 'Stripe' ? '💳' : '🔌');
@@ -247,6 +269,20 @@ export default function PageIntegrations({ user, agentName, bizName }) {
       <TopBar title={<>Integrations</>} subtitle={`Connect ${displayBiz} to the services you use`} user={user} agentName={agentName}>
         <button className="btn-primary" style={{fontSize:13,padding:'9px 18px'}} onClick={openModal}>+ Connect integration</button>
       </TopBar>
+
+      {/* Smart status banner */}
+      {!loading && (
+        <div style={{
+          marginBottom:20, padding:'12px 18px', borderRadius:12,
+          background: smartBanner.type === 'warn' ? '#FEF3C7' : smartBanner.type === 'ok' ? T.greenBg : '#EFF6FF',
+          border: `1.5px solid ${smartBanner.type === 'warn' ? '#FCD34D' : smartBanner.type === 'ok' ? T.greenBd : '#BFDBFE'}`,
+          display:'flex', alignItems:'center', gap:10, fontSize:13,
+          color: smartBanner.type === 'warn' ? '#92400E' : smartBanner.type === 'ok' ? T.green : '#1E40AF',
+        }}>
+          <span style={{fontSize:16}}>{smartBanner.type === 'warn' ? '⚠️' : smartBanner.type === 'ok' ? '✅' : 'ℹ️'}</span>
+          <span>{smartBanner.msg}</span>
+        </div>
+      )}
 
       {/* KPI row */}
       <div className="kpi-row" style={{gridTemplateColumns:'repeat(3, 1fr)',marginBottom:28}}>
@@ -322,14 +358,27 @@ export default function PageIntegrations({ user, agentName, bizName }) {
                 </div>
                 {err && <div style={{fontSize:12,color:T.red,marginBottom:10}}>⚠️ {err}</div>}
                 {isConnected ? (
-                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginTop:'auto'}}>
-                    <span style={{display:'inline-flex',alignItems:'center',gap:5,padding:'5px 12px',borderRadius:50,fontSize:12,fontWeight:700,background:T.greenBg,color:T.green,border:`1px solid ${T.greenBd}`}}>
-                      <span style={{width:6,height:6,borderRadius:'50%',background:T.green,display:'inline-block'}}/>Connected
-                    </span>
-                    <button disabled={isBusy} onClick={()=>handleDisconnect(connRecord.id)}
-                      style={{padding:'6px 14px',borderRadius:50,border:`1.5px solid ${T.red}33`,background:'#FEF2F2',color:T.red,fontSize:12,fontWeight:700,cursor:isBusy?'not-allowed':'pointer',fontFamily:"'Outfit',sans-serif",opacity:isBusy?0.6:1}}>
-                      {isBusy?'Disconnecting…':'Disconnect'}
-                    </button>
+                  <div style={{marginTop:'auto'}}>
+                    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom: connRecord?.isPrimary !== undefined ? 8 : 0}}>
+                      <span style={{display:'inline-flex',alignItems:'center',gap:5,padding:'5px 12px',borderRadius:50,fontSize:12,fontWeight:700,background:T.greenBg,color:T.green,border:`1px solid ${T.greenBd}`}}>
+                        <span style={{width:6,height:6,borderRadius:'50%',background:T.green,display:'inline-block'}}/>Connected
+                      </span>
+                      <button disabled={isBusy} onClick={()=>handleDisconnect(connRecord.id)}
+                        style={{padding:'6px 14px',borderRadius:50,border:`1.5px solid ${T.red}33`,background:'#FEF2F2',color:T.red,fontSize:12,fontWeight:700,cursor:isBusy?'not-allowed':'pointer',fontFamily:"'Outfit',sans-serif",opacity:isBusy?0.6:1}}>
+                        {isBusy?'Disconnecting…':'Disconnect'}
+                      </button>
+                    </div>
+                    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                      {connRecord?.isPrimary
+                        ? <span style={{fontSize:11,fontWeight:700,color:T.p600,background:T.p50,border:`1px solid ${T.p100}`,borderRadius:50,padding:'3px 10px'}}>⭐ Primary payment</span>
+                        : <span style={{fontSize:11,color:T.soft}}>Not primary</span>}
+                      {!connRecord?.isPrimary && (
+                        <button disabled={settingPrimary===connRecord?.id} onClick={()=>handleSetPrimary(connRecord.id)}
+                          style={{padding:'5px 12px',borderRadius:50,border:`1.5px solid ${T.p300}`,background:T.p50,color:T.p700,fontSize:11,fontWeight:700,cursor:'pointer',fontFamily:"'Outfit',sans-serif",opacity:settingPrimary===connRecord?.id?0.6:1}}>
+                          {settingPrimary===connRecord?.id?'Setting…':'Set as primary'}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ) : (
                   <button onClick={()=>handleOAuthConnect(intg)} disabled={isBusy}
@@ -376,13 +425,30 @@ export default function PageIntegrations({ user, agentName, bizName }) {
                     Connected: {new Date(int.lastSynced).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}
                   </div>
                 )}
-                <div style={{marginTop:20,paddingTop:18,borderTop:`1px solid ${T.paper}`,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-                  <span style={{display:'inline-flex',alignItems:'center',gap:5,padding:'5px 12px',borderRadius:50,fontSize:12,fontWeight:700,background:T.greenBg,color:T.green,border:`1px solid ${T.greenBd}`}}>
-                    <span style={{width:6,height:6,borderRadius:'50%',background:T.green,display:'inline-block'}}/>Connected
-                  </span>
-                  <button disabled={isBusy} onClick={()=>handleDisconnect(int.id)} style={{padding:'7px 16px',borderRadius:50,border:`1.5px solid ${T.red}33`,background:'#FEF2F2',color:T.red,fontSize:12,fontWeight:700,cursor:isBusy?'not-allowed':'pointer',fontFamily:"'Outfit',sans-serif",opacity:isBusy?0.6:1,transition:'all .18s'}}>
-                    {isBusy?'Disconnecting…':'Disconnect'}
-                  </button>
+                <div style={{marginTop:20,paddingTop:18,borderTop:`1px solid ${T.paper}`}}>
+                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom: PAYMENT_PROVIDERS.includes(int.name) ? 10 : 0}}>
+                    <span style={{display:'inline-flex',alignItems:'center',gap:5,padding:'5px 12px',borderRadius:50,fontSize:12,fontWeight:700,background:T.greenBg,color:T.green,border:`1px solid ${T.greenBd}`}}>
+                      <span style={{width:6,height:6,borderRadius:'50%',background:T.green,display:'inline-block'}}/>Connected
+                    </span>
+                    <button disabled={isBusy} onClick={()=>handleDisconnect(int.id)} style={{padding:'7px 16px',borderRadius:50,border:`1.5px solid ${T.red}33`,background:'#FEF2F2',color:T.red,fontSize:12,fontWeight:700,cursor:isBusy?'not-allowed':'pointer',fontFamily:"'Outfit',sans-serif",opacity:isBusy?0.6:1,transition:'all .18s'}}>
+                      {isBusy?'Disconnecting…':'Disconnect'}
+                    </button>
+                  </div>
+                  {PAYMENT_PROVIDERS.includes(int.name) && (
+                    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                      {int.isPrimary
+                        ? <span style={{fontSize:11,fontWeight:700,color:T.p600,background:T.p50,border:`1px solid ${T.p100}`,borderRadius:50,padding:'3px 10px'}}>⭐ Primary payment</span>
+                        : <span style={{fontSize:11,color:T.soft}}>Not primary</span>}
+                      {!int.isPrimary && (
+                        <button
+                          disabled={settingPrimary === int.id}
+                          onClick={()=>handleSetPrimary(int.id)}
+                          style={{padding:'5px 12px',borderRadius:50,border:`1.5px solid ${T.p300}`,background:T.p50,color:T.p700,fontSize:11,fontWeight:700,cursor:'pointer',fontFamily:"'Outfit',sans-serif",opacity:settingPrimary===int.id?0.6:1}}>
+                          {settingPrimary===int.id?'Setting…':'Set as primary'}
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             );
