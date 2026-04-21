@@ -90,13 +90,21 @@ export default function PageMenu({ user, agentName, bizName }) {
   const activeCat = categories.find(c => c.id === activeCatId)
     || (activeCatId?.startsWith('__int__') ? { name: activeCatId.replace('__int__', '') } : null);
 
-  // Merge DB categories with integration-only categories for the sidebar
+  // Merge DB categories with integration categories for the sidebar
+  // - Matching categories (same name): merge item counts
+  // - Integration-only categories: added as new entries
   const allCategories = useMemo(() => {
-    const result = [...categories];
+    const result = categories.map(c => ({ ...c }));
     if (integrationMenu?.categories?.length) {
       for (const intCat of integrationMenu.categories) {
-        const exists = result.find(c => c.name.toLowerCase() === intCat.name.toLowerCase());
-        if (!exists) {
+        const existing = result.find(c => c.name.toLowerCase() === intCat.name.toLowerCase());
+        if (existing) {
+          // Add integration item count (de-duplicated by name)
+          const dbNames = new Set((existing._itemNames || []).map(n => n.toLowerCase()));
+          const newCount = intCat.items.filter(i => !dbNames.has(i.name.toLowerCase())).length;
+          existing._intItemCount = newCount;
+          existing._count = { items: (existing._count?.items || 0) + newCount };
+        } else {
           result.push({
             id: `__int__${intCat.name}`,
             name: intCat.name,
