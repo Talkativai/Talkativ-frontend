@@ -81,10 +81,12 @@ export default function PageMenu({ user, agentName, bizName }) {
 
   useEffect(() => {
     if (!activeCatId) { setItems([]); return; }
+    // Integration-only categories have no DB record — skip the API call entirely
+    if (activeCatId.startsWith('__int__')) { setItems([]); return; }
     setLoadingItems(true);
     api.menu.getCategoryItems(activeCatId)
       .then(d => { setItems(d || []); setLoadingItems(false); })
-      .catch(() => setLoadingItems(false));
+      .catch(() => { setItems([]); setLoadingItems(false); });
   }, [activeCatId]);
 
   const activeCat = categories.find(c => c.id === activeCatId)
