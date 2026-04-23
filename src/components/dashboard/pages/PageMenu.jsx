@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import T from '../../../utils/tokens';
 import { api } from '../../../api.js';
-import { POS_SYSTEMS } from '../../../utils/constants';
 import TopBar from '../TopBar';
 
 export default function PageMenu({ user, agentName, bizName }) {
@@ -17,14 +16,6 @@ export default function PageMenu({ user, agentName, bizName }) {
   const [integrationMenu, setIntegrationMenu] = useState(null);
   const [integrationLoading, setIntegrationLoading] = useState(false);
 
-  // Import modal
-  const [showImport, setShowImport] = useState(false);
-  const [importTab, setImportTab] = useState('pos');
-  const [importLoading, setImportLoading] = useState(false);
-  const [importResult, setImportResult] = useState(null);
-  const [importError, setImportError] = useState('');
-  const [importPosSelected, setImportPosSelected] = useState(null);
-  const [importPosFields, setImportPosFields] = useState({});
 
   // Add item modal
   const [showAddItem, setShowAddItem] = useState(false);
@@ -155,22 +146,6 @@ export default function PageMenu({ user, agentName, bizName }) {
 
   const fmtPrice = (p) => p != null ? `£${Number(p).toFixed(2)}` : '';
 
-  const runPosImport = async () => {
-    if (!importPosSelected) { setImportError('Please select a POS system.'); return; }
-    const pos = POS_SYSTEMS.find(p => p.name === importPosSelected);
-    const missing = pos?.fields.find(f => !importPosFields[f.key]?.trim());
-    if (missing) { setImportError(`${missing.label} is required.`); return; }
-    setImportLoading(true); setImportError(''); setImportResult(null);
-    try {
-      const r = await api.menu.importFromPos(importPosSelected, importPosFields);
-      setImportResult({ pos: r });
-      syncAgent();
-    } catch (e) { setImportError(e.message || 'POS import failed'); }
-    setImportLoading(false);
-  };
-
-  const closeImport = () => { setShowImport(false); setImportResult(null); setImportError(''); setImportPosSelected(null); setImportPosFields({}); };
-
   const syncAgent = () => { api.agent.rebuildPrompt().catch(() => {}); };
 
   const handleAddItem = async () => {
@@ -237,7 +212,6 @@ export default function PageMenu({ user, agentName, bizName }) {
             {integrationLoading ? '↻ Syncing…' : `↻ Refresh ${integrationMenu.source}`}
           </button>
         )}
-        <button className="btn-secondary" style={{fontSize:13,padding:"8px 16px"}} onClick={()=>{ setShowImport(true); }}>🔌 Connect POS</button>
         <button className="btn-primary" style={{fontSize:13,padding:"9px 18px"}} onClick={()=>{ setNewItemCatId(activeCatId); setShowAddItem(true); }}>+ Add item</button>
       </TopBar>
 
@@ -258,12 +232,11 @@ export default function PageMenu({ user, agentName, bizName }) {
           <div style={{fontSize:48,marginBottom:16}}>🍽️</div>
           <div style={{fontSize:18,fontWeight:700,color:T.ink,marginBottom:8}}>No menu added yet</div>
           <div style={{fontSize:14,color:T.soft,marginBottom:28,lineHeight:1.6,maxWidth:400,margin:"0 auto 28px"}}>
-            Connect your POS system to sync your menu, or add items manually.<br/>
+            Add your menu items manually or import from a URL or file.<br/>
             {displayAgent} will use your menu to answer questions and take orders.
           </div>
           <div style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap"}}>
-            <button className="btn-primary" style={{fontSize:13,padding:"11px 24px"}} onClick={()=>setShowImport(true)}>🔌 Connect POS</button>
-            <button className="btn-secondary" style={{fontSize:13,padding:"11px 24px"}} onClick={()=>setShowAddCat(true)}>+ Add manually</button>
+            <button className="btn-primary" style={{fontSize:13,padding:"11px 24px"}} onClick={()=>setShowAddCat(true)}>+ Add manually</button>
           </div>
         </div>
       ) : (
@@ -372,77 +345,6 @@ export default function PageMenu({ user, agentName, bizName }) {
             </div>
           </div>
         </>
-      )}
-
-      {/* ── Import Modal ── */}
-      {showImport && (
-        <div style={modalOverlay} onClick={()=>{ if(!importLoading) closeImport(); }}>
-          <div style={{position:"absolute",inset:0,background:"rgba(19,13,46,.45)",backdropFilter:"blur(6px)"}}/>
-          <div onClick={e=>e.stopPropagation()} style={{...modalBox, maxWidth:480}}>
-            <div style={{padding:"24px 28px 18px",borderBottom:`1px solid ${T.line}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-              <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:900,color:T.ink,margin:0}}>Connect POS</h3>
-              <button onClick={closeImport} style={{width:32,height:32,borderRadius:"50%",border:`1.5px solid ${T.line}`,background:T.paper,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:T.mid}}>✕</button>
-            </div>
-            <div style={{padding:"20px 28px 24px"}}>
-              {!importResult && (
-                <>
-                  <div className="resp-3col-grid" style={{gap:7,marginBottom:14}}>
-                    {POS_SYSTEMS.map(p=>{
-                      const active = importPosSelected===p.name;
-                      return (
-                        <div key={p.name} onClick={()=>{ setImportPosSelected(p.name); setImportPosFields({}); setImportError(''); }}
-                          style={{border:`1.5px solid ${active?T.p500:T.line}`,borderRadius:10,padding:"9px 6px",textAlign:"center",cursor:"pointer",background:active?T.p50:T.white,fontSize:12.5,fontWeight:active?700:500,color:active?T.p700:T.mid,transition:"all .15s",display:"flex",flexDirection:"column",alignItems:"center",gap:3}}
-                          onMouseEnter={e=>{if(!active){e.currentTarget.style.borderColor=T.p300;e.currentTarget.style.color=T.p600;}}}
-                          onMouseLeave={e=>{if(!active){e.currentTarget.style.borderColor=T.line;e.currentTarget.style.color=T.mid;}}}>
-                          <span style={{fontSize:16}}>{p.icon}</span><span>{p.name}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  {importPosSelected && (() => {
-                    const pos = POS_SYSTEMS.find(p=>p.name===importPosSelected);
-                    return (
-                      <div style={{background:T.paper,borderRadius:12,padding:"14px 16px",border:`1.5px solid ${T.line}`,marginBottom:14}}>
-                        <div style={{fontSize:13,fontWeight:700,color:T.ink,marginBottom:10}}>{pos.icon} {pos.name} credentials</div>
-                        {pos.fields.map(f=>(
-                          <div key={f.key} style={{marginBottom:10}}>
-                            <label style={{display:"block",fontSize:11,fontWeight:700,color:T.soft,marginBottom:4,textTransform:"uppercase",letterSpacing:".3px"}}>{f.label}</label>
-                            <input value={importPosFields[f.key]||""} onChange={e=>{setImportPosFields(v=>({...v,[f.key]:e.target.value}));setImportError('');}} placeholder={f.ph} style={inputStyle}/>
-                          </div>
-                        ))}
-                      </div>
-                    );
-                  })()}
-                  <button className="btn-primary" style={{width:"100%",justifyContent:"center",fontSize:14,padding:"12px"}} disabled={importLoading||!importPosSelected} onClick={runPosImport}>{importLoading?"Connecting…":"Connect & sync menu"}</button>
-                </>
-              )}
-
-              {importError && <div style={{background:T.redBg,border:`1.5px solid #FECACA`,borderRadius:10,padding:"10px 14px",fontSize:13,color:T.red,marginTop:4}}>{importError}</div>}
-
-              {importResult && (
-                <div style={{background:T.greenBg,border:`1.5px solid ${T.greenBd}`,borderRadius:12,padding:"16px 18px"}}>
-                  <div style={{fontSize:14,fontWeight:700,color:T.green,marginBottom:10}}>✓ {importResult.pos ? `${importResult.pos.posSystem} connected` : 'Import complete'}</div>
-                  <div style={{fontSize:13,color:T.mid,lineHeight:1.7}}>
-                    {importResult.pos ? (
-                      <>
-                        <div>{importResult.pos.message}</div>
-                        {importResult.pos.categories?.map(c=><div key={c.name}>· {c.name}: {c.itemCount} items</div>)}
-                      </>
-                    ) : (<>
-                      {importResult.categorized?.menu && <>
-                        <div>🍽️ Menu items saved: <strong>{importResult.categorized.menu.savedItems}</strong></div>
-                        {importResult.categorized.menu.duplicatesSkipped > 0 && <div style={{color:T.soft}}>⟳ Duplicates skipped: {importResult.categorized.menu.duplicatesSkipped}</div>}
-                      </>}
-                      {importResult.categorized?.hours?.found && <div>⏰ Opening hours extracted</div>}
-                      {importResult.categorized?.faq?.found && <div>💬 FAQs saved: <strong>{importResult.categorized.faq.count}</strong></div>}
-                    </>)}
-                  </div>
-                  <button className="btn-primary" style={{marginTop:14,fontSize:13,padding:"9px 22px"}} onClick={closeImport}>Done</button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
       )}
 
       {/* ── Add Item Modal ── */}
