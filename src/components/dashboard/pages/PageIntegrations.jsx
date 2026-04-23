@@ -116,6 +116,7 @@ export default function PageIntegrations({ user, agentName, bizName }) {
   const [loading, setLoading]     = useState(true);
   const [disconnecting, setDisconnecting] = useState(null);
   const [settingPrimary, setSettingPrimary]   = useState(null);
+  const [userPlan, setUserPlan] = useState(null); // 'GROWTH' | 'PRO' | 'ENTERPRISE'
 
   // Connect modal (credential-based)
   const [showConnectModal, setShowConnectModal]   = useState(false);
@@ -138,6 +139,7 @@ export default function PageIntegrations({ user, agentName, bizName }) {
 
   useEffect(() => {
     fetchConnected();
+    api.billing.get().then(d => { if (d?.plan) setUserPlan(d.plan); }).catch(() => {});
     // Handle OAuth callback query params (always before # in URL)
     const search = window.location.search;
     const oauthProviders = [
@@ -241,6 +243,8 @@ export default function PageIntegrations({ user, agentName, bizName }) {
 
   const connectedNames = new Set(connected.map(c => c.name));
   const connectedCount = connected.length;
+  const isProPlan = userPlan === 'PRO' || userPlan === 'ENTERPRISE';
+  const PRO_ONLY_NAMES = ['Square', 'Clover', 'Zettle', 'resOS', 'ResDiary'];
   const stripeConnected = connectedNames.has('Stripe');
   const notConnected = ALL_CREDENTIAL_INTEGRATIONS.filter(i => !connectedNames.has(i.name));
 
@@ -349,8 +353,14 @@ export default function PageIntegrations({ user, agentName, bizName }) {
             const isBusy = oauthConnecting === intg.name || disconnecting === intg.name;
             const connRecord = connected.find(c => c.name === intg.name);
             const err = oauthErrors[intg.name];
+            const isLocked = !isProPlan && PRO_ONLY_NAMES.includes(intg.name) && !isConnected;
             return (
-              <div key={intg.name} style={{background:T.white,border:`1.5px solid ${isConnected ? T.greenBd : T.line}`,borderRadius:18,padding:22,display:'flex',flexDirection:'column',gap:0}}>
+              <div key={intg.name} style={{background:T.white,border:`1.5px solid ${isConnected ? T.greenBd : isLocked ? T.line : T.line}`,borderRadius:18,padding:22,display:'flex',flexDirection:'column',gap:0,position:'relative',opacity:isLocked?0.75:1}}>
+                {isLocked && (
+                  <div style={{position:'absolute',top:12,right:12,background:T.amber,color:'white',borderRadius:50,padding:'3px 10px',fontSize:11,fontWeight:700,display:'flex',alignItems:'center',gap:4}}>
+                    🔒 Pro
+                  </div>
+                )}
                 <div style={{display:'flex',alignItems:'center',gap:14,marginBottom:14}}>
                   <div style={{width:48,height:48,borderRadius:13,background:isConnected ? T.greenBg : '#f8f7ff',border:`1.5px solid ${isConnected ? T.greenBd : '#e8e5ff'}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,flexShrink:0}}>{intg.icon}</div>
                   <div>
@@ -382,6 +392,10 @@ export default function PageIntegrations({ user, agentName, bizName }) {
                       )}
                     </div>
                   </div>
+                ) : isLocked ? (
+                  <a href="#/dashboard/billing" style={{display:'block',textAlign:'center',padding:'9px 18px',borderRadius:50,background:T.p50,border:`1.5px solid ${T.p100}`,color:T.p700,fontSize:13,fontWeight:700,textDecoration:'none',marginTop:'auto'}}>
+                    Upgrade to Pro to connect →
+                  </a>
                 ) : (
                   <button onClick={()=>handleOAuthConnect(intg)} disabled={isBusy}
                     style={{padding:'9px 18px',borderRadius:50,border:'none',background:intg.color,color:'white',fontSize:13,fontWeight:700,cursor:isBusy?'not-allowed':'pointer',fontFamily:"'Outfit',sans-serif",opacity:isBusy?0.7:1,marginTop:'auto',whiteSpace:'nowrap'}}>
@@ -484,20 +498,23 @@ export default function PageIntegrations({ user, agentName, bizName }) {
                   {OAUTH_POS_INTEGRATIONS.map(intg => {
                     const already = connectedNames.has(intg.name);
                     const isBusy = oauthConnecting === intg.name;
+                    const locked = !isProPlan && PRO_ONLY_NAMES.includes(intg.name) && !already;
                     return (
                       <div key={intg.name}
-                        style={{display:'flex',alignItems:'center',gap:14,padding:'14px 16px',borderRadius:12,border:`1.5px solid ${already ? T.greenBd : T.line}`,background:already ? T.greenBg : T.paper,transition:'all .18s'}}>
+                        style={{display:'flex',alignItems:'center',gap:14,padding:'14px 16px',borderRadius:12,border:`1.5px solid ${already ? T.greenBd : T.line}`,background:already ? T.greenBg : T.paper,transition:'all .18s',opacity:locked?0.7:1}}>
                         <div style={{width:40,height:40,borderRadius:10,background:already?T.greenBg:T.white,border:`1.5px solid ${already?T.greenBd:T.line}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>{intg.icon}</div>
                         <div style={{flex:1}}>
-                          <div style={{fontSize:13,fontWeight:700,color:T.ink}}>{intg.name}</div>
+                          <div style={{fontSize:13,fontWeight:700,color:T.ink}}>{intg.name}{locked && <span style={{marginLeft:6,fontSize:10,fontWeight:700,background:T.amber,color:'white',borderRadius:4,padding:'1px 6px'}}>Pro</span>}</div>
                           <div style={{fontSize:11.5,color:T.soft,marginTop:1}}>{intg.desc}</div>
                         </div>
                         {already
                           ? <span style={{fontSize:11,fontWeight:700,color:T.green,background:T.greenBg,border:`1px solid ${T.greenBd}`,borderRadius:50,padding:'3px 10px',flexShrink:0}}>Connected</span>
-                          : <button onClick={()=>handleOAuthConnect(intg)} disabled={isBusy}
-                              style={{fontSize:11,fontWeight:700,color:'white',background:intg.color,border:'none',borderRadius:50,padding:'5px 12px',flexShrink:0,cursor:isBusy?'not-allowed':'pointer',fontFamily:"'Outfit',sans-serif",opacity:isBusy?0.7:1}}>
-                              {isBusy?'…':`Connect →`}
-                            </button>}
+                          : locked
+                            ? <span style={{fontSize:11,fontWeight:700,color:T.p600,background:T.p50,border:`1px solid ${T.p100}`,borderRadius:50,padding:'3px 10px',flexShrink:0}}>🔒 Pro only</span>
+                            : <button onClick={()=>handleOAuthConnect(intg)} disabled={isBusy}
+                                style={{fontSize:11,fontWeight:700,color:'white',background:intg.color,border:'none',borderRadius:50,padding:'5px 12px',flexShrink:0,cursor:isBusy?'not-allowed':'pointer',fontFamily:"'Outfit',sans-serif",opacity:isBusy?0.7:1}}>
+                                {isBusy?'…':`Connect →`}
+                              </button>}
                       </div>
                     );
                   })}
@@ -525,19 +542,22 @@ export default function PageIntegrations({ user, agentName, bizName }) {
                   <div style={{fontSize:10,fontWeight:700,color:T.mid,textTransform:'uppercase',letterSpacing:'.5px',marginBottom:4,marginTop:12}}>Reservations</div>
                   {RESERVATION_INTEGRATIONS.map(intg => {
                     const already = connectedNames.has(intg.name);
+                    const locked = !isProPlan && PRO_ONLY_NAMES.includes(intg.name) && !already;
                     return (
-                      <div key={intg.name} onClick={()=>!already && pickIntegration(intg)}
-                        style={{display:'flex',alignItems:'center',gap:14,padding:'14px 16px',borderRadius:12,border:`1.5px solid ${already ? T.greenBd : T.line}`,background:already ? T.greenBg : T.paper,cursor:already?'default':'pointer',transition:'all .18s'}}
-                        onMouseEnter={e=>{ if(!already){e.currentTarget.style.borderColor=T.p300;e.currentTarget.style.background=T.p50;} }}
-                        onMouseLeave={e=>{ if(!already){e.currentTarget.style.borderColor=T.line;e.currentTarget.style.background=T.paper;} }}>
+                      <div key={intg.name} onClick={()=>!already && !locked && pickIntegration(intg)}
+                        style={{display:'flex',alignItems:'center',gap:14,padding:'14px 16px',borderRadius:12,border:`1.5px solid ${already ? T.greenBd : T.line}`,background:already ? T.greenBg : T.paper,cursor:(already||locked)?'default':'pointer',transition:'all .18s',opacity:locked?0.7:1}}
+                        onMouseEnter={e=>{ if(!already && !locked){e.currentTarget.style.borderColor=T.p300;e.currentTarget.style.background=T.p50;} }}
+                        onMouseLeave={e=>{ if(!already && !locked){e.currentTarget.style.borderColor=T.line;e.currentTarget.style.background=T.paper;} }}>
                         <div style={{width:40,height:40,borderRadius:10,background:already?T.greenBg:T.white,border:`1.5px solid ${already?T.greenBd:T.line}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>{intg.icon}</div>
                         <div style={{flex:1}}>
-                          <div style={{fontSize:13,fontWeight:700,color:T.ink}}>{intg.name}</div>
+                          <div style={{fontSize:13,fontWeight:700,color:T.ink}}>{intg.name}{locked && <span style={{marginLeft:6,fontSize:10,fontWeight:700,background:T.amber,color:'white',borderRadius:4,padding:'1px 6px'}}>Pro</span>}</div>
                           <div style={{fontSize:11.5,color:T.soft,marginTop:1}}>{intg.desc}</div>
                         </div>
                         {already
                           ? <span style={{fontSize:11,fontWeight:700,color:T.green,background:T.greenBg,border:`1px solid ${T.greenBd}`,borderRadius:50,padding:'3px 10px',flexShrink:0}}>Connected</span>
-                          : <span style={{fontSize:11,fontWeight:700,color:T.p600,background:T.p50,border:`1px solid ${T.p100}`,borderRadius:50,padding:'3px 10px',flexShrink:0}}>Configure →</span>}
+                          : locked
+                            ? <span style={{fontSize:11,fontWeight:700,color:T.p600,background:T.p50,border:`1px solid ${T.p100}`,borderRadius:50,padding:'3px 10px',flexShrink:0}}>🔒 Pro only</span>
+                            : <span style={{fontSize:11,fontWeight:700,color:T.p600,background:T.p50,border:`1px solid ${T.p100}`,borderRadius:50,padding:'3px 10px',flexShrink:0}}>Configure →</span>}
                       </div>
                     );
                   })}

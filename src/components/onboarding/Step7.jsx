@@ -11,25 +11,25 @@ const IS_TEST_MODE = STRIPE_KEY?.startsWith('pk_test_') ?? true;
 
 // Fixed prices per currency (ISO 4217 codes)
 const PLAN_PRICES = {
-  GBP: { starter: 199, growth: 399 },
-  EUR: { starter: 229, growth: 459 },
-  USD: { starter: 249, growth: 499 },
-  AUD: { starter: 379, growth: 749 },
-  CAD: { starter: 339, growth: 679 },
-  NZD: { starter: 419, growth: 829 },
-  CHF: { starter: 219, growth: 439 },
-  SEK: { starter: 2699, growth: 5399 },
-  NOK: { starter: 2699, growth: 5399 },
-  DKK: { starter: 1699, growth: 3399 },
-  SGD: { starter: 339, growth: 679 },
-  HKD: { starter: 1949, growth: 3899 },
-  ZAR: { starter: 4599, growth: 9199 },
-  NGN: { starter: 399000, growth: 799000 },
+  GBP: { growth: 99, pro: 179 },
+  EUR: { growth: 119, pro: 209 },
+  USD: { growth: 119, pro: 219 },
+  AUD: { growth: 189, pro: 339 },
+  CAD: { growth: 169, pro: 299 },
+  NZD: { growth: 209, pro: 369 },
+  CHF: { growth: 109, pro: 199 },
+  SEK: { growth: 1299, pro: 2399 },
+  NOK: { growth: 1299, pro: 2399 },
+  DKK: { growth: 849, pro: 1549 },
+  SGD: { growth: 169, pro: 299 },
+  HKD: { growth: 949, pro: 1749 },
+  ZAR: { growth: 2299, pro: 4199 },
+  NGN: { growth: 199000, pro: 359000 },
 };
 
 const PLAN_IDS = {
-  starter: import.meta.env.VITE_STRIPE_STARTER_PRICE_ID || "",
   growth: import.meta.env.VITE_STRIPE_GROWTH_PRICE_ID || "",
+  pro: import.meta.env.VITE_STRIPE_PRO_PRICE_ID || "",
 };
 
 const fmtPrice = (amount, currency) => {
@@ -57,51 +57,87 @@ const CARD_ELEMENT_OPTIONS = {
   },
 };
 
-const PLAN_NAMES = ["Starter", "Growth"];
+const PLAN_NAMES = ["Growth", "Pro"];
 
 // ─── Shared plan cards component ─────────────────────────────────────────────
 function PlanCards({ plan, setPlan, prices, currency, subscribed }) {
   const plans = [
-    { nm: "Starter", pr: fmtPrice(prices.starter, currency), fs: ["100% calls answered", "Menu Q&A & information", "Basic call analytics", "Email support"] },
-    { nm: "Growth",  pr: fmtPrice(prices.growth, currency),  fs: ["Everything in Starter", "Takeout & delivery orders", "Reservation booking", "POS integration", "Priority support"], pop: true },
+    {
+      nm: "Growth", key: "growth",
+      pr: fmtPrice(prices.growth, currency),
+      fs: ["500 calls/month", "100% calls answered 24/7", "Orders & reservations", "SumUp + Stripe payments", "Menu Q&A & analytics", "Email support"],
+    },
+    {
+      nm: "Pro", key: "pro",
+      pr: fmtPrice(prices.pro, currency),
+      fs: ["1,000 calls/month", "Everything in Growth", "Square, Clover & Zettle POS", "resOS & ResDiary booking", "Full POS integration", "Priority support"],
+      pop: true,
+    },
   ];
+
   return (
-    <div className="plan-grid">
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 16 }}>
+      {/* Growth & Pro selectable cards */}
       {plans.map((p, i) => (
         <div
           key={p.nm}
           className={`plan-card ${plan === i ? "selected" : ""}`}
           onClick={() => !subscribed && setPlan(i)}
-          style={{ cursor: subscribed ? "default" : "pointer", opacity: subscribed && plan !== i ? 0.45 : 1 }}
+          style={{ cursor: subscribed ? "default" : "pointer", opacity: subscribed && plan !== i ? 0.45 : 1, padding: "22px 18px" }}
         >
           {p.pop && <div className="plan-popular-badge">Most popular</div>}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
             <div>
               <div className="plan-name">{p.nm}</div>
-              <div className="plan-price">{p.pr}<span>/mo</span></div>
+              <div className="plan-price" style={{ fontSize: 30 }}>{p.pr}<span>/mo</span></div>
             </div>
             <div style={{
-              width: 22, height: 22, borderRadius: "50%",
+              width: 20, height: 20, borderRadius: "50%",
               border: `2px solid ${plan === i ? T.p500 : T.faint}`,
               background: plan === i ? T.p500 : "transparent",
               display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
             }}>
-              {plan === i && <div style={{ width: 8, height: 8, borderRadius: "50%", background: "white" }} />}
+              {plan === i && <div style={{ width: 7, height: 7, borderRadius: "50%", background: "white" }} />}
             </div>
           </div>
           <div className="plan-feature-list">
-            {p.fs.map(f => <div key={f} className="plan-feature">{f}</div>)}
+            {p.fs.map(f => <div key={f} className="plan-feature" style={{ fontSize: 12 }}>{f}</div>)}
           </div>
         </div>
       ))}
+
+      {/* Enterprise — contact sales card */}
+      <div style={{
+        border: `1.5px solid ${T.line}`, borderRadius: 22, padding: "22px 18px",
+        background: T.ink, display: "flex", flexDirection: "column", justifyContent: "space-between",
+      }}>
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,.5)", marginBottom: 8, textTransform: "uppercase", letterSpacing: ".8px" }}>Enterprise</div>
+          <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 24, fontWeight: 900, color: "white", marginBottom: 14 }}>Custom</div>
+          <div style={{ fontSize: 12, color: "rgba(255,255,255,.6)", lineHeight: 1.6, marginBottom: 14 }}>
+            Unlimited calls · Full platform access · Dedicated support · Custom SLA
+          </div>
+        </div>
+        <a
+          href="mailto:product@uvanatech.com?subject=Talkativ Enterprise enquiry"
+          style={{
+            display: "block", textAlign: "center", background: "rgba(255,255,255,.12)",
+            border: "1px solid rgba(255,255,255,.2)", color: "white", borderRadius: 50,
+            padding: "9px 0", fontSize: 12.5, fontWeight: 600, textDecoration: "none",
+            fontFamily: "'Outfit',sans-serif",
+          }}
+        >
+          Contact sales →
+        </a>
+      </div>
     </div>
   );
 }
 
 // ─── Success confirmation card ────────────────────────────────────────────────
 function TrialActivatedCard({ planName, currency, prices }) {
-  const planKey = planName.toLowerCase();
-  const price = fmtPrice(prices[planKey], currency);
+  const planKey = planName.toLowerCase(); // "growth" or "pro"
+  const price = fmtPrice(prices[planKey] ?? prices.growth, currency);
   const trialEnd = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString("en-GB", {
     day: "numeric", month: "long", year: "numeric",
   });
@@ -138,7 +174,7 @@ function TrialActivatedCard({ planName, currency, prices }) {
 
 // ─── Test Mode Plan Form (auto-attaches Stripe test card, no manual entry) ───
 function PlanFormTest({ onNext, onBack }) {
-  const [plan, setPlan] = useState(1); // default to Growth
+  const [plan, setPlan] = useState(0); // default to Growth (index 0)
   const [currency, setCurrency] = useState("GBP");
   const [saving, setSaving] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
@@ -146,17 +182,16 @@ function PlanFormTest({ onNext, onBack }) {
 
   useEffect(() => {
     api.business.get().then((d) => { if (d?.currency) setCurrency(d.currency); }).catch(() => {});
-    // If subscription already exists from a previous attempt, don't re-subscribe
     api.billing.get().then((d) => {
       if (d?.plan && d.plan !== 'NONE' && d.status !== 'NO_SUBSCRIPTION') {
-        setPlan(d.plan === 'STARTER' ? 0 : 1);
+        setPlan(d.plan === 'PRO' || d.plan === 'ENTERPRISE' ? 1 : 0);
         setSubscribed(true);
       }
     }).catch(() => {});
   }, []);
 
   const prices = PLAN_PRICES[currency] || PLAN_PRICES.GBP;
-  const planKey = plan === 0 ? "starter" : "growth";
+  const planKey = plan === 0 ? "growth" : "pro";
   const planName = PLAN_NAMES[plan];
 
   const handleSubscribe = async () => {
@@ -262,7 +297,7 @@ function PlanFormLive({ onNext, onBack }) {
   const stripe = useStripe();
   const elements = useElements();
 
-  const [plan, setPlan] = useState(1);
+  const [plan, setPlan] = useState(0); // default to Growth
   const [currency, setCurrency] = useState("GBP");
   const [saving, setSaving] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
@@ -273,10 +308,9 @@ function PlanFormLive({ onNext, onBack }) {
 
   useEffect(() => {
     api.business.get().then((d) => { if (d?.currency) setCurrency(d.currency); }).catch(() => {});
-    // Check if already subscribed
     api.billing.get().then((d) => {
       if (d?.plan && d.plan !== 'NONE' && d.status !== 'NO_SUBSCRIPTION') {
-        setPlan(d.plan === 'STARTER' ? 0 : 1);
+        setPlan(d.plan === 'PRO' || d.plan === 'ENTERPRISE' ? 1 : 0);
         setSubscribed(true);
         setLoadingSecret(false);
       }
@@ -293,7 +327,7 @@ function PlanFormLive({ onNext, onBack }) {
   }, [subscribed]);
 
   const prices = PLAN_PRICES[currency] || PLAN_PRICES.GBP;
-  const planKey = plan === 0 ? "starter" : "growth";
+  const planKey = plan === 0 ? "growth" : "pro";
   const planName = PLAN_NAMES[plan];
 
   const handleSubscribe = async () => {

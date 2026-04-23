@@ -4,12 +4,13 @@ import TopBar from '../TopBar';
 import { api } from '../../../api.js';
 
 const PLAN_LABELS = {
-  STARTER: 'Starter',
   GROWTH: 'Growth',
   PRO: 'Pro',
   ENTERPRISE: 'Enterprise',
   TRIALING: 'Free Trial',
 };
+
+const PLAN_CALL_LIMITS = { GROWTH: 500, PRO: 1000, ENTERPRISE: null };
 
 const STATUS_BADGE = {
   TRIALING:   { label: 'Trial',    bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' },
@@ -109,9 +110,41 @@ export default function PageBilling({ user, agentName }) {
               </div>
             </div>
           ) : (
-            <div style={{fontSize:13,color:T.soft}}>
-              Usage stats will appear here once your subscription is active.
-            </div>
+            (() => {
+              const limit = PLAN_CALL_LIMITS[sub?.plan];
+              const used = sub?.callsThisMonth ?? 0;
+              const pct = limit ? Math.min(100, Math.round((used / limit) * 100)) : 0;
+              return (
+                <div>
+                  <div style={{display:"flex",justifyContent:"space-between",padding:"12px 0",borderBottom:`1px solid ${T.paper}`}}>
+                    <span style={{fontSize:13.5,color:T.mid}}>Plan</span>
+                    <span style={{fontSize:13.5,fontWeight:700,color:T.ink}}>{planLabel}</span>
+                  </div>
+                  <div style={{display:"flex",justifyContent:"space-between",padding:"12px 0",borderBottom:`1px solid ${T.paper}`}}>
+                    <span style={{fontSize:13.5,color:T.mid}}>Calls this month</span>
+                    <span style={{fontSize:13.5,fontWeight:700,color:T.ink}}>
+                      {used}{limit ? ` / ${limit}` : ' (unlimited)'}
+                    </span>
+                  </div>
+                  {limit && (
+                    <div style={{paddingTop:14}}>
+                      <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+                        <span style={{fontSize:12,color:T.soft}}>Usage</span>
+                        <span style={{fontSize:12,fontWeight:600,color:pct >= 90 ? T.red : T.mid}}>{pct}%</span>
+                      </div>
+                      <div className="prog-track">
+                        <div className="prog-fill" style={{width:`${pct}%`,background:pct >= 90 ? T.red : undefined}} />
+                      </div>
+                      {pct >= 90 && (
+                        <div style={{marginTop:10,fontSize:12.5,color:T.red,background:T.redBg,border:`1px solid ${T.red}`,borderRadius:8,padding:"8px 12px"}}>
+                          You're approaching your monthly call limit. Consider upgrading to Pro.
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })()
           )}
         </div>
       </div>
