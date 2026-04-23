@@ -131,6 +131,11 @@ export default function PageMenu({ user, agentName, bizName }) {
       .map(i => ({ ...i, _source: integrationMenu.source, _readonly: true }));
   }, [integrationMenu, activeCatId, activeCat, items]);
 
+  const totalItemCount = useMemo(
+    () => allCategories.reduce((sum, c) => sum + (c._count?.items || 0), 0),
+    [allCategories],
+  );
+
   // All items to display (DB items first, then integration additions)
   const allItems = useMemo(() => [...items, ...integrationItemsForActive], [items, integrationItemsForActive]);
 
@@ -276,7 +281,10 @@ export default function PageMenu({ user, agentName, bizName }) {
           <div className="resp-grid-sidebar-left">
             {!isMobile && (
               <div className="card" style={{padding:16,height:"fit-content"}}>
-                <div style={{fontSize:11,fontWeight:700,color:T.soft,textTransform:"uppercase",letterSpacing:".8px",marginBottom:12}}>Categories</div>
+                <div style={{fontSize:11,fontWeight:700,color:T.soft,textTransform:"uppercase",letterSpacing:".8px",marginBottom:12,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <span>Categories</span>
+                  <span style={{fontWeight:500,fontSize:11,color:T.faint}}>{totalItemCount} items</span>
+                </div>
                 {allCategories.map(c=>(
                   <div key={c.id} onClick={()=>setActiveCatId(c.id)} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 12px",borderRadius:10,cursor:"pointer",fontSize:13.5,fontWeight:500,color:activeCatId===c.id?T.p700:T.mid,background:activeCatId===c.id?T.p50:"transparent",border:`1.5px solid ${activeCatId===c.id?T.p100:"transparent"}`,marginBottom:2,transition:"all .18s"}}>
                     <span>{c.name}{c._integrationOnly&&<span style={{fontSize:10,marginLeft:5,opacity:.65}}>🔗</span>}</span>
