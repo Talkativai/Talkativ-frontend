@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import T from '../../../utils/tokens';
 import { api } from '../../../api.js';
 import TopBar from '../TopBar';
@@ -115,6 +116,7 @@ const PRO_ONLY_NAMES    = ['Square', 'Clover', 'Zettle', 'SpotOn', 'resOS', 'Res
 
 export default function PageIntegrations({ user, agentName, bizName }) {
   const displayBiz = bizName || "your business";
+  const navigate = useNavigate();
 
   const [connected, setConnected]           = useState([]);
   const [loading, setLoading]               = useState(true);
@@ -253,10 +255,21 @@ export default function PageIntegrations({ user, agentName, bizName }) {
   const connectedPOS        = connected.filter(i => POS_NAMES.includes(i.name));
   const connectedReservation = connected.filter(i => RESERVATION_NAMES.includes(i.name));
 
+  // Plan-filtered: hide Pro-only integrations from Growth users
+  const visiblePayment     = isProPlan ? connectedPayment     : connectedPayment.filter(i => !PRO_ONLY_NAMES.includes(i.name));
+  const visiblePOS         = isProPlan ? connectedPOS         : connectedPOS.filter(i => !PRO_ONLY_NAMES.includes(i.name));
+  const visibleReservation = isProPlan ? connectedReservation : connectedReservation.filter(i => !PRO_ONLY_NAMES.includes(i.name));
+
+  // Count integrations sitting in DB but hidden due to plan
+  const hiddenPOSCount         = isProPlan ? 0 : connectedPOS.filter(i => PRO_ONLY_NAMES.includes(i.name)).length;
+  const hiddenReservationCount = isProPlan ? 0 : connectedReservation.filter(i => PRO_ONLY_NAMES.includes(i.name)).length;
+  const hiddenCount            = hiddenPOSCount + hiddenReservationCount;
+
   const PAYMENT_PROVIDERS = ['Square', 'Clover', 'SumUp', 'Zettle', 'Stripe'];
-  const hasKDS = connectedNames.has('Square') || connectedNames.has('Clover');
-  const hasMenuIntegration = connectedNames.has('Square') || connectedNames.has('Clover') || connectedNames.has('Zettle');
-  const primaryPayment = connectedPayment.find(i => i.isPrimary) || connectedPayment[0] || null;
+  const visibleNames = new Set(visiblePOS.map(i => i.name));
+  const hasKDS = visibleNames.has('Square') || visibleNames.has('Clover');
+  const hasMenuIntegration = visibleNames.has('Square') || visibleNames.has('Clover') || visibleNames.has('Zettle');
+  const primaryPayment = visiblePayment.find(i => i.isPrimary) || visiblePayment[0] || null;
 
   const smartBanner = (() => {
     if (connectedPayment.length === 0) return { type: 'warn', msg: 'No payment integration connected — your agent cannot take orders until you connect one.' };
@@ -317,13 +330,32 @@ export default function PageIntegrations({ user, agentName, bizName }) {
 
       {/* Smart status banner */}
       {!loading && (
-        <div style={{marginBottom:24,padding:'12px 18px',borderRadius:12,
+        <div style={{marginBottom:hiddenCount>0?12:24,padding:'12px 18px',borderRadius:12,
           background: smartBanner.type==='warn'?'#FEF3C7':smartBanner.type==='ok'?T.greenBg:'#EFF6FF',
           border:`1.5px solid ${smartBanner.type==='warn'?'#FCD34D':smartBanner.type==='ok'?T.greenBd:'#BFDBFE'}`,
           display:'flex',alignItems:'center',gap:10,fontSize:13,
           color: smartBanner.type==='warn'?'#92400E':smartBanner.type==='ok'?T.green:'#1E40AF'}}>
           <span style={{fontSize:16}}>{smartBanner.type==='warn'?'⚠️':smartBanner.type==='ok'?'✅':'ℹ️'}</span>
           <span>{smartBanner.msg}</span>
+        </div>
+      )}
+
+      {/* Upsell banner — hidden Pro-only integrations waiting */}
+      {!loading && hiddenCount > 0 && (
+        <div style={{marginBottom:24,padding:'14px 18px',borderRadius:12,background:T.p50,border:`1.5px solid ${T.p100}`,display:'flex',alignItems:'center',gap:12,fontSize:13}}>
+          <span style={{fontSize:18}}>🔒</span>
+          <div style={{flex:1}}>
+            <span style={{color:T.ink,fontWeight:600}}>
+              {hiddenCount} integration{hiddenCount>1?'s':''} waiting —{' '}
+            </span>
+            <span style={{color:T.mid}}>
+              {[hiddenPOSCount>0&&`${hiddenPOSCount} POS`,hiddenReservationCount>0&&`${hiddenReservationCount} reservation`].filter(Boolean).join(' + ')} connected during setup but locked on your current plan.
+            </span>
+          </div>
+          <button onClick={()=>navigate('/billing')}
+            style={{padding:'7px 16px',borderRadius:50,border:'none',background:T.p500,color:'white',fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:"'Outfit',sans-serif",whiteSpace:'nowrap',flexShrink:0}}>
+            Upgrade to Pro →
+          </button>
         </div>
       )}
 
@@ -341,16 +373,16 @@ export default function PageIntegrations({ user, agentName, bizName }) {
               title="Primary Payment"
               desc="Customers pay directly to your account. Set one provider as primary — that's what handles all phone orders and deposits."
             />
-            {connectedPayment.length === 0 ? (
+            {visiblePayment.length === 0 ? (
               <EmptySection
                 icon="💳"
                 title="No payment provider connected"
-                sub="Connect Stripe, SumUp, Square, Clover, or Zettle so customers can pay you directly on every call."
+                sub="Connect Stripe or SumUp so customers can pay you directly on every call."
                 onAdd={openModal}
               />
             ) : (
               <div style={{display:'flex',flexDirection:'column',gap:10}}>
-                {connectedPayment.map(p => {
+                {visiblePayment.map(p => {
                   const isStripeProv = p.name === 'Stripe';
                   const isBusy = (isStripeProv ? disconnecting === 'stripe' : disconnecting === p.id) || settingPrimary === p.id;
                   return (
@@ -387,16 +419,16 @@ export default function PageIntegrations({ user, agentName, bizName }) {
               title="POS & Ordering"
               desc="Orders are pushed to your kitchen display after payment. Square, Clover, and Zettle also sync your live menu automatically."
             />
-            {connectedPOS.length === 0 ? (
+            {visiblePOS.length === 0 ? (
               <EmptySection
                 icon="🖥️"
-                title="No POS connected"
-                sub="Connect Square, Clover, Zettle, or SpotOn to push orders to your kitchen display after every call."
-                onAdd={openModal}
+                title={isProPlan ? "No POS connected" : "POS & Ordering requires Pro"}
+                sub={isProPlan ? "Connect Square, Clover, Zettle, or SpotOn to push orders to your kitchen display after every call." : "Upgrade to Pro to use Square, Clover, Zettle, or SpotOn for live menu sync and KDS order routing."}
+                onAdd={isProPlan ? openModal : ()=>navigate('/billing')}
               />
             ) : (
               <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))',gap:14}}>
-                {connectedPOS.map(int => {
+                {visiblePOS.map(int => {
                   const isBusy = disconnecting === int.id;
                   const hasMenu = MENU_SYNC_NAMES.includes(int.name);
                   return (
@@ -432,16 +464,16 @@ export default function PageIntegrations({ user, agentName, bizName }) {
               title="Reservations"
               desc="Your agent checks availability and books tables on every call. Deposits are charged via your primary payment provider."
             />
-            {connectedReservation.length === 0 ? (
+            {visibleReservation.length === 0 ? (
               <EmptySection
                 icon="📅"
-                title="No reservation platform connected"
-                sub="Connect resOS, ResDiary, OpenTable, or Collins to handle table bookings automatically on every call."
-                onAdd={openModal}
+                title={isProPlan ? "No reservation platform connected" : "Reservation integrations require Pro"}
+                sub={isProPlan ? "Connect resOS, ResDiary, OpenTable, or Collins to handle table bookings automatically on every call." : "Upgrade to Pro to connect resOS, ResDiary, OpenTable, or Collins. Your agent will still handle manual reservations in the meantime."}
+                onAdd={isProPlan ? openModal : ()=>navigate('/billing')}
               />
             ) : (
               <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))',gap:14}}>
-                {connectedReservation.map(int => {
+                {visibleReservation.map(int => {
                   const isBusy = disconnecting === int.id;
                   return (
                     <div key={int.id} style={{background:T.white,border:`1.5px solid ${T.greenBd}`,borderRadius:16,padding:20,display:'flex',flexDirection:'column',gap:10}}>
