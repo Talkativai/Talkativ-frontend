@@ -111,7 +111,7 @@ const PAYMENT_NAMES     = ['Stripe', 'Square', 'Clover', 'SumUp', 'Zettle'];
 const POS_NAMES         = ['Square', 'Clover', 'Zettle', 'SpotOn'];
 const RESERVATION_NAMES = ['resOS', 'ResDiary', 'OpenTable', 'Collins'];
 const MENU_SYNC_NAMES   = ['Square', 'Clover', 'Zettle'];
-const PRO_ONLY_NAMES    = ['Square', 'Clover', 'Zettle', 'resOS', 'ResDiary', 'OpenTable', 'Collins'];
+const PRO_ONLY_NAMES    = ['Square', 'Clover', 'Zettle', 'SpotOn', 'resOS', 'ResDiary', 'OpenTable', 'Collins'];
 
 export default function PageIntegrations({ user, agentName, bizName }) {
   const displayBiz = bizName || "your business";
