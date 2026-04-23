@@ -68,6 +68,7 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
   // ── Reservations ──────────────────────────────────────────────────────────
   const [reservationsEnabled, setReservationsEnabled] = useState(false);
   const [maxPartySize, setMaxPartySize] = useState(20);
+  const [seatingCapacity, setSeatingCapacity] = useState(50);
   const [bookingLeadTime, setBookingLeadTime] = useState(24);
   const [depositRequired, setDepositRequired] = useState(false);
   const [depositAmount, setDepositAmount] = useState(0);
@@ -182,6 +183,7 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
       api.settings.getReservationPolicy().then(d => {
         setReservationsEnabled(d.reservationsEnabled ?? false);
         setMaxPartySize(d.maxPartySize ?? 20);
+        setSeatingCapacity(d.seatingCapacity ?? 50);
         setBookingLeadTime(d.bookingLeadTime ?? 24);
         setDepositRequired(d.depositRequired ?? false);
         setDepositAmount(d.depositAmount ?? 0);
@@ -241,7 +243,7 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
 
   const saveReservation = async () => {
     setSavingRes(true);
-    try { await api.settings.updateReservationPolicy({ reservationsEnabled, maxPartySize: parseInt(maxPartySize), bookingLeadTime: parseInt(bookingLeadTime), depositRequired, depositAmount: parseFloat(depositAmount), depositType, cancellationHours: parseInt(cancellationHours), refundPercentage: parseInt(refundPercentage) }); }
+    try { await api.settings.updateReservationPolicy({ reservationsEnabled, maxPartySize: parseInt(maxPartySize), seatingCapacity: parseInt(seatingCapacity), bookingLeadTime: parseInt(bookingLeadTime), depositRequired, depositAmount: parseFloat(depositAmount), depositType, cancellationHours: parseInt(cancellationHours), refundPercentage: parseInt(refundPercentage) }); }
     catch (e) {} finally { setSavingRes(false); }
   };
 
@@ -853,6 +855,7 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
                 <>
                   <div className="resp-2col-grid" style={{marginBottom:20}}>
                     <div style={fw}><label style={lb}>Maximum party size</label><input value={maxPartySize} onChange={e=>setMaxPartySize(e.target.value)} style={fi} type="number" min="1"/></div>
+                    <div style={fw}><label style={lb}>Total seating capacity</label><input value={seatingCapacity} onChange={e=>setSeatingCapacity(e.target.value)} style={fi} type="number" min="1" placeholder="e.g. 50"/></div>
                     <div style={fw}>
                       <label style={lb}>Booking lead time (hours)</label>
                       <select value={bookingLeadTime} onChange={e=>setBookingLeadTime(e.target.value)} style={fi}>
