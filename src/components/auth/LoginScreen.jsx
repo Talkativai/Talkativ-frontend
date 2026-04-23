@@ -144,11 +144,7 @@ export default function LoginScreen() {
         {/* Owner Login */}
         {mode==="owner" && (
           <div style={{background:T.white,border:`1.5px solid ${T.line}`,borderRadius:20,padding:28,boxShadow:`0 8px 32px rgba(134,87,255,.06)`}}>
-            <div className="sso-row" style={{marginBottom:16}}>
-              <button className="sso-btn" style={{width:"100%"}} onClick={handleGoogleLogin}>🔵 Continue with Google</button>
-            </div>
-            <div className="divider-row"><div className="divider-line"/><span className="divider-text">or sign in with email</span><div className="divider-line"/></div>
-            <div style={{marginTop:16}}>
+            <div style={{marginTop:0}}>
               <div className="form-group"><label className="form-label">Email address</label><input className="form-input" placeholder="you@restaurant.com" type="email" value={ownerEmail} onChange={e=>setOwnerEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleOwnerLogin()}/></div>
               <div className="form-group"><label className="form-label">Password</label><input className="form-input" placeholder="Enter your password" type="password" value={ownerPassword} onChange={e=>setOwnerPassword(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleOwnerLogin()}/></div>
               <div style={{display:"flex",justifyContent:"flex-end",marginBottom:18}}>
