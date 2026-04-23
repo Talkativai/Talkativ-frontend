@@ -36,20 +36,21 @@ const OAUTH_POS_INTEGRATIONS = [
     errorParam: "sumup_error",
     color: "#00B4D8",
   },
+  {
+    name: "Zettle",
+    icon: "💳",
+    category: "ordering",
+    desc: "Connect Zettle by PayPal — menu sync, in-person and phone payments",
+    oauthKey: "zettleConnectInit",
+    connectedParam: "zettle_connected",
+    errorParam: "zettle_error",
+    color: "#009BDE",
+  },
 ];
 
 // ─── Credential-based integrations ───────────────────────────────────────────
 
 const POS_INTEGRATIONS = [
-  {
-    name: "Zettle",
-    icon: "💳",
-    category: "ordering",
-    desc: "Connect Zettle by PayPal for in-person and phone payments",
-    fields: [
-      { key: "apiKey", label: "API Key", placeholder: "..." },
-    ],
-  },
   {
     name: "SpotOn",
     icon: "📍",
@@ -144,6 +145,7 @@ export default function PageIntegrations({ user, agentName, bizName }) {
       { connected: 'square_connected=1', error: 'square_error=', name: 'Square' },
       { connected: 'clover_connected=1', error: 'clover_error=', name: 'Clover' },
       { connected: 'sumup_connected=1',  error: 'sumup_error=',  name: 'SumUp'  },
+      { connected: 'zettle_connected=1', error: 'zettle_error=', name: 'Zettle' },
     ];
     for (const p of oauthProviders) {
       if (search.includes(p.connected)) {

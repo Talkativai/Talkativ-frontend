@@ -312,6 +312,8 @@ export const api = {
     cloverConnectInit: () => get('/api/integrations/clover/connect'),
     // SumUp OAuth
     sumupConnectInit: () => get('/api/integrations/sumup/connect'),
+    // Zettle OAuth
+    zettleConnectInit: () => get('/api/integrations/zettle/connect'),
     // Set primary payment provider
     setPrimary: (id) => put(`/api/integrations/${id}/set-primary`, {}),
   },

@@ -596,6 +596,52 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
                   </div>
                 ))}
               </div>
+
+              {/* ── Migrate your number ───────────────────────────────────── */}
+              <div style={{marginTop:28,borderTop:`1.5px solid ${T.line}`,paddingTop:24}}>
+                <div style={{fontSize:14,fontWeight:700,color:T.ink,marginBottom:4}}>Migrating from another platform?</div>
+                <div style={{fontSize:12.5,color:T.soft,marginBottom:16,lineHeight:1.5}}>
+                  If you have an existing number your customers already know (e.g. from Loman AI or a previous provider), you have two options to keep using it with Talkativ.
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+                  <div style={{background:T.paper,border:`1.5px solid ${T.line}`,borderRadius:12,padding:16}}>
+                    <div style={{fontSize:13,fontWeight:700,color:T.ink,marginBottom:6}}>Option 1 — Port your number (recommended)</div>
+                    <div style={{fontSize:12,color:T.soft,lineHeight:1.5,marginBottom:10}}>
+                      Transfer your existing number to Talkativ permanently. Your customers keep calling the same number and the AI answers directly. Takes 3–10 business days.
+                    </div>
+                    <div style={{fontSize:11.5,color:T.soft,lineHeight:1.6}}>
+                      <div style={{fontWeight:600,color:T.ink,marginBottom:4}}>How to request a port:</div>
+                      <ol style={{margin:0,paddingLeft:16}}>
+                        <li>Contact us at <span style={{color:T.p400}}>support@talkativ.io</span> with your existing number</li>
+                        <li>We handle the port request on your behalf</li>
+                        <li>Your old provider releases the number (they are legally required to)</li>
+                        <li>Number goes live on Talkativ — no changes for your customers</li>
+                      </ol>
+                    </div>
+                  </div>
+                  <div style={{background:T.paper,border:`1.5px solid ${T.line}`,borderRadius:12,padding:16}}>
+                    <div style={{fontSize:13,fontWeight:700,color:T.ink,marginBottom:6}}>Option 2 — Forward your old number (instant)</div>
+                    <div style={{fontSize:12,color:T.soft,lineHeight:1.5,marginBottom:10}}>
+                      Keep your old number at your current provider and set up call forwarding to your Talkativ number. Works immediately — no waiting period.
+                    </div>
+                    <div style={{fontSize:11.5,color:T.soft,lineHeight:1.6}}>
+                      <div style={{fontWeight:600,color:T.ink,marginBottom:4}}>How to set up forwarding:</div>
+                      <ol style={{margin:0,paddingLeft:16}}>
+                        <li>Log into your old provider's dashboard (Loman, Vonage, etc.)</li>
+                        <li>Find "Call forwarding" or "Forward all calls"</li>
+                        <li>Enter your Talkativ AI number as the forwarding destination</li>
+                        <li>All calls to your old number now reach the Talkativ agent</li>
+                      </ol>
+                    </div>
+                    <div style={{marginTop:10,fontSize:11,color:T.soft,fontStyle:"italic"}}>
+                      Note: forwarding adds a small delay and depends on your old provider staying active.
+                    </div>
+                  </div>
+                </div>
+                <div style={{marginTop:12,fontSize:11.5,color:T.soft}}>
+                  Your Talkativ AI number: <span style={{fontWeight:700,color:T.ink,fontFamily:"monospace"}}>{assignedNumber || 'Not yet assigned — complete phone setup in onboarding'}</span>
+                </div>
+              </div>
             </div>
           )}
 
