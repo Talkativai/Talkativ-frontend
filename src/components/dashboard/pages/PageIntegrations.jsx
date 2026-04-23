@@ -48,8 +48,6 @@ const OAUTH_POS_INTEGRATIONS = [
   },
 ];
 
-// ─── Credential-based integrations ───────────────────────────────────────────
-
 const POS_INTEGRATIONS = [
   {
     name: "SpotOn",
@@ -107,29 +105,35 @@ const RESERVATION_INTEGRATIONS = [
 ];
 
 const ALL_CREDENTIAL_INTEGRATIONS = [...POS_INTEGRATIONS, ...RESERVATION_INTEGRATIONS];
-const TOTAL_INTEGRATIONS = OAUTH_POS_INTEGRATIONS.length + ALL_CREDENTIAL_INTEGRATIONS.length + 1; // +1 for Stripe Connect
+const ALL_INTEGRATIONS_FOR_META   = [...OAUTH_POS_INTEGRATIONS, ...ALL_CREDENTIAL_INTEGRATIONS];
+
+const PAYMENT_NAMES     = ['Stripe', 'Square', 'Clover', 'SumUp', 'Zettle'];
+const POS_NAMES         = ['Square', 'Clover', 'Zettle', 'SpotOn'];
+const RESERVATION_NAMES = ['resOS', 'ResDiary', 'OpenTable', 'Collins'];
+const MENU_SYNC_NAMES   = ['Square', 'Clover', 'Zettle'];
+const PRO_ONLY_NAMES    = ['Square', 'Clover', 'Zettle', 'resOS', 'ResDiary'];
 
 export default function PageIntegrations({ user, agentName, bizName }) {
   const displayBiz = bizName || "your business";
 
-  const [connected, setConnected] = useState([]);
-  const [loading, setLoading]     = useState(true);
-  const [disconnecting, setDisconnecting] = useState(null);
-  const [settingPrimary, setSettingPrimary]   = useState(null);
-  const [userPlan, setUserPlan] = useState(null); // 'GROWTH' | 'PRO' | 'ENTERPRISE'
+  const [connected, setConnected]           = useState([]);
+  const [loading, setLoading]               = useState(true);
+  const [disconnecting, setDisconnecting]   = useState(null);
+  const [settingPrimary, setSettingPrimary] = useState(null);
+  const [userPlan, setUserPlan]             = useState(null);
 
-  // Connect modal (credential-based)
+  // Connect modal
   const [showConnectModal, setShowConnectModal]   = useState(false);
   const [pickedIntegration, setPickedIntegration] = useState(null);
   const [configValues, setConfigValues]           = useState({});
   const [configError, setConfigError]             = useState('');
   const [connecting, setConnecting]               = useState(false);
 
-  // OAuth connecting state
-  const [stripeConnecting, setStripeConnecting]   = useState(false);
-  const [stripeError, setStripeError]             = useState('');
-  const [oauthConnecting, setOauthConnecting]     = useState(null); // name of integration being OAuth'd
-  const [oauthErrors, setOauthErrors]             = useState({});   // { Square: 'error msg', ... }
+  // OAuth state
+  const [stripeConnecting, setStripeConnecting] = useState(false);
+  const [stripeError, setStripeError]           = useState('');
+  const [oauthConnecting, setOauthConnecting]   = useState(null);
+  const [oauthErrors, setOauthErrors]           = useState({});
 
   const fetchConnected = async () => {
     try { setConnected(await api.integrations.list()); }
@@ -140,22 +144,21 @@ export default function PageIntegrations({ user, agentName, bizName }) {
   useEffect(() => {
     fetchConnected();
     api.billing.get().then(d => { if (d?.plan) setUserPlan(d.plan); }).catch(() => {});
-    // Handle OAuth callback query params (always before # in URL)
     const search = window.location.search;
-    const oauthProviders = [
+    const providers = [
       { connected: 'stripe_connected=1', error: 'stripe_error=', name: 'Stripe', setter: setStripeError },
       { connected: 'square_connected=1', error: 'square_error=', name: 'Square' },
       { connected: 'clover_connected=1', error: 'clover_error=', name: 'Clover' },
       { connected: 'sumup_connected=1',  error: 'sumup_error=',  name: 'SumUp'  },
       { connected: 'zettle_connected=1', error: 'zettle_error=', name: 'Zettle' },
     ];
-    for (const p of oauthProviders) {
+    for (const p of providers) {
       if (search.includes(p.connected)) {
         window.history.replaceState(null, '', window.location.pathname + '#/dashboard');
         fetchConnected();
         break;
       } else if (search.includes(p.error)) {
-        const match = search.match(new RegExp(p.error.replace('=', '=') + '([^&]+)'));
+        const match = search.match(new RegExp(p.error + '([^&]+)'));
         const msg = match ? decodeURIComponent(match[1]) : 'Connection failed';
         if (p.setter) p.setter(msg);
         else setOauthErrors(prev => ({ ...prev, [p.name]: msg }));
@@ -222,6 +225,13 @@ export default function PageIntegrations({ user, agentName, bizName }) {
     }
   };
 
+  const handleStripeDisconnect = async () => {
+    setDisconnecting('stripe');
+    try { await api.integrations.stripeConnectDisconnect(); await fetchConnected(); }
+    catch {}
+    setDisconnecting(null);
+  };
+
   const handleOAuthConnect = async (intg) => {
     setOauthConnecting(intg.name);
     setOauthErrors(prev => ({ ...prev, [intg.name]: '' }));
@@ -234,26 +244,19 @@ export default function PageIntegrations({ user, agentName, bizName }) {
     }
   };
 
-  const handleStripeDisconnect = async () => {
-    setDisconnecting('stripe');
-    try { await api.integrations.stripeConnectDisconnect(); await fetchConnected(); }
-    catch {}
-    setDisconnecting(null);
-  };
+  // ─── Derived state ─────────────────────────────────────────────────────────
+  const connectedNames      = new Set(connected.map(c => c.name));
+  const isProPlan           = userPlan === 'PRO' || userPlan === 'ENTERPRISE';
+  const stripeConnected     = connectedNames.has('Stripe');
 
-  const connectedNames = new Set(connected.map(c => c.name));
-  const connectedCount = connected.length;
-  const isProPlan = userPlan === 'PRO' || userPlan === 'ENTERPRISE';
-  const PRO_ONLY_NAMES = ['Square', 'Clover', 'Zettle', 'resOS', 'ResDiary'];
-  const stripeConnected = connectedNames.has('Stripe');
-  const notConnected = ALL_CREDENTIAL_INTEGRATIONS.filter(i => !connectedNames.has(i.name));
+  const connectedPayment    = connected.filter(i => PAYMENT_NAMES.includes(i.name));
+  const connectedPOS        = connected.filter(i => POS_NAMES.includes(i.name));
+  const connectedReservation = connected.filter(i => RESERVATION_NAMES.includes(i.name));
 
-  // Smart status banner logic
   const PAYMENT_PROVIDERS = ['Square', 'Clover', 'SumUp', 'Zettle', 'Stripe'];
-  const connectedPayment = connected.filter(i => PAYMENT_PROVIDERS.includes(i.name));
-  const primaryPayment = connectedPayment.find(i => i.isPrimary) || connectedPayment[0] || null;
   const hasKDS = connectedNames.has('Square') || connectedNames.has('Clover');
   const hasMenuIntegration = connectedNames.has('Square') || connectedNames.has('Clover') || connectedNames.has('Zettle');
+  const primaryPayment = connectedPayment.find(i => i.isPrimary) || connectedPayment[0] || null;
 
   const smartBanner = (() => {
     if (connectedPayment.length === 0) return { type: 'warn', msg: 'No payment integration connected — your agent cannot take orders until you connect one.' };
@@ -262,13 +265,42 @@ export default function PageIntegrations({ user, agentName, bizName }) {
     return { type: 'info', msg: `Payments via ${primaryPayment?.name}. Your Talkativ menu is used for ordering. Customers pay directly to you.` };
   })();
 
-  const ALL_INTEGRATIONS_FOR_META = [...OAUTH_POS_INTEGRATIONS, ...ALL_CREDENTIAL_INTEGRATIONS];
-  const intgIcon = (name) => ALL_INTEGRATIONS_FOR_META.find(i => i.name === name)?.icon
-    || (name === 'Stripe' ? '💳' : '🔌');
-  const intgDesc = (name) => ALL_INTEGRATIONS_FOR_META.find(i => i.name === name)?.desc
-    || (name === 'Stripe' ? 'Accept payments directly into your Stripe account' : '');
+  const intgIcon = (name) => ALL_INTEGRATIONS_FOR_META.find(i => i.name === name)?.icon || (name === 'Stripe' ? '💳' : '🔌');
+  const intgDesc = (name) => ALL_INTEGRATIONS_FOR_META.find(i => i.name === name)?.desc || (name === 'Stripe' ? 'Accept payments directly into your Stripe account' : '');
+  const oauthColor = (name) => OAUTH_POS_INTEGRATIONS.find(i => i.name === name)?.color || (name === 'Stripe' ? '#635BFF' : '#666');
 
   const modalOverlay = { position:'fixed', inset:0, zIndex:9999, display:'flex', alignItems:'center', justifyContent:'center', padding:24 };
+
+  const SectionHeader = ({ title, desc }) => (
+    <div style={{marginBottom:14}}>
+      <div style={{fontSize:13,fontWeight:800,color:T.ink,marginBottom:3}}>{title}</div>
+      <div style={{fontSize:12,color:T.soft}}>{desc}</div>
+    </div>
+  );
+
+  const EmptySection = ({ icon, title, sub, onAdd }) => (
+    <div style={{background:T.paper,border:`1.5px dashed ${T.line}`,borderRadius:16,padding:'28px 24px',textAlign:'center'}}>
+      <div style={{fontSize:32,marginBottom:10}}>{icon}</div>
+      <div style={{fontSize:14,fontWeight:600,color:T.ink,marginBottom:5}}>{title}</div>
+      <div style={{fontSize:12.5,color:T.soft,marginBottom:18,maxWidth:380,margin:'0 auto 18px'}}>{sub}</div>
+      <button className="btn-primary" style={{fontSize:13,padding:'9px 22px'}} onClick={onAdd}>+ Connect</button>
+    </div>
+  );
+
+  const ConnectedBadge = () => (
+    <span style={{display:'inline-flex',alignItems:'center',gap:5,padding:'4px 11px',borderRadius:50,fontSize:11,fontWeight:700,background:T.greenBg,color:T.green,border:`1px solid ${T.greenBd}`,flexShrink:0}}>
+      <span style={{width:5,height:5,borderRadius:'50%',background:T.green,display:'inline-block'}}/>Connected
+    </span>
+  );
+
+  const DisconnectBtn = ({ onClick, busy }) => (
+    <button disabled={busy} onClick={onClick}
+      style={{padding:'6px 14px',borderRadius:50,border:`1.5px solid ${T.red}33`,background:'#FEF2F2',color:T.red,fontSize:12,fontWeight:700,cursor:busy?'not-allowed':'pointer',fontFamily:"'Outfit',sans-serif",opacity:busy?0.6:1,whiteSpace:'nowrap',flexShrink:0}}>
+      {busy ? '…' : 'Disconnect'}
+    </button>
+  );
+
+  const anyError = stripeError || Object.values(oauthErrors).find(Boolean);
 
   return (
     <>
@@ -276,199 +308,165 @@ export default function PageIntegrations({ user, agentName, bizName }) {
         <button className="btn-primary" style={{fontSize:13,padding:'9px 18px'}} onClick={openModal}>+ Connect integration</button>
       </TopBar>
 
+      {/* Error banner */}
+      {anyError && (
+        <div style={{marginBottom:16,padding:'12px 18px',borderRadius:12,background:'#FEF2F2',border:'1.5px solid #FECACA',fontSize:13,color:T.red,display:'flex',gap:8,alignItems:'center'}}>
+          <span>⚠️</span><span>{anyError}</span>
+        </div>
+      )}
+
       {/* Smart status banner */}
       {!loading && (
-        <div style={{
-          marginBottom:20, padding:'12px 18px', borderRadius:12,
-          background: smartBanner.type === 'warn' ? '#FEF3C7' : smartBanner.type === 'ok' ? T.greenBg : '#EFF6FF',
-          border: `1.5px solid ${smartBanner.type === 'warn' ? '#FCD34D' : smartBanner.type === 'ok' ? T.greenBd : '#BFDBFE'}`,
-          display:'flex', alignItems:'center', gap:10, fontSize:13,
-          color: smartBanner.type === 'warn' ? '#92400E' : smartBanner.type === 'ok' ? T.green : '#1E40AF',
-        }}>
-          <span style={{fontSize:16}}>{smartBanner.type === 'warn' ? '⚠️' : smartBanner.type === 'ok' ? '✅' : 'ℹ️'}</span>
+        <div style={{marginBottom:24,padding:'12px 18px',borderRadius:12,
+          background: smartBanner.type==='warn'?'#FEF3C7':smartBanner.type==='ok'?T.greenBg:'#EFF6FF',
+          border:`1.5px solid ${smartBanner.type==='warn'?'#FCD34D':smartBanner.type==='ok'?T.greenBd:'#BFDBFE'}`,
+          display:'flex',alignItems:'center',gap:10,fontSize:13,
+          color: smartBanner.type==='warn'?'#92400E':smartBanner.type==='ok'?T.green:'#1E40AF'}}>
+          <span style={{fontSize:16}}>{smartBanner.type==='warn'?'⚠️':smartBanner.type==='ok'?'✅':'ℹ️'}</span>
           <span>{smartBanner.msg}</span>
         </div>
       )}
 
-      {/* KPI row */}
-      <div className="kpi-row" style={{gridTemplateColumns:'repeat(3, 1fr)',marginBottom:28}}>
-        {[
-          { l:'Available',          v:String(TOTAL_INTEGRATIONS),  d:'Ready to connect' },
-          { l:'Connected',          v:String(connectedCount),      d:connectedCount > 0 ? 'Active right now' : 'Connect one to get started' },
-          { l:'Remaining',          v:String(TOTAL_INTEGRATIONS - connectedCount), d:'Available to connect' },
-        ].map(k=>(
-          <div className="kpi-card" key={k.l}>
-            <div className="kpi-label">{k.l}</div>
-            <div className="kpi-value">{k.v}</div>
-            <div className="kpi-delta">{k.d}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* ── Stripe Connect section ── */}
-      <div style={{marginBottom:28}}>
-        <div style={{fontSize:11,fontWeight:700,color:T.mid,textTransform:'uppercase',letterSpacing:'.5px',marginBottom:12}}>Payments (Stripe Connect)</div>
-        <div style={{background:T.white,border:`1.5px solid ${stripeConnected ? T.greenBd : T.line}`,borderRadius:18,padding:24,display:'flex',alignItems:'center',gap:20}}>
-          <div style={{width:52,height:52,borderRadius:14,background:stripeConnected ? T.greenBg : '#f5f3ff',border:`1.5px solid ${stripeConnected ? T.greenBd : '#ddd6fe'}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:26,flexShrink:0}}>💳</div>
-          <div style={{flex:1}}>
-            <div style={{fontSize:16,fontWeight:700,color:T.ink,marginBottom:4}}>Stripe Connect</div>
-            <div style={{fontSize:13,color:T.soft,lineHeight:1.5}}>
-              {stripeConnected
-                ? 'Your Stripe account is connected. Customers pay directly into your account.'
-                : 'Connect your existing Stripe account so customers can pay you directly. All money goes straight to your account.'}
-            </div>
-            {stripeError && <div style={{fontSize:12,color:T.red,marginTop:6}}>⚠️ {stripeError}</div>}
-          </div>
-          <div style={{flexShrink:0}}>
-            {stripeConnected ? (
-              <div style={{display:'flex',alignItems:'center',gap:10}}>
-                <span style={{display:'inline-flex',alignItems:'center',gap:5,padding:'5px 12px',borderRadius:50,fontSize:12,fontWeight:700,background:T.greenBg,color:T.green,border:`1px solid ${T.greenBd}`}}>
-                  <span style={{width:6,height:6,borderRadius:'50%',background:T.green,display:'inline-block'}}/>Connected
-                </span>
-                <button
-                  disabled={disconnecting === 'stripe'}
-                  onClick={handleStripeDisconnect}
-                  style={{padding:'7px 16px',borderRadius:50,border:`1.5px solid ${T.red}33`,background:'#FEF2F2',color:T.red,fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:"'Outfit',sans-serif",opacity:disconnecting==='stripe'?0.6:1}}>
-                  {disconnecting === 'stripe' ? 'Disconnecting…' : 'Disconnect'}
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={handleStripeConnect}
-                disabled={stripeConnecting}
-                style={{padding:'10px 22px',borderRadius:50,border:'none',background:'#635BFF',color:'white',fontSize:13,fontWeight:700,cursor:stripeConnecting?'not-allowed':'pointer',fontFamily:"'Outfit',sans-serif",opacity:stripeConnecting?0.7:1,whiteSpace:'nowrap'}}>
-                {stripeConnecting ? 'Redirecting…' : 'Connect with Stripe →'}
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* ── OAuth one-tap POS integrations ── */}
-      <div style={{marginBottom:28}}>
-        <div style={{fontSize:11,fontWeight:700,color:T.mid,textTransform:'uppercase',letterSpacing:'.5px',marginBottom:12}}>POS & Ordering (One-tap connect)</div>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))',gap:16}}>
-          {OAUTH_POS_INTEGRATIONS.map(intg => {
-            const isConnected = connectedNames.has(intg.name);
-            const isBusy = oauthConnecting === intg.name || disconnecting === intg.name;
-            const connRecord = connected.find(c => c.name === intg.name);
-            const err = oauthErrors[intg.name];
-            const isLocked = !isProPlan && PRO_ONLY_NAMES.includes(intg.name) && !isConnected;
-            return (
-              <div key={intg.name} style={{background:T.white,border:`1.5px solid ${isConnected ? T.greenBd : isLocked ? T.line : T.line}`,borderRadius:18,padding:22,display:'flex',flexDirection:'column',gap:0,position:'relative',opacity:isLocked?0.75:1}}>
-                {isLocked && (
-                  <div style={{position:'absolute',top:12,right:12,background:T.amber,color:'white',borderRadius:50,padding:'3px 10px',fontSize:11,fontWeight:700,display:'flex',alignItems:'center',gap:4}}>
-                    🔒 Pro
-                  </div>
-                )}
-                <div style={{display:'flex',alignItems:'center',gap:14,marginBottom:14}}>
-                  <div style={{width:48,height:48,borderRadius:13,background:isConnected ? T.greenBg : '#f8f7ff',border:`1.5px solid ${isConnected ? T.greenBd : '#e8e5ff'}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,flexShrink:0}}>{intg.icon}</div>
-                  <div>
-                    <div style={{fontSize:15,fontWeight:700,color:T.ink}}>{intg.name}</div>
-                    <div style={{fontSize:11.5,color:T.soft,marginTop:1,lineHeight:1.4}}>{intg.desc}</div>
-                  </div>
-                </div>
-                {err && <div style={{fontSize:12,color:T.red,marginBottom:10}}>⚠️ {err}</div>}
-                {isConnected ? (
-                  <div style={{marginTop:'auto'}}>
-                    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom: connRecord?.isPrimary !== undefined ? 8 : 0}}>
-                      <span style={{display:'inline-flex',alignItems:'center',gap:5,padding:'5px 12px',borderRadius:50,fontSize:12,fontWeight:700,background:T.greenBg,color:T.green,border:`1px solid ${T.greenBd}`}}>
-                        <span style={{width:6,height:6,borderRadius:'50%',background:T.green,display:'inline-block'}}/>Connected
-                      </span>
-                      <button disabled={isBusy} onClick={()=>handleDisconnect(connRecord.id)}
-                        style={{padding:'6px 14px',borderRadius:50,border:`1.5px solid ${T.red}33`,background:'#FEF2F2',color:T.red,fontSize:12,fontWeight:700,cursor:isBusy?'not-allowed':'pointer',fontFamily:"'Outfit',sans-serif",opacity:isBusy?0.6:1}}>
-                        {isBusy?'Disconnecting…':'Disconnect'}
-                      </button>
-                    </div>
-                    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-                      {connRecord?.isPrimary
-                        ? <span style={{fontSize:11,fontWeight:700,color:T.p600,background:T.p50,border:`1px solid ${T.p100}`,borderRadius:50,padding:'3px 10px'}}>⭐ Primary payment</span>
-                        : <span style={{fontSize:11,color:T.soft}}>Not primary</span>}
-                      {!connRecord?.isPrimary && (
-                        <button disabled={settingPrimary===connRecord?.id} onClick={()=>handleSetPrimary(connRecord.id)}
-                          style={{padding:'5px 12px',borderRadius:50,border:`1.5px solid ${T.p300}`,background:T.p50,color:T.p700,fontSize:11,fontWeight:700,cursor:'pointer',fontFamily:"'Outfit',sans-serif",opacity:settingPrimary===connRecord?.id?0.6:1}}>
-                          {settingPrimary===connRecord?.id?'Setting…':'Set as primary'}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ) : isLocked ? (
-                  <a href="#/dashboard/billing" style={{display:'block',textAlign:'center',padding:'9px 18px',borderRadius:50,background:T.p50,border:`1.5px solid ${T.p100}`,color:T.p700,fontSize:13,fontWeight:700,textDecoration:'none',marginTop:'auto'}}>
-                    Upgrade to Pro to connect →
-                  </a>
-                ) : (
-                  <button onClick={()=>handleOAuthConnect(intg)} disabled={isBusy}
-                    style={{padding:'9px 18px',borderRadius:50,border:'none',background:intg.color,color:'white',fontSize:13,fontWeight:700,cursor:isBusy?'not-allowed':'pointer',fontFamily:"'Outfit',sans-serif",opacity:isBusy?0.7:1,marginTop:'auto',whiteSpace:'nowrap'}}>
-                    {isBusy ? 'Redirecting…' : `Connect with ${intg.name} →`}
-                  </button>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* ── Connected integrations ── */}
       {loading ? (
-        <div style={{textAlign:'center',padding:'60px 20px'}}>
+        <div style={{textAlign:'center',padding:'80px 20px'}}>
           <div style={{fontSize:36,marginBottom:12}}>⏳</div>
           <div style={{fontSize:15,fontWeight:600,color:T.ink}}>Loading integrations…</div>
         </div>
-      ) : connectedCount === 0 ? (
-        <div className="card" style={{textAlign:'center',padding:'64px 32px'}}>
-          <div style={{fontSize:48,marginBottom:16}}>🔌</div>
-          <div style={{fontSize:18,fontWeight:700,color:T.ink,marginBottom:8}}>No integrations connected yet</div>
-          <div style={{fontSize:14,color:T.soft,marginBottom:28,lineHeight:1.6,maxWidth:420,margin:'0 auto 28px'}}>
-            Connect Square, SumUp, or Clover to take orders, or resOS / ResDiary to manage reservations.<br/>
-            Your agent will use these to serve customers on every call.
-          </div>
-          <button className="btn-primary" style={{fontSize:13,padding:'11px 28px'}} onClick={openModal}>+ Connect your first integration</button>
-        </div>
       ) : (
-        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(300px, 1fr))',gap:20}}>
-          {connected.filter(i => i.name !== 'Stripe').map(int => {
-            const isBusy = disconnecting === int.id;
-            return (
-              <div key={int.id} style={{background:T.white,border:`1.5px solid ${T.greenBd}`,borderRadius:18,padding:26,display:'flex',flexDirection:'column',transition:'box-shadow .2s'}} onMouseEnter={e=>e.currentTarget.style.boxShadow='0 8px 28px rgba(34,197,94,.1)'} onMouseLeave={e=>e.currentTarget.style.boxShadow='none'}>
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:18}}>
-                  <div style={{width:56,height:56,borderRadius:16,background:T.greenBg,border:`1.5px solid ${T.greenBd}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:28}}>{intgIcon(int.name)}</div>
-                  <span style={{padding:'4px 11px',borderRadius:50,fontSize:10.5,fontWeight:700,letterSpacing:'.3px',textTransform:'uppercase',background:T.p50,color:T.p700,border:`1px solid ${T.p100}`}}>{int.category}</span>
-                </div>
-                <div style={{fontSize:17,fontWeight:700,color:T.ink,marginBottom:6}}>{int.name}</div>
-                <div style={{fontSize:13,color:T.soft,lineHeight:1.55,flex:1}}>{intgDesc(int.name)}</div>
-                {int.lastSynced && (
-                  <div style={{fontSize:11.5,color:T.soft,marginTop:10}}>
-                    Connected: {new Date(int.lastSynced).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}
-                  </div>
-                )}
-                <div style={{marginTop:20,paddingTop:18,borderTop:`1px solid ${T.paper}`}}>
-                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom: PAYMENT_PROVIDERS.includes(int.name) ? 10 : 0}}>
-                    <span style={{display:'inline-flex',alignItems:'center',gap:5,padding:'5px 12px',borderRadius:50,fontSize:12,fontWeight:700,background:T.greenBg,color:T.green,border:`1px solid ${T.greenBd}`}}>
-                      <span style={{width:6,height:6,borderRadius:'50%',background:T.green,display:'inline-block'}}/>Connected
-                    </span>
-                    <button disabled={isBusy} onClick={()=>handleDisconnect(int.id)} style={{padding:'7px 16px',borderRadius:50,border:`1.5px solid ${T.red}33`,background:'#FEF2F2',color:T.red,fontSize:12,fontWeight:700,cursor:isBusy?'not-allowed':'pointer',fontFamily:"'Outfit',sans-serif",opacity:isBusy?0.6:1,transition:'all .18s'}}>
-                      {isBusy?'Disconnecting…':'Disconnect'}
-                    </button>
-                  </div>
-                  {PAYMENT_PROVIDERS.includes(int.name) && (
-                    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-                      {int.isPrimary
-                        ? <span style={{fontSize:11,fontWeight:700,color:T.p600,background:T.p50,border:`1px solid ${T.p100}`,borderRadius:50,padding:'3px 10px'}}>⭐ Primary payment</span>
-                        : <span style={{fontSize:11,color:T.soft}}>Not primary</span>}
-                      {!int.isPrimary && (
-                        <button
-                          disabled={settingPrimary === int.id}
-                          onClick={()=>handleSetPrimary(int.id)}
-                          style={{padding:'5px 12px',borderRadius:50,border:`1.5px solid ${T.p300}`,background:T.p50,color:T.p700,fontSize:11,fontWeight:700,cursor:'pointer',fontFamily:"'Outfit',sans-serif",opacity:settingPrimary===int.id?0.6:1}}>
-                          {settingPrimary===int.id?'Setting…':'Set as primary'}
-                        </button>
-                      )}
+        <div style={{display:'flex',flexDirection:'column',gap:32}}>
+
+          {/* ── Primary Payment ── */}
+          <div>
+            <SectionHeader
+              title="Primary Payment"
+              desc="Customers pay directly to your account. Set one provider as primary — that's what handles all phone orders and deposits."
+            />
+            {connectedPayment.length === 0 ? (
+              <EmptySection
+                icon="💳"
+                title="No payment provider connected"
+                sub="Connect Stripe, SumUp, Square, Clover, or Zettle so customers can pay you directly on every call."
+                onAdd={openModal}
+              />
+            ) : (
+              <div style={{display:'flex',flexDirection:'column',gap:10}}>
+                {connectedPayment.map(p => {
+                  const isStripeProv = p.name === 'Stripe';
+                  const isBusy = (isStripeProv ? disconnecting === 'stripe' : disconnecting === p.id) || settingPrimary === p.id;
+                  return (
+                    <div key={p.id} style={{background:T.white,border:`1.5px solid ${p.isPrimary ? T.p200 : T.line}`,borderRadius:14,padding:'16px 20px',display:'flex',alignItems:'center',gap:14}}>
+                      <div style={{width:44,height:44,borderRadius:12,background:p.isPrimary?T.p50:'#f8f8f8',border:`1.5px solid ${p.isPrimary?T.p100:T.line}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,flexShrink:0}}>{intgIcon(p.name)}</div>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+                          <span style={{fontSize:15,fontWeight:700,color:T.ink}}>{p.name}</span>
+                          {p.isPrimary && (
+                            <span style={{fontSize:11,fontWeight:700,color:T.p600,background:T.p50,border:`1px solid ${T.p100}`,borderRadius:50,padding:'2px 9px',flexShrink:0}}>⭐ Primary</span>
+                          )}
+                        </div>
+                        <div style={{fontSize:12,color:T.soft,marginTop:2}}>{intgDesc(p.name)}</div>
+                      </div>
+                      <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
+                        {!p.isPrimary && (
+                          <button disabled={isBusy} onClick={()=>handleSetPrimary(p.id)}
+                            style={{padding:'6px 14px',borderRadius:50,border:`1.5px solid ${T.p300}`,background:T.p50,color:T.p700,fontSize:12,fontWeight:700,cursor:isBusy?'not-allowed':'pointer',fontFamily:"'Outfit',sans-serif",opacity:isBusy?0.6:1,whiteSpace:'nowrap'}}>
+                            {settingPrimary===p.id?'Setting…':'Set as primary'}
+                          </button>
+                        )}
+                        <DisconnectBtn busy={isBusy} onClick={isStripeProv ? handleStripeDisconnect : ()=>handleDisconnect(p.id)} />
+                      </div>
                     </div>
-                  )}
-                </div>
+                  );
+                })}
               </div>
-            );
-          })}
+            )}
+          </div>
+
+          {/* ── POS & Ordering ── */}
+          <div>
+            <SectionHeader
+              title="POS & Ordering"
+              desc="Orders are pushed to your kitchen display after payment. Square, Clover, and Zettle also sync your live menu automatically."
+            />
+            {connectedPOS.length === 0 ? (
+              <EmptySection
+                icon="🖥️"
+                title="No POS connected"
+                sub="Connect Square, Clover, Zettle, or SpotOn to push orders to your kitchen display after every call."
+                onAdd={openModal}
+              />
+            ) : (
+              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))',gap:14}}>
+                {connectedPOS.map(int => {
+                  const isBusy = disconnecting === int.id;
+                  const hasMenu = MENU_SYNC_NAMES.includes(int.name);
+                  return (
+                    <div key={int.id} style={{background:T.white,border:`1.5px solid ${T.greenBd}`,borderRadius:16,padding:20,display:'flex',flexDirection:'column',gap:10}}>
+                      <div style={{display:'flex',alignItems:'center',gap:12}}>
+                        <div style={{width:46,height:46,borderRadius:13,background:T.greenBg,border:`1.5px solid ${T.greenBd}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,flexShrink:0}}>{intgIcon(int.name)}</div>
+                        <div>
+                          <div style={{fontSize:15,fontWeight:700,color:T.ink,marginBottom:4}}>{int.name}</div>
+                          <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
+                            <span style={{fontSize:10,fontWeight:700,background:T.greenBg,color:T.green,borderRadius:4,padding:'1px 6px',border:`1px solid ${T.greenBd}`}}>KDS</span>
+                            {hasMenu && <span style={{fontSize:10,fontWeight:700,background:'#EFF6FF',color:'#2563EB',borderRadius:4,padding:'1px 6px',border:'1px solid #BFDBFE'}}>Menu sync</span>}
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{fontSize:12.5,color:T.soft,lineHeight:1.55,flex:1}}>{intgDesc(int.name)}</div>
+                      {int.lastSynced && (
+                        <div style={{fontSize:11,color:T.faint}}>Connected {new Date(int.lastSynced).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>
+                      )}
+                      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',paddingTop:10,borderTop:`1px solid ${T.paper}`}}>
+                        <ConnectedBadge />
+                        <DisconnectBtn busy={isBusy} onClick={()=>handleDisconnect(int.id)} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* ── Reservations ── */}
+          <div>
+            <SectionHeader
+              title="Reservations"
+              desc="Your agent checks availability and books tables on every call. Deposits are charged via your primary payment provider."
+            />
+            {connectedReservation.length === 0 ? (
+              <EmptySection
+                icon="📅"
+                title="No reservation platform connected"
+                sub="Connect resOS, ResDiary, OpenTable, or Collins to handle table bookings automatically on every call."
+                onAdd={openModal}
+              />
+            ) : (
+              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))',gap:14}}>
+                {connectedReservation.map(int => {
+                  const isBusy = disconnecting === int.id;
+                  return (
+                    <div key={int.id} style={{background:T.white,border:`1.5px solid ${T.greenBd}`,borderRadius:16,padding:20,display:'flex',flexDirection:'column',gap:10}}>
+                      <div style={{display:'flex',alignItems:'center',gap:12}}>
+                        <div style={{width:46,height:46,borderRadius:13,background:T.greenBg,border:`1.5px solid ${T.greenBd}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,flexShrink:0}}>{intgIcon(int.name)}</div>
+                        <div>
+                          <div style={{fontSize:15,fontWeight:700,color:T.ink,marginBottom:4}}>{int.name}</div>
+                          <span style={{fontSize:10,fontWeight:700,background:'#F3F4F6',color:T.mid,borderRadius:4,padding:'1px 6px'}}>Reservations</span>
+                        </div>
+                      </div>
+                      <div style={{fontSize:12.5,color:T.soft,lineHeight:1.55,flex:1}}>{intgDesc(int.name)}</div>
+                      {int.lastSynced && (
+                        <div style={{fontSize:11,color:T.faint}}>Connected {new Date(int.lastSynced).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>
+                      )}
+                      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',paddingTop:10,borderTop:`1px solid ${T.paper}`}}>
+                        <ConnectedBadge />
+                        <DisconnectBtn busy={isBusy} onClick={()=>handleDisconnect(int.id)} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
         </div>
       )}
 
@@ -493,18 +491,45 @@ export default function PageIntegrations({ user, agentName, bizName }) {
             <div style={{padding:'22px 28px 28px'}}>
               {!pickedIntegration ? (
                 <div style={{display:'flex',flexDirection:'column',gap:8}}>
-                  {/* OAuth POS section */}
-                  <div style={{fontSize:10,fontWeight:700,color:T.mid,textTransform:'uppercase',letterSpacing:'.5px',marginBottom:4,marginTop:4}}>POS & Ordering (One-tap)</div>
-                  {OAUTH_POS_INTEGRATIONS.map(intg => {
+
+                  {/* Payments */}
+                  <div style={{fontSize:10,fontWeight:700,color:T.mid,textTransform:'uppercase',letterSpacing:'.5px',marginBottom:4,marginTop:4}}>Payments</div>
+                  {[
+                    { name:'Stripe', icon:'💳', desc:'Accept payments directly into your Stripe account', isOAuth:true, color:'#635BFF' },
+                    ...OAUTH_POS_INTEGRATIONS.filter(i => ['SumUp'].includes(i.name)),
+                  ].map(intg => {
+                    const already = connectedNames.has(intg.name);
+                    const isBusy = intg.name==='Stripe' ? stripeConnecting : oauthConnecting===intg.name;
+                    return (
+                      <div key={intg.name}
+                        style={{display:'flex',alignItems:'center',gap:14,padding:'14px 16px',borderRadius:12,border:`1.5px solid ${already?T.greenBd:T.line}`,background:already?T.greenBg:T.paper}}>
+                        <div style={{width:38,height:38,borderRadius:9,background:already?T.greenBg:T.white,border:`1.5px solid ${already?T.greenBd:T.line}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>{intg.icon}</div>
+                        <div style={{flex:1}}>
+                          <div style={{fontSize:13,fontWeight:700,color:T.ink}}>{intg.name}</div>
+                          <div style={{fontSize:11.5,color:T.soft,marginTop:1}}>{intg.desc}</div>
+                        </div>
+                        {already
+                          ? <span style={{fontSize:11,fontWeight:700,color:T.green,background:T.greenBg,border:`1px solid ${T.greenBd}`,borderRadius:50,padding:'3px 10px',flexShrink:0}}>Connected</span>
+                          : <button onClick={()=>{ intg.name==='Stripe' ? handleStripeConnect() : handleOAuthConnect(intg); }} disabled={isBusy}
+                              style={{fontSize:11,fontWeight:700,color:'white',background:intg.color,border:'none',borderRadius:50,padding:'5px 12px',flexShrink:0,cursor:isBusy?'not-allowed':'pointer',fontFamily:"'Outfit',sans-serif",opacity:isBusy?0.7:1}}>
+                              {isBusy?'…':'Connect →'}
+                            </button>}
+                      </div>
+                    );
+                  })}
+
+                  {/* POS & Ordering (one-tap) */}
+                  <div style={{fontSize:10,fontWeight:700,color:T.mid,textTransform:'uppercase',letterSpacing:'.5px',marginBottom:4,marginTop:10}}>POS & Ordering (One-tap)</div>
+                  {OAUTH_POS_INTEGRATIONS.filter(i => !['SumUp'].includes(i.name)).map(intg => {
                     const already = connectedNames.has(intg.name);
                     const isBusy = oauthConnecting === intg.name;
                     const locked = !isProPlan && PRO_ONLY_NAMES.includes(intg.name) && !already;
                     return (
                       <div key={intg.name}
-                        style={{display:'flex',alignItems:'center',gap:14,padding:'14px 16px',borderRadius:12,border:`1.5px solid ${already ? T.greenBd : T.line}`,background:already ? T.greenBg : T.paper,transition:'all .18s',opacity:locked?0.7:1}}>
-                        <div style={{width:40,height:40,borderRadius:10,background:already?T.greenBg:T.white,border:`1.5px solid ${already?T.greenBd:T.line}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>{intg.icon}</div>
+                        style={{display:'flex',alignItems:'center',gap:14,padding:'14px 16px',borderRadius:12,border:`1.5px solid ${already?T.greenBd:T.line}`,background:already?T.greenBg:T.paper,opacity:locked?0.7:1}}>
+                        <div style={{width:38,height:38,borderRadius:9,background:already?T.greenBg:T.white,border:`1.5px solid ${already?T.greenBd:T.line}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>{intg.icon}</div>
                         <div style={{flex:1}}>
-                          <div style={{fontSize:13,fontWeight:700,color:T.ink}}>{intg.name}{locked && <span style={{marginLeft:6,fontSize:10,fontWeight:700,background:T.amber,color:'white',borderRadius:4,padding:'1px 6px'}}>Pro</span>}</div>
+                          <div style={{fontSize:13,fontWeight:700,color:T.ink}}>{intg.name}{locked&&<span style={{marginLeft:6,fontSize:10,fontWeight:700,background:T.amber,color:'white',borderRadius:4,padding:'1px 5px'}}>Pro</span>}</div>
                           <div style={{fontSize:11.5,color:T.soft,marginTop:1}}>{intg.desc}</div>
                         </div>
                         {already
@@ -513,21 +538,22 @@ export default function PageIntegrations({ user, agentName, bizName }) {
                             ? <span style={{fontSize:11,fontWeight:700,color:T.p600,background:T.p50,border:`1px solid ${T.p100}`,borderRadius:50,padding:'3px 10px',flexShrink:0}}>🔒 Pro only</span>
                             : <button onClick={()=>handleOAuthConnect(intg)} disabled={isBusy}
                                 style={{fontSize:11,fontWeight:700,color:'white',background:intg.color,border:'none',borderRadius:50,padding:'5px 12px',flexShrink:0,cursor:isBusy?'not-allowed':'pointer',fontFamily:"'Outfit',sans-serif",opacity:isBusy?0.7:1}}>
-                                {isBusy?'…':`Connect →`}
+                                {isBusy?'…':'Connect →'}
                               </button>}
                       </div>
                     );
                   })}
-                  {/* Credential-based POS section */}
-                  <div style={{fontSize:10,fontWeight:700,color:T.mid,textTransform:'uppercase',letterSpacing:'.5px',marginBottom:4,marginTop:8}}>Other POS</div>
+
+                  {/* Other POS */}
+                  <div style={{fontSize:10,fontWeight:700,color:T.mid,textTransform:'uppercase',letterSpacing:'.5px',marginBottom:4,marginTop:10}}>Other POS</div>
                   {POS_INTEGRATIONS.map(intg => {
                     const already = connectedNames.has(intg.name);
                     return (
-                      <div key={intg.name} onClick={()=>!already && pickIntegration(intg)}
-                        style={{display:'flex',alignItems:'center',gap:14,padding:'14px 16px',borderRadius:12,border:`1.5px solid ${already ? T.greenBd : T.line}`,background:already ? T.greenBg : T.paper,cursor:already?'default':'pointer',transition:'all .18s'}}
+                      <div key={intg.name} onClick={()=>!already&&pickIntegration(intg)}
+                        style={{display:'flex',alignItems:'center',gap:14,padding:'14px 16px',borderRadius:12,border:`1.5px solid ${already?T.greenBd:T.line}`,background:already?T.greenBg:T.paper,cursor:already?'default':'pointer'}}
                         onMouseEnter={e=>{ if(!already){e.currentTarget.style.borderColor=T.p300;e.currentTarget.style.background=T.p50;} }}
                         onMouseLeave={e=>{ if(!already){e.currentTarget.style.borderColor=T.line;e.currentTarget.style.background=T.paper;} }}>
-                        <div style={{width:40,height:40,borderRadius:10,background:already?T.greenBg:T.white,border:`1.5px solid ${already?T.greenBd:T.line}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>{intg.icon}</div>
+                        <div style={{width:38,height:38,borderRadius:9,background:already?T.greenBg:T.white,border:`1.5px solid ${already?T.greenBd:T.line}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>{intg.icon}</div>
                         <div style={{flex:1}}>
                           <div style={{fontSize:13,fontWeight:700,color:T.ink}}>{intg.name}</div>
                           <div style={{fontSize:11.5,color:T.soft,marginTop:1}}>{intg.desc}</div>
@@ -538,19 +564,20 @@ export default function PageIntegrations({ user, agentName, bizName }) {
                       </div>
                     );
                   })}
-                  {/* Reservation section */}
+
+                  {/* Reservations */}
                   <div style={{fontSize:10,fontWeight:700,color:T.mid,textTransform:'uppercase',letterSpacing:'.5px',marginBottom:4,marginTop:12}}>Reservations</div>
                   {RESERVATION_INTEGRATIONS.map(intg => {
                     const already = connectedNames.has(intg.name);
                     const locked = !isProPlan && PRO_ONLY_NAMES.includes(intg.name) && !already;
                     return (
-                      <div key={intg.name} onClick={()=>!already && !locked && pickIntegration(intg)}
-                        style={{display:'flex',alignItems:'center',gap:14,padding:'14px 16px',borderRadius:12,border:`1.5px solid ${already ? T.greenBd : T.line}`,background:already ? T.greenBg : T.paper,cursor:(already||locked)?'default':'pointer',transition:'all .18s',opacity:locked?0.7:1}}
-                        onMouseEnter={e=>{ if(!already && !locked){e.currentTarget.style.borderColor=T.p300;e.currentTarget.style.background=T.p50;} }}
-                        onMouseLeave={e=>{ if(!already && !locked){e.currentTarget.style.borderColor=T.line;e.currentTarget.style.background=T.paper;} }}>
-                        <div style={{width:40,height:40,borderRadius:10,background:already?T.greenBg:T.white,border:`1.5px solid ${already?T.greenBd:T.line}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>{intg.icon}</div>
+                      <div key={intg.name} onClick={()=>!already&&!locked&&pickIntegration(intg)}
+                        style={{display:'flex',alignItems:'center',gap:14,padding:'14px 16px',borderRadius:12,border:`1.5px solid ${already?T.greenBd:T.line}`,background:already?T.greenBg:T.paper,cursor:(already||locked)?'default':'pointer',opacity:locked?0.7:1}}
+                        onMouseEnter={e=>{ if(!already&&!locked){e.currentTarget.style.borderColor=T.p300;e.currentTarget.style.background=T.p50;} }}
+                        onMouseLeave={e=>{ if(!already&&!locked){e.currentTarget.style.borderColor=T.line;e.currentTarget.style.background=T.paper;} }}>
+                        <div style={{width:38,height:38,borderRadius:9,background:already?T.greenBg:T.white,border:`1.5px solid ${already?T.greenBd:T.line}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>{intg.icon}</div>
                         <div style={{flex:1}}>
-                          <div style={{fontSize:13,fontWeight:700,color:T.ink}}>{intg.name}{locked && <span style={{marginLeft:6,fontSize:10,fontWeight:700,background:T.amber,color:'white',borderRadius:4,padding:'1px 6px'}}>Pro</span>}</div>
+                          <div style={{fontSize:13,fontWeight:700,color:T.ink}}>{intg.name}{locked&&<span style={{marginLeft:6,fontSize:10,fontWeight:700,background:T.amber,color:'white',borderRadius:4,padding:'1px 5px'}}>Pro</span>}</div>
                           <div style={{fontSize:11.5,color:T.soft,marginTop:1}}>{intg.desc}</div>
                         </div>
                         {already
@@ -573,7 +600,7 @@ export default function PageIntegrations({ user, agentName, bizName }) {
                         <label style={{display:'block',fontSize:11,fontWeight:700,color:T.mid,marginBottom:5,textTransform:'uppercase',letterSpacing:'.4px'}}>{f.label}</label>
                         <input type="text" value={configValues[f.key]||''} onChange={e=>{ setConfigValues(v=>({...v,[f.key]:e.target.value})); setConfigError(''); }}
                           placeholder={f.placeholder}
-                          style={{width:'100%',padding:'11px 14px',borderRadius:10,border:`1.5px solid ${T.line}`,fontSize:13,fontFamily:"'Outfit',sans-serif",outline:'none',boxSizing:'border-box',background:T.paper,color:T.ink,transition:'border-color .2s'}}
+                          style={{width:'100%',padding:'11px 14px',borderRadius:10,border:`1.5px solid ${T.line}`,fontSize:13,fontFamily:"'Outfit',sans-serif",outline:'none',boxSizing:'border-box',background:T.paper,color:T.ink}}
                           onFocus={e=>e.target.style.borderColor=T.p400} onBlur={e=>e.target.style.borderColor=T.line}/>
                       </div>
                     ))}
