@@ -25,10 +25,22 @@ function formatDate(iso) {
   return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+const GROWTH_PRICE_ID = import.meta.env.VITE_STRIPE_GROWTH_PRICE_ID;
+const PRO_PRICE_ID    = import.meta.env.VITE_STRIPE_PRO_PRICE_ID;
+
+const PLANS = [
+  { key: 'GROWTH', label: 'Growth', price: '£99', calls: '500 calls/mo', priceId: GROWTH_PRICE_ID, color: T.p500 },
+  { key: 'PRO',    label: 'Pro',    price: '£179', calls: '1,000 calls/mo', priceId: PRO_PRICE_ID, color: '#7C3AED', popular: true },
+];
+
 export default function PageBilling({ user, agentName }) {
   const [sub, setSub] = useState(null);
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showPlanModal, setShowPlanModal] = useState(false);
+  const [changingPlan, setChangingPlan] = useState(null);
+  const [planError, setPlanError] = useState('');
+  const [portalLoading, setPortalLoading] = useState(false);
 
   useEffect(() => {
     Promise.all([api.billing.get(), api.billing.getInvoices()])
@@ -36,6 +48,30 @@ export default function PageBilling({ user, agentName }) {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  const handleChangePlan = async (plan) => {
+    setPlanError('');
+    setChangingPlan(plan.key);
+    try {
+      const updated = await api.billing.changePlan({ priceId: plan.priceId, plan: plan.key });
+      setSub(prev => ({ ...prev, plan: plan.key, ...updated }));
+      setShowPlanModal(false);
+    } catch (e) {
+      setPlanError(e?.message || 'Could not change plan. Try again.');
+    }
+    setChangingPlan(null);
+  };
+
+  const handlePaymentMethod = async () => {
+    if (!sub?.stripeCustomerId) { setShowPlanModal(true); return; }
+    setPortalLoading(true);
+    try {
+      const { url } = await api.billing.getPortal();
+      window.location.href = url;
+    } catch (e) {
+      setPortalLoading(false);
+    }
+  };
 
   const statusKey = sub?.status || 'NO_SUBSCRIPTION';
   const badge = STATUS_BADGE[statusKey] || STATUS_BADGE.NO_SUBSCRIPTION;
@@ -77,11 +113,11 @@ export default function PageBilling({ user, agentName }) {
                 </div>
               )}
               <div style={{display:"flex",gap:8}}>
-                <button style={{background:"rgba(255,255,255,.15)",border:"1px solid rgba(255,255,255,.2)",borderRadius:50,padding:"9px 20px",fontSize:13,fontWeight:600,color:"white",cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
+                <button onClick={()=>{ setShowPlanModal(true); setPlanError(''); }} style={{background:"rgba(255,255,255,.15)",border:"1px solid rgba(255,255,255,.2)",borderRadius:50,padding:"9px 20px",fontSize:13,fontWeight:600,color:"white",cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
                   {sub?.status === 'TRIALING' ? 'Upgrade plan' : 'Change plan'}
                 </button>
                 {sub?.status === 'ACTIVE' && (
-                  <button style={{background:"transparent",border:"1px solid rgba(255,255,255,.15)",borderRadius:50,padding:"9px 20px",fontSize:13,fontWeight:600,color:"rgba(255,255,255,.6)",cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>Cancel</button>
+                  <button onClick={async()=>{ try{ await api.billing.cancel(); setSub(p=>({...p,status:'CANCELED'})); }catch{} }} style={{background:"transparent",border:"1px solid rgba(255,255,255,.15)",borderRadius:50,padding:"9px 20px",fontSize:13,fontWeight:600,color:"rgba(255,255,255,.6)",cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>Cancel</button>
                 )}
               </div>
             </>
@@ -213,12 +249,58 @@ export default function PageBilling({ user, agentName }) {
               </div>
             )}
           </div>
-          <button style={{width:"100%",background:`linear-gradient(135deg, ${T.ink}, ${T.ink2})`,border:"none",color:"white",fontWeight:600,fontSize:14,padding:"12px 0",borderRadius:10,cursor:"pointer",marginBottom:12,boxShadow:`0 4px 12px rgba(0,0,0,0.15)`}}>
-            {sub?.stripeCustomerId ? 'Update payment method' : 'Add payment method'}
+          <button onClick={handlePaymentMethod} disabled={portalLoading} style={{width:"100%",background:`linear-gradient(135deg, ${T.ink}, ${T.ink2})`,border:"none",color:"white",fontWeight:600,fontSize:14,padding:"12px 0",borderRadius:10,cursor:portalLoading?"not-allowed":"pointer",marginBottom:12,boxShadow:`0 4px 12px rgba(0,0,0,0.15)`,opacity:portalLoading?0.7:1}}>
+            {portalLoading ? 'Loading…' : sub?.stripeCustomerId ? 'Update payment method' : 'Add payment method'}
           </button>
           <p style={{fontSize:12,color:T.soft,textAlign:"center",margin:0}}>🔒 Secured by Stripe</p>
         </div>
       </div>
+      {/* ── Plan Change Modal ── */}
+      {showPlanModal && (
+        <div style={{position:'fixed',inset:0,zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',padding:24}} onClick={()=>setShowPlanModal(false)}>
+          <div style={{position:'absolute',inset:0,background:'rgba(19,13,46,.45)',backdropFilter:'blur(6px)'}}/>
+          <div onClick={e=>e.stopPropagation()} style={{position:'relative',width:'100%',maxWidth:520,background:T.white,border:`1.5px solid ${T.line}`,borderRadius:22,boxShadow:`0 24px 80px rgba(134,87,255,.18)`,animation:'fadeUp .3s ease both',overflow:'hidden'}}>
+            <div style={{padding:'24px 28px 18px',borderBottom:`1px solid ${T.line}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <div>
+                <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:900,color:T.ink,margin:0}}>Choose a plan</h3>
+                <p style={{margin:'4px 0 0',fontSize:12,color:T.soft}}>Change takes effect at your next billing cycle — no immediate charge</p>
+              </div>
+              <button onClick={()=>setShowPlanModal(false)} style={{width:32,height:32,borderRadius:'50%',border:`1.5px solid ${T.line}`,background:T.paper,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',fontSize:14,color:T.mid}}>✕</button>
+            </div>
+            <div style={{padding:'22px 28px 28px',display:'flex',flexDirection:'column',gap:12}}>
+              {PLANS.map(plan => {
+                const isCurrent = sub?.plan === plan.key;
+                const isBusy = changingPlan === plan.key;
+                return (
+                  <div key={plan.key} style={{border:`1.5px solid ${isCurrent ? T.p200 : plan.popular ? '#DDD6FE' : T.line}`,borderRadius:16,padding:'18px 20px',background:isCurrent ? T.p50 : plan.popular ? '#FAF5FF' : T.paper,position:'relative'}}>
+                    {plan.popular && !isCurrent && <span style={{position:'absolute',top:12,right:12,fontSize:10,fontWeight:700,background:'#7C3AED',color:'white',borderRadius:50,padding:'2px 8px'}}>Most popular</span>}
+                    {isCurrent && <span style={{position:'absolute',top:12,right:12,fontSize:10,fontWeight:700,background:T.p500,color:'white',borderRadius:50,padding:'2px 8px'}}>Current plan</span>}
+                    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                      <div>
+                        <div style={{fontSize:16,fontWeight:800,color:T.ink,marginBottom:2}}>{plan.label}</div>
+                        <div style={{fontSize:12,color:T.soft}}>{plan.calls} · {plan.price}/mo</div>
+                      </div>
+                      {!isCurrent && (
+                        <button onClick={()=>handleChangePlan(plan)} disabled={!!changingPlan} style={{padding:'9px 20px',borderRadius:50,border:'none',background:plan.popular?'#7C3AED':T.p500,color:'white',fontSize:13,fontWeight:700,cursor:changingPlan?'not-allowed':'pointer',fontFamily:"'Outfit',sans-serif",opacity:changingPlan?0.7:1,whiteSpace:'nowrap'}}>
+                          {isBusy ? 'Switching…' : `Switch to ${plan.label} →`}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              <div style={{padding:'14px 16px',borderRadius:12,border:`1.5px solid ${T.line}`,background:T.paper,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                <div>
+                  <div style={{fontSize:14,fontWeight:700,color:T.ink}}>Enterprise</div>
+                  <div style={{fontSize:12,color:T.soft}}>Custom volume · Dedicated support</div>
+                </div>
+                <a href="mailto:product@uvanatech.com" style={{padding:'9px 18px',borderRadius:50,border:`1.5px solid ${T.line}`,background:'transparent',color:T.mid,fontSize:13,fontWeight:700,textDecoration:'none',whiteSpace:'nowrap'}}>Contact sales →</a>
+              </div>
+              {planError && <div style={{fontSize:13,color:T.red,background:T.redBg,border:`1px solid ${T.red}`,borderRadius:8,padding:'9px 12px'}}>{planError}</div>}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

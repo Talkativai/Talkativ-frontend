@@ -4,6 +4,8 @@ import { api } from "../../api.js";
 import { POS_SYSTEMS } from "../../utils/constants";
 import ObShell from "./ObShell";
 
+const OAUTH_NAMES = ['Square', 'Clover', 'SumUp', 'Zettle'];
+
 export default function Step3({ onNext, onBack }) {
   const [sel, setSel] = useState(0);
   const [url, setUrl] = useState("");
@@ -77,6 +79,8 @@ export default function Step3({ onNext, onBack }) {
       if (!file) { setError("Please select a file."); return; }
     } else {
       if (!posSelected) { setError("Please select an integration."); return; }
+      // OAuth integrations connect later — just skip ahead
+      if (OAUTH_NAMES.includes(posSelected)) { onNext(); return; }
       const pos = POS_SYSTEMS.find(p => p.name === posSelected);
       const missing = pos?.fields.find(f => !posFields[f.key]?.trim());
       if (missing) { setError(`${missing.label} is required.`); return; }
@@ -153,7 +157,7 @@ export default function Step3({ onNext, onBack }) {
   return (
     <>
     <ObShell step={3} onNext={result ? onNext : handleImport} onBack={onBack}
-      nextLabel={loading ? (sel === 2 ? "Connecting…" : "Importing…") : result ? "Continue →" : sel === 2 ? (posSelected ? "Connect POS →" : "Skip for now →") : "Import menu →"}>
+      nextLabel={loading ? (sel === 2 ? "Connecting…" : "Importing…") : result ? "Continue →" : sel === 2 ? (posSelected ? (OAUTH_NAMES.includes(posSelected) ? "Continue →" : "Connect POS →") : "Skip for now →") : "Import menu →"}>
       <div className="ob-step-label">Step 4 · Menu</div>
       <h1 className="ob-heading">Import your<br /><em>menu</em></h1>
       <p className="ob-subheading">We parse it automatically — no manual entry. Your AI uses this to answer customer questions and take orders.</p>
@@ -234,9 +238,22 @@ export default function Step3({ onNext, onBack }) {
             })}
           </div>
 
-          {/* Credential fields for selected integration */}
+          {/* Credential fields or OAuth note for selected integration */}
           {posSelected && (() => {
             const pos = POS_SYSTEMS.find(p => p.name === posSelected);
+            if (OAUTH_NAMES.includes(posSelected)) {
+              return (
+                <div style={{ background: '#EFF6FF', border: '1.5px solid #BFDBFE', borderRadius: 14, padding: "16px 18px", marginBottom: 14, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                  <span style={{ fontSize: 20 }}>🔗</span>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#1E40AF', marginBottom: 4 }}>{pos.icon} {pos.name} uses one-tap connect</div>
+                    <div style={{ fontSize: 12.5, color: '#1E40AF', lineHeight: 1.6 }}>
+                      You'll connect {pos.name} from the <strong>Integrations</strong> page after completing setup — it only takes one click. No credentials needed.
+                    </div>
+                  </div>
+                </div>
+              );
+            }
             return (
               <div style={{ background: T.paper, borderRadius: 14, padding: "16px 18px", border: `1.5px solid ${T.line}`, marginBottom: 14 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: T.ink, marginBottom: 12 }}>{pos.icon} {pos.name} credentials</div>
