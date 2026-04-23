@@ -390,9 +390,27 @@ function PageIntegrations() {
         <Card icon="🤖" name="Anthropic (Claude)" data={an}>
           {an?.totalExtractions != null && <Row label="Total extractions run" value={an.totalExtractions?.toLocaleString()} />}
           {an?.last30DaysInputTokens != null ? <>
-            <Row label="Last 30d input tokens" value={an.last30DaysInputTokens?.toLocaleString()} />
-            <Row label="Last 30d output tokens" value={an.last30DaysOutputTokens?.toLocaleString()} />
-            <Row label="Last 30d cache tokens" value={an.last30DaysCacheTokens?.toLocaleString()} />
+            {an.estimatedCostUsd != null && (
+              <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 10, padding: "10px 14px", marginBottom: 10 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "#166534", textTransform: "uppercase", letterSpacing: ".5px", marginBottom: 2 }}>Estimated spend (last 30d)</div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: "#166534" }}>${an.estimatedCostUsd.toFixed(2)}</div>
+                <div style={{ fontSize: 11, color: "#15803d", marginTop: 2 }}>Based on Anthropic's public pricing. Excludes volume discounts.</div>
+              </div>
+            )}
+            <Row label="Input tokens" value={an.last30DaysInputTokens?.toLocaleString()} />
+            <Row label="Output tokens" value={an.last30DaysOutputTokens?.toLocaleString()} />
+            <Row label="Cache write tokens" value={an.last30DaysCacheTokens?.toLocaleString()} />
+            {an.byModel?.length > 0 && (
+              <div style={{ marginTop: 10 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: T.soft, textTransform: "uppercase", letterSpacing: ".5px", marginBottom: 6 }}>By model</div>
+                {an.byModel.map(m => (
+                  <div key={m.model} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 0", borderBottom: "1px solid #f1f5f9", fontSize: 12 }}>
+                    <span style={{ color: T.ink, fontWeight: 600, fontFamily: "monospace", fontSize: 11 }}>{m.model}</span>
+                    <span style={{ color: T.soft }}>${m.estimatedCostUsd.toFixed(3)} · {(m.inputTokens + m.outputTokens).toLocaleString()} tokens</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </> : an?.note && (
             <div style={{ fontSize: 12, color: T.soft, fontStyle: "italic", marginTop: 6, lineHeight: 1.5 }}>
               {an.note}
