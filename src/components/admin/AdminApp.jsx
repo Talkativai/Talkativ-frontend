@@ -390,27 +390,55 @@ function PageIntegrations() {
         <Card icon="🤖" name="Anthropic (Claude)" data={an}>
           {an?.totalExtractions != null && <Row label="Total extractions run" value={an.totalExtractions?.toLocaleString()} />}
           {an?.last30DaysInputTokens != null ? <>
-            {an.estimatedCostUsd != null && (
-              <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 10, padding: "10px 14px", marginBottom: 10 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: "#166534", textTransform: "uppercase", letterSpacing: ".5px", marginBottom: 2 }}>Estimated spend (last 30d)</div>
-                <div style={{ fontSize: 22, fontWeight: 800, color: "#166534" }}>${an.estimatedCostUsd.toFixed(2)}</div>
-                <div style={{ fontSize: 11, color: "#15803d", marginTop: 2 }}>Based on Anthropic's public pricing. Excludes volume discounts.</div>
+            {/* Actual cost from cost_report */}
+            <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 10, padding: "10px 14px", marginBottom: 10 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#166534", textTransform: "uppercase", letterSpacing: ".5px", marginBottom: 2 }}>Actual spend (last 30d)</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "#166534" }}>
+                {an.actualCostUsd != null
+                  ? an.actualCostUsd < 0.01
+                    ? `$${an.actualCostUsd.toFixed(6)}`
+                    : `$${an.actualCostUsd.toFixed(4)}`
+                  : '—'}
+              </div>
+              <div style={{ fontSize: 11, color: "#15803d", marginTop: 2 }}>Reported directly by Anthropic's cost API</div>
+            </div>
+
+            {/* Token counts */}
+            <Row label="Input tokens (30d)" value={an.last30DaysInputTokens?.toLocaleString()} />
+            <Row label="Output tokens (30d)" value={an.last30DaysOutputTokens?.toLocaleString()} />
+            <Row label="Cache write tokens (30d)" value={an.last30DaysCacheTokens?.toLocaleString()} />
+
+            {/* Cost breakdown by type */}
+            {an.costByType && Object.keys(an.costByType).length > 0 && (
+              <div style={{ marginTop: 10 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: T.soft, textTransform: "uppercase", letterSpacing: ".5px", marginBottom: 6 }}>Cost breakdown</div>
+                {Object.entries(an.costByType).map(([k, v]) => (
+                  <div key={k} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", borderBottom: "1px solid #f1f5f9", fontSize: 12 }}>
+                    <span style={{ color: T.mid }}>{k.replace(/_cost$/, '').replace(/_/g, ' ')}</span>
+                    <span style={{ color: T.ink, fontWeight: 600 }}>${Number(v).toFixed(6)}</span>
+                  </div>
+                ))}
               </div>
             )}
-            <Row label="Input tokens" value={an.last30DaysInputTokens?.toLocaleString()} />
-            <Row label="Output tokens" value={an.last30DaysOutputTokens?.toLocaleString()} />
-            <Row label="Cache write tokens" value={an.last30DaysCacheTokens?.toLocaleString()} />
+
+            {/* By model */}
             {an.byModel?.length > 0 && (
               <div style={{ marginTop: 10 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: T.soft, textTransform: "uppercase", letterSpacing: ".5px", marginBottom: 6 }}>By model</div>
                 {an.byModel.map(m => (
                   <div key={m.model} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 0", borderBottom: "1px solid #f1f5f9", fontSize: 12 }}>
-                    <span style={{ color: T.ink, fontWeight: 600, fontFamily: "monospace", fontSize: 11 }}>{m.model}</span>
-                    <span style={{ color: T.soft }}>${m.estimatedCostUsd.toFixed(3)} · {(m.inputTokens + m.outputTokens).toLocaleString()} tokens</span>
+                    <span style={{ color: T.ink, fontWeight: 600, fontFamily: "monospace", fontSize: 10.5 }}>{m.model}</span>
+                    <span style={{ color: T.soft }}>{m.totalTokens?.toLocaleString()} tokens</span>
                   </div>
                 ))}
               </div>
             )}
+
+            {/* Credits note */}
+            <div style={{ marginTop: 12, background: "#fefce8", border: "1px solid #fde68a", borderRadius: 8, padding: "8px 12px", fontSize: 11.5, color: "#92400e", lineHeight: 1.5 }}>
+              💳 Credit balance & deposit history are not available via API —
+              check <a href="https://console.anthropic.com" target="_blank" rel="noreferrer" style={{ color: "#92400e", fontWeight: 700 }}>console.anthropic.com</a>
+            </div>
           </> : an?.note && (
             <div style={{ fontSize: 12, color: T.soft, fontStyle: "italic", marginTop: 6, lineHeight: 1.5 }}>
               {an.note}
