@@ -69,9 +69,9 @@ export default function PageDashboard({ onNav, user, agentName, bizName, agentDa
   return (
     <>
       <div className="dash-topbar">
-        <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
-          <button className="resp-show-mobile" onClick={() => document.body.classList.add('mob-nav-open')} style={{ background: "transparent", border: "none", fontSize: 26, cursor: "pointer", padding: 0, color: T.ink, marginTop: -2 }}>☰</button>
-          <div>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 12, flex: 1, minWidth: 0 }}>
+          <button className="resp-show-mobile" onClick={() => document.body.classList.add('mob-nav-open')} style={{ background: "transparent", border: "none", fontSize: 26, cursor: "pointer", padding: 0, color: T.ink, marginTop: 2, flexShrink: 0 }}>☰</button>
+          <div className="dash-topbar-left">
             <div className="dash-date">{dateStr}</div>
             <div className="dash-greeting">{greeting}, <strong>{firstName || 'there'}</strong> 👋</div>
             <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, marginTop: 8 }}>
@@ -127,7 +127,7 @@ export default function PageDashboard({ onNav, user, agentName, bizName, agentDa
             </div>
           </div>
         </div>
-        <div className="dash-topbar-right">
+        <div className="dash-topbar-right" style={{ flexShrink: 0 }}>
           <div className="dash-live-badge">
             <div style={{ width:7, height:7, borderRadius:"50%", background:T.green, animation:"pulse 2s infinite" }} />
             {displayAgent} live

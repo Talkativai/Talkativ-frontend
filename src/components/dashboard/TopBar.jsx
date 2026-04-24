@@ -6,9 +6,9 @@ export default function TopBar({ title, subtitle, children, user, agentName }) {
   const dateStr = today.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).replace(',', ' ·');
   return (
     <div className="dash-topbar">
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
-        <button className="resp-show-mobile" onClick={() => document.body.classList.add('mob-nav-open')} style={{ background: "transparent", border: "none", fontSize: 26, cursor: "pointer", padding: 0, color: T.ink, marginTop: -2 }}>☰</button>
-        <div>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 12, flex: 1, minWidth: 0 }}>
+        <button className="resp-show-mobile" onClick={() => document.body.classList.add('mob-nav-open')} style={{ background: "transparent", border: "none", fontSize: 26, cursor: "pointer", padding: 0, color: T.ink, marginTop: 2, flexShrink: 0 }}>☰</button>
+        <div className="dash-topbar-left">
           <div className="dash-date">{dateStr}</div>
           <div className="page-title">{title}</div>
           {subtitle && <div className="page-sub">{subtitle}</div>}

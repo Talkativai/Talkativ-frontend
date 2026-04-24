@@ -773,6 +773,7 @@ textarea.form-input { resize: none; line-height: 1.6; }
 .dash-greeting em { font-style: italic; color: ${T.p600}; }
 .dash-date { font-size: 12px; color: ${T.soft}; margin-bottom: 5px; font-weight: 500; text-transform: uppercase; letter-spacing: .5px; }
 .dash-topbar-right { display: flex; align-items: center; gap: 12px; }
+.dash-topbar-left { flex: 1; min-width: 0; }
 .dash-live-badge {
   display: flex; align-items: center; gap: 6px;
   background: ${T.greenBg}; border: 1.5px solid ${T.greenBd};
@@ -967,6 +968,10 @@ textarea.form-input { resize: none; line-height: 1.6; }
 .resp-2col-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .resp-3col-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 
+/* ── HORIZONTAL SCROLL STRIP (filter tabs, etc.) ── */
+.mob-scroll-x { display: flex; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; gap: 6px; }
+.mob-scroll-x::-webkit-scrollbar { display: none; }
+
 /* ── TRANSCRIPT PANEL ── */
 @keyframes slideDown {
   from { max-height: 0; opacity: 0; }
@@ -1110,6 +1115,18 @@ textarea.form-input { resize: none; line-height: 1.6; }
   }
   .ob-overlay.ob-open { opacity: 1; pointer-events: auto; }
   .ob-hamburger { display: flex !important; }
+
+  /* Settings section nav: horizontal scrollable tab strip */
+  .settings-page > .card:first-child {
+    display: flex !important; flex-direction: row !important;
+    overflow-x: auto !important; gap: 6px !important;
+    padding: 10px !important; height: auto !important; scrollbar-width: none;
+  }
+  .settings-page > .card:first-child::-webkit-scrollbar { display: none; }
+  .settings-page > .card:first-child > * {
+    white-space: nowrap !important; flex-shrink: 0 !important; margin-bottom: 0 !important;
+    padding: 8px 14px !important;
+  }
 }
 
 /* MOBILE (max 768px) */
@@ -1152,10 +1169,16 @@ textarea.form-input { resize: none; line-height: 1.6; }
   .lb-btn { margin-left: 0; }
   .proof-bar { padding: 20px; flex-direction: column; gap: 16px; }
   .proof-div { display: none; }
-  .dash-topbar { flex-wrap: wrap; gap: 10px; align-items: flex-start; }
-  .dash-topbar-right { width: 100%; justify-content: flex-end; }
+
+  /* TopBar: single-row layout — right side never wraps to new row */
+  .dash-topbar { flex-wrap: nowrap !important; align-items: flex-start !important; gap: 10px !important; }
+  .dash-topbar-right { flex-shrink: 0 !important; width: auto !important; }
+  .dash-date { display: none !important; }
   .page-title { font-size: 20px !important; }
   .page-sub { font-size: 12px; }
+
+  /* iOS: prevent auto-zoom on input focus */
+  input, select, textarea { font-size: 16px !important; }
   .landing-nav-links { display: none !important; }
 
   /* Success screen */
@@ -1193,20 +1216,26 @@ textarea.form-input { resize: none; line-height: 1.6; }
   .feat-card { padding: 24px 20px; }
   .proof-bar { padding: 16px; }
   .success-screen { padding: 32px 16px; }
-  .success-h1 { font-size: 30px !important; }
+  .success-h1 { font-size: 30px !important; letter-spacing: -1px; }
   .success-sub { font-size: 14px; max-width: 300px; }
   .ss-val { font-size: 24px; }
   .resp-2col-grid { grid-template-columns: 1fr !important; }
   .resp-3col-grid { grid-template-columns: 1fr !important; }
-  .dash-topbar { margin-bottom: 20px; }
-  .dash-topbar-right { flex-wrap: wrap; gap: 8px; }
-  .dash-live-badge { font-size: 11px; padding: 5px 12px; }
+  .dash-topbar { margin-bottom: 16px; }
+  .dash-topbar-right { gap: 6px; }
+  .dash-live-badge { display: none !important; }
+  .page-sub { display: none !important; }
   .btn-secondary { font-size: 12px; padding: 8px 16px; }
   .ob-main { padding: 20px 16px; }
   .ob-heading { font-size: 26px !important; }
   .plan-price { font-size: 34px !important; }
   .transcript-turn.agent { margin-right: 16px; }
   .transcript-turn.caller { margin-left: 16px; }
+  .card-head { margin-bottom: 14px !important; }
+  .agent-meta { grid-template-columns: 1fr 1fr !important; }
+  .dash-greeting { font-size: 22px !important; }
+  /* Settings section nav smaller on tiny screens */
+  .settings-page > .card:first-child > * { padding: 7px 10px !important; font-size: 12.5px !important; }
 }
 
 \n`;
