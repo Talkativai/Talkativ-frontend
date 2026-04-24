@@ -112,7 +112,7 @@ const PAYMENT_NAMES     = ['Stripe', 'Square', 'Clover', 'SumUp', 'Zettle'];
 const POS_NAMES         = ['Square', 'Clover', 'Zettle', 'SpotOn'];
 const RESERVATION_NAMES = ['resOS', 'ResDiary', 'OpenTable', 'Collins'];
 const MENU_SYNC_NAMES   = ['Square', 'Clover', 'Zettle'];
-const PRO_ONLY_NAMES    = ['Square', 'Clover', 'Zettle', 'SpotOn', 'resOS', 'ResDiary', 'OpenTable', 'Collins'];
+const PRO_ONLY_NAMES    = ['Square', 'Clover', 'Zettle', 'SpotOn', 'SumUp', 'resOS', 'ResDiary', 'OpenTable', 'Collins'];
 
 export default function PageIntegrations({ user, agentName, bizName }) {
   const displayBiz = bizName || "your business";
@@ -377,7 +377,7 @@ export default function PageIntegrations({ user, agentName, bizName }) {
               <EmptySection
                 icon="💳"
                 title="No payment provider connected"
-                sub="Connect Stripe or SumUp so customers can pay you directly on every call."
+                sub={isProPlan ? "Connect Stripe, SumUp, Square, Clover, or Zettle so customers can pay you directly on every call." : "Connect Stripe so customers can pay you directly on every call."}
                 onAdd={openModal}
               />
             ) : (
@@ -532,20 +532,23 @@ export default function PageIntegrations({ user, agentName, bizName }) {
                   ].map(intg => {
                     const already = connectedNames.has(intg.name);
                     const isBusy = intg.name==='Stripe' ? stripeConnecting : oauthConnecting===intg.name;
+                    const locked = !isProPlan && PRO_ONLY_NAMES.includes(intg.name) && !already;
                     return (
                       <div key={intg.name}
-                        style={{display:'flex',alignItems:'center',gap:14,padding:'14px 16px',borderRadius:12,border:`1.5px solid ${already?T.greenBd:T.line}`,background:already?T.greenBg:T.paper}}>
+                        style={{display:'flex',alignItems:'center',gap:14,padding:'14px 16px',borderRadius:12,border:`1.5px solid ${already?T.greenBd:T.line}`,background:already?T.greenBg:T.paper,opacity:locked?0.7:1}}>
                         <div style={{width:38,height:38,borderRadius:9,background:already?T.greenBg:T.white,border:`1.5px solid ${already?T.greenBd:T.line}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>{intg.icon}</div>
                         <div style={{flex:1}}>
-                          <div style={{fontSize:13,fontWeight:700,color:T.ink}}>{intg.name}</div>
+                          <div style={{fontSize:13,fontWeight:700,color:T.ink}}>{intg.name}{locked&&<span style={{marginLeft:6,fontSize:10,fontWeight:700,background:T.amber,color:'white',borderRadius:4,padding:'1px 5px'}}>Pro</span>}</div>
                           <div style={{fontSize:11.5,color:T.soft,marginTop:1}}>{intg.desc}</div>
                         </div>
                         {already
                           ? <span style={{fontSize:11,fontWeight:700,color:T.green,background:T.greenBg,border:`1px solid ${T.greenBd}`,borderRadius:50,padding:'3px 10px',flexShrink:0}}>Connected</span>
-                          : <button onClick={()=>{ intg.name==='Stripe' ? handleStripeConnect() : handleOAuthConnect(intg); }} disabled={isBusy}
-                              style={{fontSize:11,fontWeight:700,color:'white',background:intg.color,border:'none',borderRadius:50,padding:'5px 12px',flexShrink:0,cursor:isBusy?'not-allowed':'pointer',fontFamily:"'Outfit',sans-serif",opacity:isBusy?0.7:1}}>
-                              {isBusy?'…':'Connect →'}
-                            </button>}
+                          : locked
+                            ? <span style={{fontSize:11,fontWeight:700,color:T.p600,background:T.p50,border:`1px solid ${T.p100}`,borderRadius:50,padding:'3px 10px',flexShrink:0}}>🔒 Pro only</span>
+                            : <button onClick={()=>{ intg.name==='Stripe' ? handleStripeConnect() : handleOAuthConnect(intg); }} disabled={isBusy}
+                                style={{fontSize:11,fontWeight:700,color:'white',background:intg.color,border:'none',borderRadius:50,padding:'5px 12px',flexShrink:0,cursor:isBusy?'not-allowed':'pointer',fontFamily:"'Outfit',sans-serif",opacity:isBusy?0.7:1}}>
+                                {isBusy?'…':'Connect →'}
+                              </button>}
                       </div>
                     );
                   })}
