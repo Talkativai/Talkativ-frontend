@@ -54,7 +54,7 @@ export default function PageBilling({ user, agentName }) {
     setChangingPlan(plan.key);
     try {
       const updated = await api.billing.changePlan({ priceId: plan.priceId, plan: plan.key });
-      setSub(prev => ({ ...prev, plan: plan.key, ...updated }));
+      setSub(prev => ({ ...prev, ...updated }));
       setShowPlanModal(false);
     } catch (e) {
       setPlanError(e?.message || 'Could not change plan. Try again.');
@@ -76,10 +76,19 @@ export default function PageBilling({ user, agentName }) {
   const statusKey = sub?.status || 'NO_SUBSCRIPTION';
   const badge = STATUS_BADGE[statusKey] || STATUS_BADGE.NO_SUBSCRIPTION;
   const planLabel = PLAN_LABELS[sub?.plan] || (sub?.plan || 'None');
+  const pendingPlanLabel = sub?.pendingPlan ? (PLAN_LABELS[sub.pendingPlan] || sub.pendingPlan) : null;
 
   return (
     <>
       <TopBar title={<>Billing</>} subtitle="Manage your subscription and payment details" user={user} agentName={agentName}/>
+
+      {/* Pending plan change banner */}
+      {pendingPlanLabel && sub?.pendingPlanDate && (
+        <div style={{margin:'0 0 18px',padding:'12px 18px',background:'#fffbeb',border:'1.5px solid #fde68a',borderRadius:12,display:'flex',alignItems:'center',gap:10,fontSize:13,color:'#92400e'}}>
+          <span style={{fontSize:18}}>🔄</span>
+          <span>Your plan will switch to <strong>{pendingPlanLabel}</strong> on <strong>{formatDate(sub.pendingPlanDate)}</strong>. Your current plan stays active until then.</span>
+        </div>
+      )}
 
       <div className="resp-grid-2">
         {/* Current plan card */}
@@ -263,26 +272,28 @@ export default function PageBilling({ user, agentName }) {
             <div style={{padding:'24px 28px 18px',borderBottom:`1px solid ${T.line}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
               <div>
                 <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:900,color:T.ink,margin:0}}>Choose a plan</h3>
-                <p style={{margin:'4px 0 0',fontSize:12,color:T.soft}}>Change takes effect at your next billing cycle — no immediate charge</p>
+                <p style={{margin:'4px 0 0',fontSize:12,color:T.soft}}>Your current plan finishes first — new plan starts at the next billing date</p>
               </div>
               <button onClick={()=>setShowPlanModal(false)} style={{width:32,height:32,borderRadius:'50%',border:`1.5px solid ${T.line}`,background:T.paper,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',fontSize:14,color:T.mid}}>✕</button>
             </div>
             <div style={{padding:'22px 28px 28px',display:'flex',flexDirection:'column',gap:12}}>
               {PLANS.map(plan => {
-                const isCurrent = sub?.plan === plan.key;
+                const isCurrent = sub?.plan === plan.key && !sub?.pendingPlan;
+                const isPending = sub?.pendingPlan === plan.key;
                 const isBusy = changingPlan === plan.key;
                 return (
-                  <div key={plan.key} style={{border:`1.5px solid ${isCurrent ? T.p200 : plan.popular ? '#DDD6FE' : T.line}`,borderRadius:16,padding:'18px 20px',background:isCurrent ? T.p50 : plan.popular ? '#FAF5FF' : T.paper,position:'relative'}}>
-                    {plan.popular && !isCurrent && <span style={{position:'absolute',top:12,right:12,fontSize:10,fontWeight:700,background:'#7C3AED',color:'white',borderRadius:50,padding:'2px 8px'}}>Most popular</span>}
+                  <div key={plan.key} style={{border:`1.5px solid ${isCurrent ? T.p200 : isPending ? '#fde68a' : plan.popular ? '#DDD6FE' : T.line}`,borderRadius:16,padding:'18px 20px',background:isCurrent ? T.p50 : isPending ? '#fffbeb' : plan.popular ? '#FAF5FF' : T.paper,position:'relative'}}>
+                    {plan.popular && !isCurrent && !isPending && <span style={{position:'absolute',top:12,right:12,fontSize:10,fontWeight:700,background:'#7C3AED',color:'white',borderRadius:50,padding:'2px 8px'}}>Most popular</span>}
                     {isCurrent && <span style={{position:'absolute',top:12,right:12,fontSize:10,fontWeight:700,background:T.p500,color:'white',borderRadius:50,padding:'2px 8px'}}>Current plan</span>}
+                    {isPending && <span style={{position:'absolute',top:12,right:12,fontSize:10,fontWeight:700,background:'#d97706',color:'white',borderRadius:50,padding:'2px 8px'}}>Scheduled</span>}
                     <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
                       <div>
                         <div style={{fontSize:16,fontWeight:800,color:T.ink,marginBottom:2}}>{plan.label}</div>
                         <div style={{fontSize:12,color:T.soft}}>{plan.calls} · {plan.price}/mo</div>
                       </div>
-                      {!isCurrent && (
+                      {!isCurrent && !isPending && (
                         <button onClick={()=>handleChangePlan(plan)} disabled={!!changingPlan} style={{padding:'9px 20px',borderRadius:50,border:'none',background:plan.popular?'#7C3AED':T.p500,color:'white',fontSize:13,fontWeight:700,cursor:changingPlan?'not-allowed':'pointer',fontFamily:"'Outfit',sans-serif",opacity:changingPlan?0.7:1,whiteSpace:'nowrap'}}>
-                          {isBusy ? 'Switching…' : `Switch to ${plan.label} →`}
+                          {isBusy ? 'Scheduling…' : `Switch to ${plan.label} →`}
                         </button>
                       )}
                     </div>
