@@ -135,25 +135,28 @@ export default function PageVoiceScript({ user, agentName, bizName, agentData, b
       // Backend creates an Ultravox call session and returns the joinUrl as signedUrl
       const { signedUrl: joinUrl } = await api.agent.getSignedUrl();
 
-      // Use Ultravox client SDK to join the call in the browser
       const session = new UltravoxSession();
 
+      // Set ref BEFORE joinCall so End Call works even while still connecting
+      conversationRef.current = { endSession: () => session.leaveCall() };
+
+      // Ultravox status values: 'idle' | 'connecting' | 'listening' | 'thinking' | 'speaking' | 'disconnecting' | 'disconnected'
+      // There is no 'connected' — the call is live once status becomes listening/thinking/speaking
       session.addEventListener('status', () => {
-        if (session.status === 'connected') setCallStatus('active');
-        if (session.status === 'disconnected') {
+        const s = session.status;
+        if (s === 'listening' || s === 'thinking' || s === 'speaking') {
+          setCallStatus('active');
+        }
+        if (s === 'disconnected' || s === 'disconnecting') {
           setCallStatus('ended');
           conversationRef.current = null;
         }
       });
 
       await session.joinCall(joinUrl);
-
-      // Wrap the session so endDemo can call endSession() uniformly
-      conversationRef.current = {
-        endSession: () => session.leaveCall(),
-      };
     } catch (e) {
       console.error('Test call failed:', e);
+      conversationRef.current = null;
       setCallStatus('idle');
     }
   };

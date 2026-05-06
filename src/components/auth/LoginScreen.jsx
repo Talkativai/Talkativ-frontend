@@ -55,12 +55,10 @@ export default function LoginScreen() {
     setLoading(false);
   };
 
-  // ── Google login via OAuth redirect ───────────────────────────────────────
-  const handleGoogleLogin = () => {
-    window.location.href = api.auth.googleLoginUrl();
-  };
+  // ── Google login — commented out (OAuth removed) ─────────────────────────
+  // const handleGoogleLogin = () => { window.location.href = api.auth.googleLoginUrl(); };
 
-  // ── Google login via Clerk SSO (commented out — using Google OAuth) ────────
+  // ── Google login via Clerk SSO (commented out — OAuth removed) ───────────
   // const handleGoogleLogin = async () => {
   //   if (!clerkLoaded || !signIn) return;
   //   setLoading(true); setAlert(null);

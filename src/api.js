@@ -157,11 +157,9 @@ export const api = {
       return data;
     },
 
-    googleLoginUrl() {
-      return `${API_URL}/auth/google`;
-    },
+    // googleLoginUrl() { return `${API_URL}/auth/google`; }, // commented out — OAuth removed
 
-    // Exchange a Clerk session token for an app JWT (commented out — using Google OAuth)
+    // Exchange a Clerk session token for an app JWT (commented out — OAuth removed)
     // async clerkExchange(clerkToken) {
     //   const res = await fetch(`${API_URL}/auth/clerk`, {
     //     method: 'POST',
