@@ -5,7 +5,8 @@ import { VOICE_CATALOGUE } from '../../../utils/constants';
 import { formatSchedule } from '../../../utils/format';
 import { makeDefaultSchedule, buildHours, parseSchedule, VS_DAY_KEYS, VS_DAY_LABELS } from '../../../utils/schedule';
 import TopBar from '../TopBar';
-import { Conversation } from '@elevenlabs/client';
+// import { Conversation } from '@elevenlabs/client';  // commented out — replaced by Ultravox
+import { UltravoxSession } from 'ultravox-client';
 
 export default function PageVoiceScript({ user, agentName, bizName, agentData, bizData, onAgentNameChange }) {
   const autoGreet = (name, biz) => `Hi, thanks for calling us at ${biz}! I'm ${name}, your AI assistant. Would you like to place an order, check our hours, or something else?`;
@@ -131,14 +132,26 @@ export default function PageVoiceScript({ user, agentName, bizName, agentData, b
     if (callStatus === 'connecting' || callStatus === 'active') return;
     setCallStatus('connecting');
     try {
-      const { signedUrl } = await api.agent.getSignedUrl();
-      const conv = await Conversation.startSession({
-        signedUrl,
-        onConnect: () => setCallStatus('active'),
-        onDisconnect: () => { setCallStatus('ended'); conversationRef.current = null; },
-        onError: (msg) => { console.error('ElevenLabs:', msg); setCallStatus('idle'); conversationRef.current = null; },
+      // Backend creates an Ultravox call session and returns the joinUrl as signedUrl
+      const { signedUrl: joinUrl } = await api.agent.getSignedUrl();
+
+      // Use Ultravox client SDK to join the call in the browser
+      const session = new UltravoxSession();
+
+      session.addEventListener('status', () => {
+        if (session.status === 'connected') setCallStatus('active');
+        if (session.status === 'disconnected') {
+          setCallStatus('ended');
+          conversationRef.current = null;
+        }
       });
-      conversationRef.current = conv;
+
+      await session.joinCall(joinUrl);
+
+      // Wrap the session so endDemo can call endSession() uniformly
+      conversationRef.current = {
+        endSession: () => session.leaveCall(),
+      };
     } catch (e) {
       console.error('Test call failed:', e);
       setCallStatus('idle');

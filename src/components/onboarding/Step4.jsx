@@ -40,7 +40,7 @@ export default function Step4({ onNext, onBack, bizName, bizPhone, onAgentNameCh
       await audio.play();
       setPreviewPlaying(true);
     } catch (err) {
-      setPreviewError(err?.message || "Preview unavailable — check your ElevenLabs API key.");
+      setPreviewError(err?.message || "Preview unavailable — check your Cartesia API key and voice IDs in setup.md.");
     }
     setPreviewLoading(false);
   };
