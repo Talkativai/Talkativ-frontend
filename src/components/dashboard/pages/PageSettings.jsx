@@ -88,6 +88,8 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
   const [callRecording, setCallRecording] = useState(true);
   const [voicemailFallback, setVoicemailFallback] = useState(false);
   const [savingPhone, setSavingPhone] = useState(false);
+  const [reconnecting, setReconnecting] = useState(false);
+  const [reconnectStatus, setReconnectStatus] = useState(null); // 'ok' | 'err'
 
   // ── Team ──────────────────────────────────────────────────────────────────
   const [staffList, setStaffList] = useState([]);
@@ -257,6 +259,19 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
     setSavingPhone(true);
     try { await api.settings.updatePhone({ assignedNumber: assignedNumber || null, forwardNumber: forwardNumber || null, ringsBeforeAi: parseInt(ringsBeforeAi), callRecording, voicemailFallback }); }
     catch (e) {} finally { setSavingPhone(false); }
+  };
+
+  const handleReconnectPhone = async () => {
+    setReconnecting(true); setReconnectStatus(null);
+    try {
+      await api.settings.reconnectPhone();
+      setReconnectStatus('ok');
+    } catch {
+      setReconnectStatus('err');
+    } finally {
+      setReconnecting(false);
+      setTimeout(() => setReconnectStatus(null), 4000);
+    }
   };
 
   const handleChangePassword = async () => {
@@ -644,6 +659,27 @@ export default function PageSettings({ user, agentName, bizData, onBizNameChange
                   Your Talkativ AI number: <span style={{fontWeight:700,color:T.ink,fontFamily:"monospace"}}>{assignedNumber || 'Not yet assigned — complete phone setup in onboarding'}</span>
                 </div>
               </div>
+
+              {/* ── Reconnect phone number ───────────────────────────────── */}
+              {assignedNumber && (
+                <div style={{marginTop:24,borderTop:`1.5px solid ${T.line}`,paddingTop:20,display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12}}>
+                  <div>
+                    <div style={{fontSize:13,fontWeight:700,color:T.ink,marginBottom:3}}>Reconnect phone number</div>
+                    <div style={{fontSize:12,color:T.soft}}>Re-links your number to the AI agent. Use this if calls are not going through.</div>
+                  </div>
+                  <div style={{display:"flex",alignItems:"center",gap:10}}>
+                    {reconnectStatus === 'ok' && <span style={{fontSize:12,color:"#22C55E",fontWeight:600}}>✓ Reconnected</span>}
+                    {reconnectStatus === 'err' && <span style={{fontSize:12,color:"#EF4444",fontWeight:600}}>✗ Failed — try again</span>}
+                    <button
+                      onClick={handleReconnectPhone}
+                      disabled={reconnecting}
+                      style={{padding:"9px 20px",background:reconnecting?"#9E92BA":"#130D2E",color:"white",border:"none",borderRadius:10,fontSize:13,fontWeight:600,cursor:reconnecting?"not-allowed":"pointer",whiteSpace:"nowrap"}}
+                    >
+                      {reconnecting ? "Reconnecting…" : "Reconnect"}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
