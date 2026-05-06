@@ -32,15 +32,16 @@ export default function Step4({ onNext, onBack, bizName, bizPhone, onAgentNameCh
     setPreviewLoading(true);
     setPreviewError(null);
     try {
-      const data = await api.agent.previewVoice({ voiceId: voices[vc].id, text: greeting });
-      const audio = new Audio(`data:audio/mpeg;base64,${data.audio}`);
+      const previewUrl = voices[vc].preview;
+      if (!previewUrl) throw new Error("No preview available for this voice.");
+      const audio = new Audio(previewUrl);
       audioRef.current = audio;
       audio.onended = () => { setPreviewPlaying(false); audioRef.current = null; };
       audio.onerror = () => { setPreviewPlaying(false); audioRef.current = null; setPreviewError("Audio failed to play."); };
       await audio.play();
       setPreviewPlaying(true);
     } catch (err) {
-      setPreviewError(err?.message || "Preview unavailable — check your Cartesia API key and voice IDs in setup.md.");
+      setPreviewError(err?.message || "Preview unavailable.");
     }
     setPreviewLoading(false);
   };
