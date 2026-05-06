@@ -167,6 +167,7 @@ export default function PageVoiceScript({ user, agentName, bizName, agentData, b
       conversationRef.current = null;
     }
     setCallStatus('ended');
+    setTimeout(() => setCallStatus('idle'), 2000);
   };
 
   const bizHoursDisplay   = formatSchedule(bizData?.openingHours);
