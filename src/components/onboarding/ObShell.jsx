@@ -72,7 +72,7 @@ export default function ObShell({ step, children, onNext, onBack, nextLabel = "C
         <div className="ob-footer">
           <button className="btn-back" onClick={onBack} disabled={loading}>← Back</button>
           <button
-            className={`btn-next ${loading ? "btn-next-loading" : ""}`}
+            className={`btn-next ${loading ? "btn-next-loading" : ""} ${!loading && !nextDisabled ? "btn-next-obs" : ""}`}
             onClick={onNext}
             disabled={loading || nextDisabled}
             style={{
@@ -84,14 +84,15 @@ export default function ObShell({ step, children, onNext, onBack, nextLabel = "C
               gap: 8,
               minWidth: loading ? 180 : undefined,
               transition: "all .35s cubic-bezier(.25,.8,.25,1)",
+              position: "relative",
+              overflow: "hidden",
             }}
           >
+            {!loading && !nextDisabled && <span className="ob-btn-shimmer" />}
             {loading && (
               <span className="ob-btn-spinner" />
             )}
-            <span style={{
-              transition: "opacity .2s ease",
-            }}>
+            <span style={{ transition: "opacity .2s ease", position: "relative", zIndex: 1 }}>
               {nextLabel}
             </span>
           </button>
@@ -104,6 +105,38 @@ export default function ObShell({ step, children, onNext, onBack, nextLabel = "C
       @keyframes ob-slideIn {
         from { opacity: 0; transform: translateY(16px); }
         to   { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes ob-shimmer {
+        0%   { transform: translateX(-120%) skewX(-15deg); }
+        100% { transform: translateX(320%) skewX(-15deg); }
+      }
+      @keyframes ob-pulse-glow {
+        0%, 100% { box-shadow: 0 4px 18px rgba(112,53,245,.45), 0 0 0 0 rgba(112,53,245,.25); }
+        50%       { box-shadow: 0 6px 28px rgba(112,53,245,.65), 0 0 0 6px rgba(112,53,245,.08); }
+      }
+      @keyframes ob-grad-roll {
+        0%   { background-position: 0% 50%; }
+        50%  { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+      .btn-next-obs {
+        background: linear-gradient(120deg, ${T.p600}, #9333ea, ${T.p700}, #7c3aed, ${T.p600}) !important;
+        background-size: 300% 300% !important;
+        animation: ob-grad-roll 3s ease infinite, ob-pulse-glow 2.4s ease-in-out infinite !important;
+      }
+      .btn-next-obs:hover {
+        transform: translateY(-2px) scale(1.03) !important;
+        animation: ob-grad-roll 1.5s ease infinite, ob-pulse-glow 1.2s ease-in-out infinite !important;
+      }
+      .ob-btn-shimmer {
+        position: absolute;
+        inset: 0;
+        width: 40%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent);
+        animation: ob-shimmer 2.2s cubic-bezier(.4,0,.6,1) infinite;
+        pointer-events: none;
+        z-index: 0;
       }
       .ob-btn-spinner {
         width: 16px;
