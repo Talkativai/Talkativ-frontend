@@ -32,7 +32,7 @@ export default function Step4({ onNext, onBack, bizName, bizPhone, onAgentNameCh
     setPreviewLoading(true);
     setPreviewError(null);
     try {
-      const data = await api.agent.previewVoice({ voiceId: voices[vc].id });
+      const data = await api.agent.previewVoice({ voiceId: voices[vc].ttsId, text: greeting });
       if (!data?.audio) throw new Error("No audio returned.");
       const bytes = Uint8Array.from(atob(data.audio), c => c.charCodeAt(0));
       const blob = new Blob([bytes], { type: "audio/mpeg" });
@@ -140,8 +140,8 @@ export default function Step4({ onNext, onBack, bizName, bizPhone, onAgentNameCh
 
       {/* Hear your agent preview */}
       <div style={{ background: T.paper, border: `1.5px solid ${T.line}`, borderRadius: 16, padding: "18px 20px", marginBottom: 20 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: T.ink, marginBottom: 4 }}>Hear this voice</div>
-        <div style={{ fontSize: 12, color: T.soft, marginBottom: 16 }}>Sample clip of the selected voice — your agent will sound like this on calls.</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: T.ink, marginBottom: 4 }}>Hear how your agent sounds</div>
+        <div style={{ fontSize: 12, color: T.soft, marginBottom: 16 }}>Plays your greeting message in the selected voice.</div>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <button
             onClick={handlePreview}
