@@ -32,11 +32,14 @@ export default function Step4({ onNext, onBack, bizName, bizPhone, onAgentNameCh
     setPreviewLoading(true);
     setPreviewError(null);
     try {
-      const previewUrl = voices[vc].preview;
-      if (!previewUrl) throw new Error("No preview available for this voice.");
-      const audio = new Audio(previewUrl);
+      const data = await api.agent.previewVoice({ voiceId: voices[vc].id, text: greeting });
+      if (!data?.audio) throw new Error("No audio returned.");
+      const bytes = Uint8Array.from(atob(data.audio), c => c.charCodeAt(0));
+      const blob = new Blob([bytes], { type: "audio/mpeg" });
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
       audioRef.current = audio;
-      audio.onended = () => { setPreviewPlaying(false); audioRef.current = null; };
+      audio.onended = () => { setPreviewPlaying(false); audioRef.current = null; URL.revokeObjectURL(url); };
       audio.onerror = () => { setPreviewPlaying(false); audioRef.current = null; setPreviewError("Audio failed to play."); };
       await audio.play();
       setPreviewPlaying(true);
