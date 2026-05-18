@@ -156,7 +156,7 @@ export default function PageIntegrations({ user, agentName, bizName }) {
     ];
     for (const p of providers) {
       if (search.includes(p.connected)) {
-        window.history.replaceState(null, '', window.location.pathname + '#/dashboard');
+        window.history.replaceState(null, '', window.location.pathname);
         fetchConnected();
         break;
       } else if (search.includes(p.error)) {
@@ -164,7 +164,7 @@ export default function PageIntegrations({ user, agentName, bizName }) {
         const msg = match ? decodeURIComponent(match[1]) : 'Connection failed';
         if (p.setter) p.setter(msg);
         else setOauthErrors(prev => ({ ...prev, [p.name]: msg }));
-        window.history.replaceState(null, '', window.location.pathname + '#/dashboard');
+        window.history.replaceState(null, '', window.location.pathname);
         break;
       }
     }

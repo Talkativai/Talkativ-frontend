@@ -58,7 +58,7 @@ export default function DashboardApp() {
       search.includes('zettle_connected=1') || search.includes('zettle_error=')
     ) {
       setActive('Integrations');
-      window.history.replaceState(null, '', window.location.pathname + '#/dashboard');
+      window.history.replaceState(null, '', window.location.pathname);
     }
   }, []);
 
