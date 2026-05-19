@@ -1249,6 +1249,16 @@ function AppRoutes() {
   const [obBizHours, setObBizHours] = useState(null); // hours found during business search
   const [obPhoneNumber, setObPhoneNumber] = useState(""); // phone number provisioned in Step5
 
+  // After OAuth redirects, the backend sends back to root /?square_connected=1 etc.
+  // Navigate client-side to /dashboard so the dashboard can pick up the params.
+  useEffect(() => {
+    const search = window.location.search;
+    const oauthKeys = ['stripe_connected','stripe_error','square_connected','square_error','clover_connected','clover_error','sumup_connected','sumup_error','zettle_connected','zettle_error'];
+    if (oauthKeys.some(k => search.includes(k))) {
+      navigate('/dashboard' + search, { replace: true });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Restore onboarding state from the backend after a page refresh
   useEffect(() => {
     if (!authChecked) return;
