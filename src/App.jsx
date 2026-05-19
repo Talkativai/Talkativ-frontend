@@ -1240,6 +1240,41 @@ textarea.form-input { resize: none; line-height: 1.6; }
 
 \n`;
 
+// ─── Payment result pages (shown after Square/SumUp redirect back) ───────────
+
+function PaymentSuccessPage() {
+  return (
+    <div style={{minHeight:"100vh",background:"#F0FDF4",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:32,textAlign:"center"}}>
+      <div style={{width:90,height:90,borderRadius:"50%",background:"linear-gradient(135deg,#22C55E,#16a34a)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:44,marginBottom:24,boxShadow:"0 12px 40px rgba(34,197,94,.3)"}}>✓</div>
+      <h1 style={{fontFamily:"'Playfair Display',serif",fontSize:34,fontWeight:900,color:"#130D2E",marginBottom:10}}>Payment confirmed!</h1>
+      <p style={{fontSize:15,color:"#6B5E8A",fontWeight:300,lineHeight:1.65,maxWidth:400,marginBottom:32}}>Your payment was successful. You'll receive a confirmation shortly.</p>
+      <a href="/" style={{padding:"13px 32px",background:"#130D2E",color:"white",borderRadius:50,fontSize:14,fontWeight:600,textDecoration:"none",fontFamily:"'Outfit',sans-serif"}}>Back to home</a>
+    </div>
+  );
+}
+
+function PaymentErrorPage() {
+  return (
+    <div style={{minHeight:"100vh",background:"#FEF2F2",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:32,textAlign:"center"}}>
+      <div style={{width:90,height:90,borderRadius:"50%",background:"linear-gradient(135deg,#EF4444,#b91c1c)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:44,marginBottom:24,boxShadow:"0 12px 40px rgba(239,68,68,.3)"}}>✕</div>
+      <h1 style={{fontFamily:"'Playfair Display',serif",fontSize:34,fontWeight:900,color:"#130D2E",marginBottom:10}}>Payment failed</h1>
+      <p style={{fontSize:15,color:"#6B5E8A",fontWeight:300,lineHeight:1.65,maxWidth:400,marginBottom:32}}>Something went wrong with your payment. Please try again or contact the restaurant directly.</p>
+      <a href="/" style={{padding:"13px 32px",background:"#130D2E",color:"white",borderRadius:50,fontSize:14,fontWeight:600,textDecoration:"none",fontFamily:"'Outfit',sans-serif"}}>Back to home</a>
+    </div>
+  );
+}
+
+function PaymentPendingPage() {
+  return (
+    <div style={{minHeight:"100vh",background:"#FFFBEB",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:32,textAlign:"center"}}>
+      <div style={{width:90,height:90,borderRadius:"50%",background:"linear-gradient(135deg,#F59E0B,#d97706)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:44,marginBottom:24,boxShadow:"0 12px 40px rgba(245,158,11,.3)"}}>⏳</div>
+      <h1 style={{fontFamily:"'Playfair Display',serif",fontSize:34,fontWeight:900,color:"#130D2E",marginBottom:10}}>Payment pending</h1>
+      <p style={{fontSize:15,color:"#6B5E8A",fontWeight:300,lineHeight:1.65,maxWidth:400,marginBottom:32}}>Your payment is being processed. You'll receive a confirmation once it's complete.</p>
+      <a href="/" style={{padding:"13px 32px",background:"#130D2E",color:"white",borderRadius:50,fontSize:14,fontWeight:600,textDecoration:"none",fontFamily:"'Outfit',sans-serif"}}>Back to home</a>
+    </div>
+  );
+}
+
 function AppRoutes() {
   const navigate = useNavigate();
   const { authChecked, handleLogin } = useAuth();
@@ -1249,13 +1284,31 @@ function AppRoutes() {
   const [obBizHours, setObBizHours] = useState(null); // hours found during business search
   const [obPhoneNumber, setObPhoneNumber] = useState(""); // phone number provisioned in Step5
 
-  // After OAuth redirects, the backend sends back to root /?square_connected=1 etc.
-  // Navigate client-side to /dashboard so the dashboard can pick up the params.
+  // Handle OAuth redirects and hash-based payment routes.
+  // Backend sends OAuth callbacks to root /?param=1 and payment links as /#/pay?pi=...
+  // Both need to be detected here and navigated client-side (avoids Render 404 on sub-paths).
   useEffect(() => {
     const search = window.location.search;
+    const hash   = window.location.hash;
+
+    // OAuth callbacks → /dashboard?param=1
     const oauthKeys = ['stripe_connected','stripe_error','square_connected','square_error','clover_connected','clover_error','sumup_connected','sumup_error','zettle_connected','zettle_error'];
     if (oauthKeys.some(k => search.includes(k))) {
       navigate('/dashboard' + search, { replace: true });
+      return;
+    }
+
+    // Payment link → /pay?pi=...&order_id=...&type=order
+    if (hash.startsWith('#/pay')) {
+      const qs = hash.includes('?') ? hash.split('?')[1] : '';
+      navigate(`/pay${qs ? '?' + qs : ''}`, { replace: true });
+      return;
+    }
+
+    // Square / SumUp payment return redirects → /payment-success, /payment-error, /payment-pending
+    if (hash.startsWith('#/payment-')) {
+      const [hashPath, qs] = hash.slice(1).split('?');
+      navigate(`${hashPath}${qs ? '?' + qs : ''}`, { replace: true });
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -1298,6 +1351,9 @@ function AppRoutes() {
           <Route path="/admin" element={<RequireAdmin><AdminApp /></RequireAdmin>} />
           <Route path="/pay" element={<PaymentLinkScreen onBack={() => navigate('/')} />} />
           <Route path="/pay/confirm" element={<PaymentConfirmScreen onBack={() => navigate('/')} />} />
+          <Route path="/payment-success" element={<PaymentSuccessPage />} />
+          <Route path="/payment-error"   element={<PaymentErrorPage />} />
+          <Route path="/payment-pending" element={<PaymentPendingPage />} />
         </Routes>
       </Suspense>
     </>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { T } from "../../utils/tokens";
@@ -94,14 +95,12 @@ export default function PaymentLinkScreen({ onBack }) {
   const [data, setData] = useState(null);
   const [fetchError, setFetchError] = useState("");
 
-  // Hash-router puts query params after the hash: /#/pay?pi=...
-  const hash = window.location.hash;
-  const qs = hash.includes("?") ? hash.split("?")[1] : "";
-  const params = new URLSearchParams(qs);
-  const pi            = params.get("pi");               // client_secret
-  const orderId       = params.get("order_id");
-  const reservationId = params.get("reservation_id");
-  const type          = params.get("type");             // 'order' | 'reservation'
+  // App.jsx navigates /#/pay?pi=... → /pay?pi=... client-side, so params are in the URL search
+  const [searchParams] = useSearchParams();
+  const pi            = searchParams.get("pi");
+  const orderId       = searchParams.get("order_id");
+  const reservationId = searchParams.get("reservation_id");
+  const type          = searchParams.get("type");       // 'order' | 'reservation'
 
   useEffect(() => {
     const load = async () => {
