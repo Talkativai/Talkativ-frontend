@@ -28,13 +28,13 @@ export const POS_SYSTEMS = [
 
 export const VOICE_CATALOGUE = {
   female: [
-    { n: "Gabrielle",  id: "33175488-b0f9-4f11-a0c6-3f4edd47353e", ttsId: "b7d50908-b17c-442d-ad8d-810c63997fd9", d: "Warm & professional",   accent: "American"   },
+    { n: "Gabrielle",  id: "33175488-b0f9-4f11-a0c6-3f4edd47353e", ttsId: "1242fb95-7ddd-44ac-8a05-9e8a22a6137d", d: "Warm & professional",   accent: "American"   },
     { n: "Karri",      id: "edc061c1-8761-4705-a927-934b754f510e", ttsId: "c45bc5ec-dc68-4feb-8829-6e6b2748095d", d: "Friendly & bright",      accent: "American"   },
     { n: "Jacqueline", id: "aa601962-1cbd-4bbd-9d96-3c7a93c3414a", ttsId: "79a125e8-cd45-4c13-8a67-188112f4dd22", d: "Confident & empathic",   accent: "American"   },
-    { n: "Kai",        id: "4c8d6eb4-c021-4d56-aec9-656bf6ca6046", ttsId: "95d51f79-c397-46f9-b349-0b14e52ac08b", d: "Warm & southern",        accent: "American"   },
-    { n: "Claire",     id: "d20e12df-6fd9-428e-a81f-ba0090de13d9", ttsId: "41534e16-2966-4c6b-9670-111411def906", d: "Clear & engaging",       accent: "British"    },
-    { n: "Louisamay",  id: "534bb930-9642-4ec3-b5c0-e82426d22add", ttsId: "694f9369-afd5-4635-9664-811ec98da2d3", d: "Bright & expressive",    accent: "Irish"      },
-    { n: "Hannah",     id: "8ff05d3d-d78d-40a6-88c1-dd1efcf571f0", ttsId: "b7d50908-b17c-442d-ad8d-810c63997fd9", d: "Knowledgeable & upbeat", accent: "Australian" },
+    { n: "Kai",        id: "4c8d6eb4-c021-4d56-aec9-656bf6ca6046", ttsId: "1a0c6bb2-bc1b-476e-8d45-56a66300362b", d: "Warm & southern",        accent: "American"   },
+    { n: "Claire",     id: "d20e12df-6fd9-428e-a81f-ba0090de13d9", ttsId: "62ae83ad-4f6a-430b-af41-a9bede9286ca", d: "Clear & engaging",       accent: "British"    },
+    { n: "Louisamay",  id: "534bb930-9642-4ec3-b5c0-e82426d22add", ttsId: "f4d6bb07-f876-4464-ba70-cd48d8701890", d: "Bright & expressive",    accent: "Irish"      },
+    { n: "Hannah",     id: "8ff05d3d-d78d-40a6-88c1-dd1efcf571f0", ttsId: "a4a16c5e-5902-4732-b9b6-2a48efd2e11b", d: "Knowledgeable & upbeat", accent: "Australian" },
   ],
   male: [
     { n: "David",  id: "ef6757de-79b1-497b-ad54-c6bef635e2b7", ttsId: "2ee87190-8f84-4925-97da-e52547f9462c", d: "Smooth & trustworthy",     accent: "American"   },
