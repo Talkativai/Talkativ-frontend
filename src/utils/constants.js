@@ -40,7 +40,7 @@ export const VOICE_CATALOGUE = {
     { n: "David",  id: "ef6757de-79b1-497b-ad54-c6bef635e2b7", ttsId: "2ee87190-8f84-4925-97da-e52547f9462c", d: "Smooth & trustworthy",     accent: "American"   },
     { n: "Troy",   id: "199c9635-edbe-4f9c-a626-ca31fb151d15", ttsId: "a0e99841-438c-4a64-b679-ae501e7d6091", d: "Charming & down-to-earth", accent: "American"   },
     { n: "Grant",  id: "5f8e97b1-cd48-431a-b6a1-3b94306d8914", ttsId: "ed81fd13-2016-4a49-8fe3-c0d2761695fc", d: "Steady & professional",    accent: "American"   },
-    { n: "Clive",  id: "a6afd1fc-960f-45d3-9e46-e8182af650b9", ttsId: "f9836c6e-a0bd-460e-9d3c-f7299fa60f94", d: "Deep & comforting",        accent: "British"    },
+    { n: "Clive",  id: "a6afd1fc-960f-45d3-9e46-e8182af650b9", ttsId: "3c0f09d6-e0d7-499c-a594-70c5b7b93048", d: "Deep & comforting",        accent: "British"    },
     { n: "Arlo",   id: "280a8e4d-2974-4593-87eb-fb74f0278a2e", ttsId: "63ff761f-c1e8-414b-b969-d1833d1c870c", d: "Warm & captivating",       accent: "Australian" },
   ],
 };
